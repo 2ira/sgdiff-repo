@@ -21,6 +21,24 @@ python -m sgdiff prepare --datasets cora usair ns
 python -m sgdiff train --config configs/sgdiff_cora.yaml
 ```
 
+## Alignment with the paper
+
+The implementation follows the PDF (`li25a.pdf`) parameter by parameter; the
+full mapping lives in [`docs/alignment.md`](docs/alignment.md).
+
+| paper (Table 4 / Sec. A.3) | this repo |
+|----------------------------|-----------|
+| hops `k = 1` for every dataset | `subgraph.hops: 1` |
+| per-hop sampling `ns` = −1 / 20 / 20 / 10 / 40 / 5 | `subgraph.max_nodes_per_hop` per dataset |
+| structure denoiser = **transformer**, 8 heads, 2 layers | `structure.arch: transformer` |
+| attention widths 256 / 64 / 64, MLP widths 256 / 128 / 128 | `structure.node_attn`, `edge_attn`, `global_attn`, `*_mlp` |
+| structure diffusion steps 20 / 20 / 10 / 5 / 10 / 20 | `structure.num_steps` per dataset |
+| feature GCN 256 / 256 / 64, 2 layers, steps 100 / 100 / 50 | `feature.hidden_dim`, `num_layers`, `num_steps` |
+| no feature stream for USAir / NS / Router | `feature.enabled: false` |
+| train with VLB + node/edge cross-entropy | `structure.aux_ce_weight: 1.0` |
+| prior `p(y) = 0.5` | `LikelihoodFusion.log_prior` (uniform) |
+| 80 / 5 / 15 split, equal negatives, AUC/AP/Hit@100, 10 seeds | `data.*`, `scripts/run_experiments.py --seeds` |
+
 ## Repository layout
 
 ```
@@ -77,8 +95,12 @@ graphs are cached as `.npz`. See `data/README.md` for formats and how to plug in
 # 1. fast smoke test (synthetic graph, ~30 s on CPU)
 python -m sgdiff train --config configs/smoke_synthetic.yaml
 
-# 2. train SGDiff on Cora
-python -m sgdiff train --config configs/sgdiff_cora.yaml --run-dir runs
+# 2. train SGDiff on Cora.  The plain config is the full Table-4 run (GPU);
+#    the --set flags below are the CPU profile used for the numbers in this README.
+python -m sgdiff train --config configs/sgdiff_cora.yaml --run-dir runs \
+  --set data.max_train_pairs=2000 data.max_eval_pairs=500 train.epochs=8 \
+        train.pretrain_epochs=3 structure.num_mc_samples=4 \
+        feature.num_mc_samples=4 subgraph.max_nodes_total=40
 
 # 3. evaluate the best checkpoint
 python -m sgdiff evaluate --checkpoint runs/cora-*/best.pt --split test --device cpu
@@ -91,6 +113,12 @@ python -m sgdiff evaluate --checkpoint runs/cora-*/best.pt --attack random --rat
 
 # 6. baselines on the same splits
 python scripts/run_baselines.py --dataset cora --baselines gcn gat sage vgae seal
+
+# 7. the paper's experiment grid (5 datasets x 3 seeds) + RQ1/RQ2/RQ3
+python scripts/run_experiments.py --datasets cora citeseer usair ns pubmed --seeds 0 1 2
+python scripts/run_experiments.py --transfer cora --targets citeseer pubmed usair ns
+python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
+python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5
 ```
 
 All hyper-parameters are YAML keys that can be overridden on the command line:
@@ -112,17 +140,30 @@ python -m sgdiff train --config configs/sgdiff_cora.yaml \
 `bash scripts/run_all_experiments.sh cora 20` runs the whole grid and writes
 JSON/log files into `results/`.
 
-Reference numbers from a CPU-only, deliberately small budget (2 000 training
-pairs, 9 epochs) — **not** the paper's numbers:
+Reference numbers from the CPU budget profile (3 seeds, mean; see
+`docs/reproduction.md` for std and the full analysis) — **not** the paper's numbers:
 
 | experiment | AUC | AP | Hit@100 |
 |------------|----:|---:|--------:|
-| Cora | 0.860 | 0.885 | 0.96 |
-| Citeseer | 0.805 | 0.854 | 0.97 |
-| Cora → Citeseer (zero-shot) | 0.834 | 0.857 | 0.73 |
-| USAir | 0.925 | 0.926 | 0.99 |
-| Cora → USAir (zero-shot) | 0.674 | 0.619 | 0.62 |
-| Cora under random attack 10% | 0.889 | 0.914 | — |
+| Cora | 0.751 | 0.809 | 0.960 |
+| Citeseer | 0.738 | 0.787 | 0.903 |
+| Pubmed | 0.816 (2 seeds) | 0.813 | 0.810 |
+| USAir | 0.929 | 0.923 | 0.960 |
+| NS | 0.964 | 0.973 | 1.000 |
+
+Attribute-free graphs (USAir, NS) land on the paper's numbers; the citation
+graphs are 10-13 AUC points below because the CPU profile uses 2 000 training
+pairs, 8 epochs and 4 Monte-Carlo steps. The single largest factor is `k = 1`
+(Table 4): with `--set subgraph.hops=2` and the same budget Cora reaches 0.86.
+
+Research questions (same budget, `results/`):
+
+| RQ | experiment | AUC |
+|----|------------|----:|
+| RQ1 | Cora → Pubmed / NS / USAir / Citeseer (zero-shot, no features) | 0.830 / 0.947 / 0.800 / 0.733 |
+| RQ2 | Cora with 1% of the training sub-graphs | 0.725 ± 0.058 |
+| RQ3 | Cora under random flip 10% / 25% / 50% | 0.698 / 0.651 / 0.577 |
+| RQ3 | Cora under DICE 10% / 25% / 50% | 0.692 / 0.643 / 0.584 |
 
 `docs/reproduction.md` lists the full table (including baselines), the exact
 protocol and every known deviation from the paper.

@@ -113,6 +113,7 @@ def extract_enclosing_subgraph(
     dst: int,
     hops: int = 2,
     max_nodes_per_hop: Optional[int] = 50,
+    max_nodes_total: Optional[int] = None,
     max_label: int = 16,
     features: Optional[np.ndarray] = None,
     remove_target: bool = True,
@@ -129,6 +130,16 @@ def extract_enclosing_subgraph(
     dv = _bfs(neighbors, int(dst), hops, max_nodes_per_hop, rng, blocked=block_dst)
 
     node_set = set(du) | set(dv)
+    if max_nodes_total is not None and len(node_set) > int(max_nodes_total):
+        # Safety cap: hub nodes can make a 1-hop neighbourhood enormous.  Keep
+        # both endpoints, then the closest nodes, then a random tie-break.
+        cap = max(int(max_nodes_total), 2)
+        priority = sorted(
+            node_set,
+            key=lambda n: (min(du.get(n, hops + 1), dv.get(n, hops + 1)), rng.random()),
+        )
+        keep = {int(src), int(dst)} | set(priority[: cap - 2])
+        node_set = keep
     nodes = np.asarray(sorted(node_set), dtype=np.int64)
     pos = {int(node): i for i, node in enumerate(nodes)}
 
@@ -165,6 +176,7 @@ class SubgraphExtractor:
         graph: GraphData,
         hops: int = 2,
         max_nodes_per_hop: Optional[int] = 50,
+        max_nodes_total: Optional[int] = None,
         max_label: int = 16,
         feature_mode: str = "auto",
         seed: int = 0,
@@ -175,6 +187,7 @@ class SubgraphExtractor:
         self.graph = graph
         self.hops = int(hops)
         self.max_nodes_per_hop = max_nodes_per_hop
+        self.max_nodes_total = max_nodes_total
         self.max_label = int(max_label)
         self.seed = int(seed)
         self.remove_target = bool(remove_target)
@@ -248,6 +261,7 @@ class SubgraphExtractor:
             key[1],
             hops=self.hops,
             max_nodes_per_hop=self.max_nodes_per_hop,
+            max_nodes_total=self.max_nodes_total,
             max_label=self.max_label,
             features=self._features,
             remove_target=self.remove_target,

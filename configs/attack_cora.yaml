@@ -1,7 +1,16 @@
-# Robustness study (RQ3): evaluate a trained Cora checkpoint under structural attacks.
+# RQ3: robustness. RF = random flip at 25% / 50% budget, DICE at 0.1-0.5.
 data:
   name: cora
-  max_eval_pairs: 2000
+  max_eval_pairs: null
+subgraph:
+  hops: 1
+  max_nodes_per_hop: null
+structure:
+  num_steps: 20
+feature:
+  enabled: true
+  hidden_dim: 256
+  num_steps: 100
 train:
   epochs: 50
   pretrain_epochs: 10

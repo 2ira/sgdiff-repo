@@ -1,12 +1,21 @@
-# SGDiff on cora (citation network, node attributes available).
+# Cora -- Table 4 of the paper: k=1, ns=-1 (no per-hop sampling), ds_t=20,
+# feature GCN 256 x 2 with ds_g=100.
 data:
   name: cora
-  max_eval_pairs: 2000
+  max_eval_pairs: null      # paper evaluates the full test split
+  max_train_pairs: null     # full 80% training split
+subgraph:
+  hops: 1
+  max_nodes_per_hop: null   # ns = -1
+structure:
+  num_steps: 20
+  num_mc_samples: null      # null = average over all ds_t timesteps (Algorithm 1)
+feature:
+  enabled: true
+  hidden_dim: 256
+  num_layers: 2
+  num_steps: 100
 train:
   epochs: 50
   pretrain_epochs: 10
   batch_size: 32
-structure:
-  num_mc_samples: 8
-feature:
-  num_mc_samples: 8

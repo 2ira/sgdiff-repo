@@ -8,6 +8,10 @@ objective and the likelihood score are the per-step KL
 ``KL[ q(A^{t-1} | A^t, A^0) || p_theta(A^{t-1} | A^t, y) ]``
 
 which is exactly the term used by Algorithm 1 in the paper's appendix.
+
+Appendix A.3 specifies a *transformer* denoiser conditioned on `time + class`,
+trained with the VLB plus the "sum of node and feature cross-entropy loss"
+(hybrid D3PM objective).  ``arch="edge_gnn"`` keeps a lighter GNN variant.
 """
 
 from __future__ import annotations
@@ -20,13 +24,13 @@ import torch.nn.functional as F
 
 from .layers import EdgeMessageLayer, MLP, SinusoidalPositionEmbedding
 from .schedules import UniformDiscreteSchedule
+from .transformer_denoiser import LABEL_DIFF_BUCKETS, TransformerStructureDenoiser
 
-LABEL_DIFF_BUCKETS = 8
 EPS = 1e-8
 
 
 class StructureDiffusionModel(nn.Module):
-    """``p_theta(A^{t-1} | A^t, y)`` implemented as an edge-featured GNN."""
+    """``p_theta(A^{t-1} | A^t, y)`` with a transformer or edge-GNN denoiser."""
 
     def __init__(
         self,
@@ -42,6 +46,15 @@ class StructureDiffusionModel(nn.Module):
         dropout: float = 0.1,
         normalize_score: bool = True,
         num_mc_samples: Optional[int] = None,
+        arch: str = "edge_gnn",
+        node_attn: int = 256,
+        edge_attn: int = 64,
+        global_attn: int = 64,
+        node_mlp: int = 256,
+        edge_mlp: int = 128,
+        global_mlp: int = 128,
+        heads: int = 8,
+        aux_ce_weight: float = 0.0,
     ) -> None:
         super().__init__()
         self.schedule = UniformDiscreteSchedule(num_steps, beta_start, beta_end)
@@ -49,17 +62,39 @@ class StructureDiffusionModel(nn.Module):
         self.num_classes = int(num_classes)
         self.normalize_score = bool(normalize_score)
         self.num_mc_samples = int(num_mc_samples or num_steps)
+        self.arch = arch
+        self.num_labels = int(num_labels)
+        self.aux_ce_weight = float(aux_ce_weight)
 
-        self.label_emb = nn.Embedding(num_labels, hidden_dim)
-        self.class_emb = nn.Embedding(num_classes, hidden_dim)
-        self.time_emb = SinusoidalPositionEmbedding(time_dim)
-        self.time_mlp = MLP(time_dim, hidden_dim, hidden_dim, 2)
-        self.edge_in = nn.Linear(1 + LABEL_DIFF_BUCKETS, edge_dim)
-        self.edge_cond = MLP(hidden_dim, hidden_dim, edge_dim, 2)
-        self.layers = nn.ModuleList(
-            [EdgeMessageLayer(hidden_dim, edge_dim, hidden_dim, dropout) for _ in range(num_layers)]
-        )
-        self.out = MLP(edge_dim, hidden_dim, 1, 2, dropout)
+        if arch == "transformer":
+            self.denoiser = TransformerStructureDenoiser(
+                num_labels=num_labels,
+                num_classes=num_classes,
+                node_attn=node_attn,
+                edge_attn=edge_attn,
+                global_attn=global_attn,
+                node_mlp=node_mlp,
+                edge_mlp=edge_mlp,
+                global_mlp=global_mlp,
+                heads=heads,
+                layers=num_layers,
+                time_dim=max(time_dim, global_attn),
+                dropout=dropout,
+            )
+        elif arch == "edge_gnn":
+            self.label_emb = nn.Embedding(num_labels, hidden_dim)
+            self.class_emb = nn.Embedding(num_classes, hidden_dim)
+            self.time_emb = SinusoidalPositionEmbedding(time_dim)
+            self.time_mlp = MLP(time_dim, hidden_dim, hidden_dim, 2)
+            self.edge_in = nn.Linear(1 + LABEL_DIFF_BUCKETS, edge_dim)
+            self.edge_cond = MLP(hidden_dim, hidden_dim, edge_dim, 2)
+            self.layers = nn.ModuleList(
+                [EdgeMessageLayer(hidden_dim, edge_dim, hidden_dim, dropout) for _ in range(num_layers)]
+            )
+            self.out = MLP(edge_dim, hidden_dim, 1, 2, dropout)
+            self.node_out = MLP(hidden_dim, hidden_dim, num_labels, 2, dropout)
+        else:
+            raise ValueError(f"unknown structure arch '{arch}'")
 
     # ------------------------------------------------------------------ utils
     def _table(self, table: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
@@ -102,8 +137,13 @@ class StructureDiffusionModel(nn.Module):
         mask: torch.Tensor,
         y: torch.Tensor,
         t: torch.Tensor,
-    ) -> torch.Tensor:
-        """Per-edge logits of ``p(A^{t-1} = 1 | A^t, y)``, shape ``(B, n, n)``."""
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return ``(node_logits, edge_logits)`` of ``p(A^{t-1} | A^t, y)``."""
+        if self.arch == "transformer":
+            cond = self.denoiser.condition(t, y)
+            node_logits, edge_logits = self.denoiser(x_t, labels, mask, cond)
+            return node_logits, 0.5 * (edge_logits + edge_logits.transpose(1, 2))
+
         cond = self.time_mlp(self.time_emb(t)) + self.class_emb(y)
         h = self.label_emb(labels) + cond.unsqueeze(1)
 
@@ -115,7 +155,11 @@ class StructureDiffusionModel(nn.Module):
         for layer in self.layers:
             h, e = layer(h, e, mask)
         logits = self.out(e).squeeze(-1)
-        return 0.5 * (logits + logits.transpose(1, 2))
+        return self.node_out(h), 0.5 * (logits + logits.transpose(1, 2))
+
+    def edge_logits(self, x_t, labels, mask, y, t) -> torch.Tensor:
+        """Per-edge logits only (used by the likelihood score)."""
+        return self.forward(x_t, labels, mask, y, t)[1]
 
     # ------------------------------------------------------------------- loss
     @staticmethod
@@ -125,20 +169,11 @@ class StructureDiffusionModel(nn.Module):
         upper = torch.triu(torch.ones(n, n, device=mask.device, dtype=torch.bool), diagonal=1)
         return (mask.unsqueeze(-1) & mask.unsqueeze(-2) & upper.unsqueeze(0)).unsqueeze(-1)
 
-    def compute_kl(
-        self,
-        x0: torch.Tensor,
-        labels: torch.Tensor,
-        mask: torch.Tensor,
-        y: torch.Tensor,
-        t: Optional[torch.Tensor] = None,
-    ) -> torch.Tensor:
-        """Per-graph KL summed over edges (mean-normalised when configured)."""
-        b = x0.shape[0]
-        if t is None:
-            t = torch.randint(1, self.num_steps + 1, (b,), device=x0.device)
-        x_t = self.q_sample(x0, t)
-        logits = self.forward(x_t, labels, mask, y, t)
+    def _kl(self, x0, labels, mask, y, t, x_t=None, logits=None) -> torch.Tensor:
+        if x_t is None:
+            x_t = self.q_sample(x0, t)
+        if logits is None:
+            logits = self.edge_logits(x_t, labels, mask, y, t)
         pq = self.posterior_state1(x0, x_t, t).unsqueeze(-1)
         p = torch.sigmoid(logits).unsqueeze(-1).clamp(EPS, 1 - EPS)
         kl = pq * torch.log((pq + EPS) / p) + (1 - pq) * torch.log((1 - pq + EPS) / (1 - p))
@@ -149,6 +184,19 @@ class StructureDiffusionModel(nn.Module):
             total = total / cmask.sum(dim=(1, 2, 3)).clamp(min=1)
         return total
 
+    def compute_kl(
+        self,
+        x0: torch.Tensor,
+        labels: torch.Tensor,
+        mask: torch.Tensor,
+        y: torch.Tensor,
+        t: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """Per-graph KL summed over edges (mean-normalised when configured)."""
+        if t is None:
+            t = torch.randint(1, self.num_steps + 1, (x0.shape[0],), device=x0.device)
+        return self._kl(x0, labels, mask, y, t)
+
     def loss(
         self,
         x0: torch.Tensor,
@@ -156,8 +204,25 @@ class StructureDiffusionModel(nn.Module):
         mask: torch.Tensor,
         y: torch.Tensor,
     ) -> torch.Tensor:
-        """Class-conditional ELBO loss (mean over the batch)."""
-        return self.compute_kl(x0, labels, mask, y).mean()
+        """VLB plus the hybrid node/edge cross-entropy (paper Sec. A.3)."""
+        b = x0.shape[0]
+        t = torch.randint(1, self.num_steps + 1, (b,), device=x0.device)
+        x_t = self.q_sample(x0, t)
+        node_logits, edge_logits = self.forward(x_t, labels, mask, y, t)
+        loss = self._kl(x0, labels, mask, y, t, x_t=x_t, logits=edge_logits).mean()
+        if self.aux_ce_weight <= 0:
+            return loss
+
+        cmask = self.candidate_mask(mask)
+        denom = cmask.sum().clamp(min=1)
+        edge_ce = F.binary_cross_entropy_with_logits(
+            edge_logits.unsqueeze(-1), x0.unsqueeze(-1), reduction="none"
+        )
+        edge_ce = (edge_ce * cmask).sum() / denom
+        node_ce = F.cross_entropy(
+            node_logits.transpose(1, 2), labels.clamp(min=0), ignore_index=0, reduction="sum"
+        ) / mask.sum().clamp(min=1)
+        return loss + self.aux_ce_weight * (edge_ce + node_ce)
 
     @torch.no_grad()
     def log_likelihood(

@@ -19,6 +19,15 @@ def build_model(cfg: ExperimentConfig, feature_dim: int, num_labels: Optional[in
     """Instantiate SGDiff from the experiment configuration."""
     num_labels = int(num_labels if num_labels is not None else cfg.subgraph.max_label + 1)
     structure_kwargs = dict(
+        arch=cfg.structure.arch,
+        node_attn=cfg.structure.node_attn,
+        edge_attn=cfg.structure.edge_attn,
+        global_attn=cfg.structure.global_attn,
+        node_mlp=cfg.structure.node_mlp,
+        edge_mlp=cfg.structure.edge_mlp,
+        global_mlp=cfg.structure.global_mlp,
+        heads=cfg.structure.heads,
+        aux_ce_weight=cfg.structure.aux_ce_weight,
         hidden_dim=cfg.structure.hidden_dim,
         num_layers=cfg.structure.num_layers,
         edge_dim=cfg.structure.edge_dim,
@@ -48,6 +57,7 @@ def build_model(cfg: ExperimentConfig, feature_dim: int, num_labels: Optional[in
         structure_kwargs=structure_kwargs,
         feature_kwargs=feature_kwargs,
         fusion_kwargs=fusion_kwargs,
+        feature_enabled=cfg.feature.enabled,
     )
 
 
@@ -66,6 +76,7 @@ def build_extractor(
         graph,
         hops=cfg.subgraph.hops,
         max_nodes_per_hop=cfg.subgraph.max_nodes_per_hop,
+        max_nodes_total=cfg.subgraph.max_nodes_total,
         max_label=cfg.subgraph.max_label,
         feature_mode=cfg.subgraph.feature_mode,
         remove_target=cfg.subgraph.remove_target_edge,

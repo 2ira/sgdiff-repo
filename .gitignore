@@ -26,6 +26,7 @@ data/dataset_report.json
 # Experiment artifacts
 runs/
 results/*.json
+!results/summary_*.json
 results/*.log
 checkpoints/*.pt
 !checkpoints/.gitkeep

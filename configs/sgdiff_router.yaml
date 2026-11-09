@@ -1,0 +1,17 @@
+# Router -- Table 4: k=1, ns=10, ds_t=5, node features N/A.
+# The graph must be placed manually, see data/README.md.
+data:
+  name: router
+  max_eval_pairs: null
+subgraph:
+  hops: 1
+  max_nodes_per_hop: 10
+structure:
+  num_steps: 5
+  num_mc_samples: null
+feature:
+  enabled: false
+train:
+  epochs: 50
+  pretrain_epochs: 10
+  batch_size: 32

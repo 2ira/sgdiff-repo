@@ -202,8 +202,8 @@ class Trainer:
         payload = {
             "model_state": self.model.state_dict(),
             "config": self.cfg.to_dict(),
-            "feature_dim": int(self.model.feature.feature_dim),
-            "num_labels": int(self.model.structure.label_emb.num_embeddings),
+            "feature_dim": int(self.model.feature_dim),
+            "num_labels": int(self.model.structure.num_labels),
             "epoch": int(epoch),
             "metrics": metrics or {},
         }

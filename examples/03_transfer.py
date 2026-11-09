@@ -33,7 +33,7 @@ def main() -> None:
     split = make_link_split(graph, seed=cfg.data.seed)
     extractor = build_extractor(
         graph.drop_edges(split.test_pos.tolist()), cfg,
-        target_feature_dim=int(model.feature.feature_dim),
+        target_feature_dim=int(model.feature_dim),
     )
     metrics = evaluate_link_prediction(
         model, extractor, split.test_pos[:500], split.test_neg[:500], device="cpu"

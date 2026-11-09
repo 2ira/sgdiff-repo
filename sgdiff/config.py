@@ -23,8 +23,9 @@ class DataConfig:
 
 @dataclass
 class SubgraphConfig:
-    hops: int = 2
-    max_nodes_per_hop: Optional[int] = 50
+    hops: int = 1  # Table 4: k = 1 for every dataset
+    max_nodes_per_hop: Optional[int] = None  # Table 4: ns (None = -1, no sampling)
+    max_nodes_total: Optional[int] = None  # compute safety cap (paper: unbounded)
     max_label: int = 16
     feature_mode: str = "auto"  # auto | attribute | structural
     remove_target_edge: bool = True
@@ -32,8 +33,17 @@ class SubgraphConfig:
 
 @dataclass
 class StructureConfig:
-    hidden_dim: int = 64
-    num_layers: int = 3
+    arch: str = "transformer"  # paper Sec. A.3 / Table 4
+    node_attn: int = 256
+    edge_attn: int = 64
+    global_attn: int = 64
+    node_mlp: int = 256
+    edge_mlp: int = 128
+    global_mlp: int = 128
+    heads: int = 8
+    num_layers: int = 2
+    aux_ce_weight: float = 1.0  # "sum of node and feature cross-entropy"
+    hidden_dim: int = 64  # only used by arch="edge_gnn"
     edge_dim: int = 16
     num_steps: int = 20
     beta_start: float = 0.0001
@@ -47,8 +57,9 @@ class StructureConfig:
 
 @dataclass
 class FeatureConfig:
-    hidden_dim: int = 64
-    num_layers: int = 3
+    enabled: bool = True  # False for USAir / NS / Router (Table 4: N/A)
+    hidden_dim: int = 256
+    num_layers: int = 2
     num_steps: int = 50
     beta_start: float = 1e-4
     beta_end: float = 0.02

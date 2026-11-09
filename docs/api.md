@@ -66,7 +66,7 @@ Every sub-command prints a JSON summary on stdout.
 |--------|-------------|
 | `sgdiff.data.GraphData` | undirected graph, optional features/labels, `.neighbors()`, `.drop_edges()`, `.add_edges()` |
 | `sgdiff.data.Subgraph` | extracted sub-graph: `nodes`, `adj`, `labels`, `x`, `u_idx`, `v_idx` |
-| `sgdiff.data.SubgraphExtractor(graph, hops=2, max_nodes_per_hop=50, max_label=16, feature_mode="auto", target_feature_dim=None)` | builds/caches sub-graphs |
+| `sgdiff.data.SubgraphExtractor(graph, hops=1, max_nodes_per_hop=None, max_nodes_total=None, max_label=16, feature_mode="auto", target_feature_dim=None)` | builds/caches sub-graphs; `max_nodes_total` is the CPU safety cap |
 | `sgdiff.data.make_link_split(graph, val_ratio=.05, test_ratio=.15, neg_ratio=1.0, seed=0)` | `LinkSplit` |
 | `sgdiff.data.random_perturbation`, `dice_attack` | structural attacks |
 | `sgdiff.data.load_graph(name, root="data", download=True, use_cache=True)` | registry loader |
@@ -75,8 +75,9 @@ Every sub-command prints a JSON summary on stdout.
 
 | class | interface |
 |-------|-----------|
-| `SGDiff(feature_dim, num_labels=17, num_classes=2, structure_kwargs, feature_kwargs, fusion_kwargs)` | `.diffusion_losses(batch)`, `.class_scores(batch)`, `.forward(batch) -> {"logits", "feature_scores", "structure_scores"}`, `.predict_proba`, `.predict_logit`, `.train_logits` |
-| `StructureDiffusionModel` | `.q_sample`, `.posterior_state1`, `.compute_kl`, `.loss`, `.log_likelihood` |
+| `SGDiff(feature_dim, num_labels=17, num_classes=2, structure_kwargs, feature_kwargs, fusion_kwargs, feature_enabled=True)` | `.diffusion_losses(batch)`, `.class_scores(batch)`, `.forward(batch) -> {"logits", "feature_scores", "structure_scores"}`, `.predict_proba`, `.predict_logit`, `.train_logits` |
+| `StructureDiffusionModel(arch="transformer"\|"edge_gnn", ...)` | `.q_sample`, `.posterior_state1`, `.compute_kl`, `.loss` (VLB + node/edge CE), `.log_likelihood` |
+| `TransformerStructureDenoiser` | transformer over node/edge/condition tokens (Table 4 widths) |
 | `FeatureDiffusionModel` | `.q_sample`, `.compute_mse`, `.loss`, `.log_likelihood` |
 | `LikelihoodFusion` | `.log_joint(feat, struct)`, `.forward(feat, struct)` |
 | `baselines.NodePairLinkPredictor` | full-graph GCN / GAT / SAGE + dot-product decoder |
@@ -99,3 +100,23 @@ Every sub-command prints a JSON summary on stdout.
 `ExperimentConfig` is a tree of dataclasses (`data`, `subgraph`, `structure`,
 `feature`, `model`, `train`) with `load_config(path, overrides)`, `to_dict()` and
 `apply_overrides(["data.name=usair", "train.epochs=5"])`.
+
+Key switches:
+
+* `structure.arch` — `transformer` (paper) or `edge_gnn` (light ablation);
+* `structure.aux_ce_weight` — weight of the node/edge cross-entropy added to the VLB;
+* `feature.enabled` — set to `false` for USAir / NS / Router and for transfer;
+* `subgraph.max_nodes_total` — compute cap for hub nodes (`null` = paper behaviour).
+
+## 4. Experiment runner
+
+```bash
+python scripts/run_experiments.py --datasets cora citeseer usair ns pubmed --seeds 0 1 2 --profile cpu
+python scripts/run_experiments.py --transfer cora --targets citeseer pubmed usair ns
+python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
+python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5
+```
+
+`--profile paper` uses the full Table-4 budget, `--profile cpu` the reduced one.
+Per-run metrics are written to `results/*.json`, aggregates (mean/std over seeds)
+to `results/summary_*.json`.

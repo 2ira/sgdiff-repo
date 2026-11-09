@@ -1,44 +1,49 @@
-# Default hyper-parameters of the SGDiff reproduction.
+# Default hyper-parameters, aligned with the paper (Table 4 / Sec. A.3).
 # Every key can be overridden from the CLI with `--set section.key=value`.
 data:
-  name: cora            # cora | citeseer | pubmed | usair | ns | router | synthetic
+  name: cora              # cora | citeseer | pubmed | usair | ns | router | synthetic
   root: data
-  val_ratio: 0.05
+  val_ratio: 0.05         # 80% / 5% / 15% split
   test_ratio: 0.15
-  neg_ratio: 1.0        # negatives per positive edge
-  train_ratio: 1.0      # 0.01 reproduces the "1% training data" study
-  max_train_pairs: null # null = use the whole training split
-  max_eval_pairs: 2000  # cap for faster validation (null = full test set)
+  neg_ratio: 1.0          # same number of negatives as positives
+  train_ratio: 1.0        # 0.01 reproduces the "1% training data" study
+  max_train_pairs: null   # null = whole training split
+  max_eval_pairs: null    # null = whole test split (paper protocol)
   download: true
   seed: 0
 
 subgraph:
-  hops: 2
-  max_nodes_per_hop: 50
+  hops: 1                 # Table 4: k = 1 for every dataset
+  max_nodes_per_hop: null # Table 4: ns, null = -1 (no per-hop sampling)
   max_label: 16
-  feature_mode: auto     # auto | attribute | structural
+  feature_mode: auto      # auto | attribute | structural
   remove_target_edge: true
 
-structure:               # discrete diffusion over the sub-graph adjacency
-  hidden_dim: 64
-  num_layers: 3
-  edge_dim: 16
-  num_steps: 20
-  # A uniform D3PM schedule must stay in the informative range: with
-  # beta_end=0.5 half of the steps are pure noise and the ELBO score averages
-  # away the class signal.
+structure:                # discrete diffusion over the sub-graph adjacency
+  arch: transformer       # paper Sec. A.3 (edge_gnn is a lighter ablation)
+  node_attn: 256          # ha_x
+  edge_attn: 64           # ha_e
+  global_attn: 64         # ha_y
+  node_mlp: 256           # hm_x
+  edge_mlp: 128           # hm_e
+  global_mlp: 128         # hm_y
+  heads: 8                # attention heads
+  num_layers: 2           # l_t (transformer layers)
+  aux_ce_weight: 1.0      # hybrid "sum of node and edge cross-entropy"
+  num_steps: 20           # ds_t (per dataset: 20/20/10/5/10/20)
   beta_start: 0.0001
   beta_end: 0.2
-  time_dim: 32
+  time_dim: 64
   dropout: 0.1
   normalize_score: true
-  num_mc_samples: null   # null = num_steps
+  num_mc_samples: null    # null = average over all ds_t steps
   weight: 1.0
 
-feature:                 # Gaussian diffusion over node features
-  hidden_dim: 64
-  num_layers: 3
-  num_steps: 50
+feature:                  # Gaussian diffusion over node features
+  enabled: true           # false for USAir / NS / Router (Table 4: N/A)
+  hidden_dim: 256         # h_g (per dataset: 256/256/64)
+  num_layers: 2           # l_g
+  num_steps: 100          # ds_g (per dataset: 100/100/50)
   beta_start: 0.0001
   beta_end: 0.02
   time_dim: 32
@@ -68,8 +73,5 @@ train:
   run_name: null
   eval_every: 1
   save_checkpoint: true
-  # Stage 2 optimises the fused likelihood (Eq. 12) end-to-end. Setting this to
-  # true freezes both denoisers and trains only eta1/eta2/delta, which is stable
-  # but noticeably weaker in our experiments.
   freeze_diffusion: false
   finetune_mc_samples: 2

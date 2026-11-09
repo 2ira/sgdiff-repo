@@ -27,6 +27,7 @@ class SGDiff(nn.Module):
         structure_kwargs: Optional[dict] = None,
         feature_kwargs: Optional[dict] = None,
         fusion_kwargs: Optional[dict] = None,
+        feature_enabled: bool = True,
     ) -> None:
         super().__init__()
         structure_kwargs = dict(structure_kwargs or {})
@@ -38,15 +39,24 @@ class SGDiff(nn.Module):
         feature_kwargs.setdefault("num_labels", num_labels)
         feature_kwargs.setdefault("num_classes", num_classes)
 
+        self.feature_enabled = bool(feature_enabled)
+        self.feature_dim = int(feature_dim)
         self.structure = StructureDiffusionModel(**structure_kwargs)
-        self.feature = FeatureDiffusionModel(feature_dim=feature_dim, **feature_kwargs)
+        if self.feature_enabled:
+            self.feature = FeatureDiffusionModel(feature_dim=feature_dim, **feature_kwargs)
+        else:  # featureless datasets (USAir / NS / Router) and cross-dataset transfer
+            self.feature = None
+        fusion_kwargs.setdefault("use_feature", self.feature_enabled)
         self.fusion = LikelihoodFusion(num_classes=num_classes, **fusion_kwargs)
 
     # ------------------------------------------------------------------ losses
     def diffusion_losses(self, batch) -> dict[str, torch.Tensor]:
         """Class-conditional ELBO of the structure model and DDPM loss of the feature model."""
         structure = self.structure.loss(batch.adj, batch.labels, batch.mask, batch.y)
-        feature = self.feature.loss(batch.x, batch.adj, batch.labels, batch.mask, batch.y)
+        if self.feature is None:
+            feature = torch.zeros((), device=batch.adj.device)
+        else:
+            feature = self.feature.loss(batch.x, batch.adj, batch.labels, batch.mask, batch.y)
         return {"structure": structure, "feature": feature}
 
     # ------------------------------------------------------------------ scores
@@ -57,11 +67,14 @@ class SGDiff(nn.Module):
         b = batch.batch_size
         for cls in range(self.fusion.num_classes):
             y = torch.full((b,), cls, device=batch.y.device, dtype=torch.long)
-            feat.append(
-                self.feature.log_likelihood(
-                    batch.x, batch.adj, batch.labels, batch.mask, y, num_samples=num_samples
+            if self.feature is None:
+                feat.append(torch.zeros(b, device=batch.y.device))
+            else:
+                feat.append(
+                    self.feature.log_likelihood(
+                        batch.x, batch.adj, batch.labels, batch.mask, y, num_samples=num_samples
+                    )
                 )
-            )
             struct.append(
                 self.structure.log_likelihood(
                     batch.adj, batch.labels, batch.mask, y, num_samples=num_samples
@@ -103,7 +116,12 @@ class SGDiff(nn.Module):
             y = torch.full((b,), cls, device=batch.y.device, dtype=torch.long)
             feat_c, struct_c = [], []
             for _ in range(num_samples):
-                feat_c.append(-self.feature.compute_mse(batch.x, batch.adj, batch.labels, batch.mask, y))
+                if self.feature is None:
+                    feat_c.append(torch.zeros(b, device=batch.y.device))
+                else:
+                    feat_c.append(
+                        -self.feature.compute_mse(batch.x, batch.adj, batch.labels, batch.mask, y)
+                    )
                 struct_c.append(-self.structure.compute_kl(batch.adj, batch.labels, batch.mask, y))
             feat.append(torch.stack(feat_c).mean(0))
             struct.append(torch.stack(struct_c).mean(0))

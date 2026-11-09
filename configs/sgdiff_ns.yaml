@@ -1,15 +1,16 @@
-# SGDiff on ns (no node attributes -> DRNL structural features drive the feature diffusion).
+# NS -- Table 4: k=1, ns=5, ds_t=20, node features N/A.
 data:
   name: ns
   max_eval_pairs: null
-  neg_ratio: 1.0
+subgraph:
+  hops: 1
+  max_nodes_per_hop: 5
+structure:
+  num_steps: 20
+  num_mc_samples: null
+feature:
+  enabled: false
 train:
   epochs: 50
   pretrain_epochs: 10
   batch_size: 32
-subgraph:
-  feature_mode: structural
-structure:
-  num_mc_samples: 8
-feature:
-  num_mc_samples: 8

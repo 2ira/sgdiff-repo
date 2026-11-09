@@ -143,7 +143,7 @@ def cmd_transfer(args) -> dict:
         eval_graph = graph.drop_edges(split.test_pos.tolist())
         extractor = build_extractor(
             eval_graph, cfg, seed=cfg.data.seed + 1,
-            target_feature_dim=int(model.feature.feature_dim),
+            target_feature_dim=int(model.feature_dim),
         )
         pos, neg = split.test_pos, split.test_neg
         if args.max_pairs:

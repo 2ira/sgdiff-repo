@@ -16,18 +16,27 @@ class LikelihoodFusion(nn.Module):
     proxies are already "higher = better".
     """
 
-    def __init__(self, num_classes: int = 2, init_eta: float = 1.0, learnable: bool = True) -> None:
+    def __init__(
+        self,
+        num_classes: int = 2,
+        init_eta: float = 1.0,
+        learnable: bool = True,
+        use_feature: bool = True,
+    ) -> None:
         super().__init__()
         self.num_classes = int(num_classes)
-        eta1 = torch.full((1,), float(init_eta))
+        self.use_feature = bool(use_feature)
+        eta1 = torch.full((1,), float(init_eta) if self.use_feature else 0.0)
         eta2 = torch.full((1,), float(init_eta))
         delta = torch.zeros(1)
-        if learnable:
+        if learnable and self.use_feature:
             self.eta1 = nn.Parameter(eta1)
+        else:
+            self.register_buffer("eta1", eta1)
+        if learnable:
             self.eta2 = nn.Parameter(eta2)
             self.delta = nn.Parameter(delta)
         else:
-            self.register_buffer("eta1", eta1)
             self.register_buffer("eta2", eta2)
             self.register_buffer("delta", delta)
         self.register_buffer("log_prior", -torch.log(torch.full((num_classes,), float(num_classes))))

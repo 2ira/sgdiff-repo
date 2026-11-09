@@ -21,14 +21,16 @@ implements it.
 ```python
 neighbors = graph.neighbors()                       # adjacency list
 sub = extract_enclosing_subgraph(neighbors, u, v,
-                                 hops=2,
-                                 max_nodes_per_hop=50,
+                                 hops=1,            # Table 4: k = 1
+                                 max_nodes_per_hop=None,  # Table 4: ns (per dataset)
                                  max_label=16,
                                  remove_target=True)
 ```
 
 * `hops` = `k` in `S^k_uv`; the node set is the union of the `k`-hop
-  neighbourhoods of `u` and `v`.
+  neighbourhoods of `u` and `v`. The paper uses `k = 1` for every dataset, with
+  per-dataset neighbour sampling `ns` (Cora none, Citeseer/Pubmed 20, Router 10,
+  USAir 40, NS 5).
 * The edge `(u, v)` is removed **from the BFS itself** (not only from the
   induced adjacency), so neither the induced matrix nor the DRNL distances can
   reveal the answer. This is required for a leakage-free evaluation; an
@@ -76,15 +78,23 @@ KL[ q(A^{t-1} | A^t, A^0) ‖ p_θ(A^{t-1} | A^t, y) ]
 summed over the upper-triangular entries of `A` (normalised by the number of
 entries when `structure.normalize_score=true`).
 
-The denoiser is an edge-featured GNN: node states come from the DRNL embedding,
-edge states from `[A^t_ij, onehot(|l_i - l_j|)]`, and both are modulated by
-`time_embedding(t) + class_embedding(y)`.
+The denoiser follows Sec. A.3: a **transformer** over node tokens (DRNL label
+embedding), edge tokens (`[A^t_ij, onehot(|l_i - l_j|)]`) and a global token
+(`time_embedding(t) + class_embedding(y)`), with 8 heads and 2 layers
+(`sgdiff/models/transformer_denoiser.py`). Edge tokens bias the node attention.
+Training minimises the VLB **plus the sum of node and edge cross-entropy**
+(`structure.aux_ce_weight`). `structure.arch="edge_gnn"` keeps a lighter
+message-passing variant for ablations.
 
 > **Schedule matters.** With `β_end = 0.5` and 20 steps, `ᾱ_20 ≈ 0.002`: most
 > timesteps are pure noise and averaging the KL over them buries the class
 > signal. The default schedule (`1e-4 → 0.2`) keeps `ᾱ_t` in `[1.0, 0.12]`.
 
 ## 3. Feature diffusion `p(X | A, y)` (Sec. 3.4)
+
+For datasets without attributes (USAir, NS, Router) and for cross-dataset
+transfer the paper uses **no** feature stream (`h_g = N/A` in Table 4); set
+`feature.enabled: false` and the fusion freezes `eta_1 = 0`.
 
 Standard DDPM on the node-attribute matrix:
 

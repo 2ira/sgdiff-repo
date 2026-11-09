@@ -1,11 +1,14 @@
 # Fast end-to-end smoke test (used by `make smoke` and the unit tests).
+# The light edge-GNN denoiser keeps it runnable on a laptop CPU.
 data:
   name: synthetic
   max_train_pairs: 256
   max_eval_pairs: 80
 subgraph:
+  hops: 1
   max_nodes_per_hop: 10
 structure:
+  arch: edge_gnn
   hidden_dim: 32
   num_layers: 2
   num_steps: 6
@@ -20,4 +23,3 @@ train:
   pretrain_epochs: 1
   batch_size: 16
   eval_batch_size: 16
-  run_dir: runs

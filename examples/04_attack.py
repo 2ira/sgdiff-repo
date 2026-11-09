@@ -33,7 +33,7 @@ def main() -> None:
         for name, attacked in variants.items():
             extractor = build_extractor(
                 attacked.drop_edges(split.test_pos.tolist()), cfg,
-                target_feature_dim=int(model.feature.feature_dim),
+                target_feature_dim=int(model.feature_dim),
             )
             metrics = evaluate_link_prediction(model, extractor, pos, neg, device="cpu")
             print(f"ratio={ratio:<5} {name:<7} AUC={metrics['auc']:.4f} AP={metrics['ap']:.4f}")

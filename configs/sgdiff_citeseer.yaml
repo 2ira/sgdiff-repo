@@ -1,12 +1,19 @@
-# SGDiff on citeseer (citation network, node attributes available).
+# Citeseer -- Table 4: k=1, ns=20, ds_t=20, feature GCN 256 x 2, ds_g=100.
 data:
   name: citeseer
-  max_eval_pairs: 2000
+  max_eval_pairs: null
+subgraph:
+  hops: 1
+  max_nodes_per_hop: 20
+structure:
+  num_steps: 20
+  num_mc_samples: null
+feature:
+  enabled: true
+  hidden_dim: 256
+  num_layers: 2
+  num_steps: 100
 train:
   epochs: 50
   pretrain_epochs: 10
   batch_size: 32
-structure:
-  num_mc_samples: 8
-feature:
-  num_mc_samples: 8

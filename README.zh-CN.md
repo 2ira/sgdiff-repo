@@ -12,6 +12,24 @@
 
 全部实现只依赖 PyTorch（无需 PyTorch Geometric / DGL），CPU 可跑。
 
+## 与论文的对齐
+
+本仓库严格按 `li25a.pdf` 的表 3、表 4 与 A.3 节设置参数，逐项对照见
+[`docs/alignment.md`](docs/alignment.md)。
+
+| 论文（表 4 / A.3） | 本仓库 |
+|--------------------|--------|
+| 子图跳数 `k = 1`（所有数据集） | `subgraph.hops: 1` |
+| 每跳采样上限 `ns` = −1 / 20 / 20 / 10 / 40 / 5 | 各数据集 `subgraph.max_nodes_per_hop` |
+| 结构去噪器为 **Transformer**，8 头、2 层 | `structure.arch: transformer` |
+| 注意力宽度 256 / 64 / 64，MLP 宽度 256 / 128 / 128 | `structure.node_attn`、`edge_attn`、`global_attn`、`*_mlp` |
+| 结构扩散步数 20 / 20 / 10 / 5 / 10 / 20 | 各数据集 `structure.num_steps` |
+| 特征 GCN 256 / 256 / 64，2 层，步数 100 / 100 / 50 | `feature.hidden_dim`、`num_layers`、`num_steps` |
+| USAir / NS / Router 不使用特征支路 | `feature.enabled: false` |
+| 训练目标 = VLB + 节点/边交叉熵之和 | `structure.aux_ce_weight: 1.0` |
+| 先验 `p(y) = 0.5` | `LikelihoodFusion.log_prior`（均匀） |
+| 80/5/15 划分、等量负样本、AUC/AP/Hit@100、10 个随机种子 | `data.*`、`scripts/run_experiments.py --seeds` |
+
 ## 目录结构
 
 ```
@@ -48,8 +66,11 @@ python -m sgdiff prepare --datasets cora citeseer pubmed usair ns
 # 冒烟测试（合成图，CPU 约 30 秒）
 python -m sgdiff train --config configs/smoke_synthetic.yaml
 
-# 在 Cora 上训练 + 测试
-python -m sgdiff train    --config configs/sgdiff_cora.yaml --run-dir runs
+# 在 Cora 上训练 + 测试（下面是 CPU 档；去掉 --set 即表 4 全量设置，需要 GPU）
+python -m sgdiff train --config configs/sgdiff_cora.yaml --run-dir runs \
+  --set data.max_train_pairs=2000 data.max_eval_pairs=500 train.epochs=8 \
+        train.pretrain_epochs=3 structure.num_mc_samples=4 \
+        feature.num_mc_samples=4 subgraph.max_nodes_total=40
 python -m sgdiff evaluate --checkpoint runs/cora-*/best.pt --split test --device cpu
 
 # RQ1 跨数据集零样本迁移
@@ -60,7 +81,17 @@ python -m sgdiff evaluate --checkpoint runs/cora-*/best.pt --attack random --rat
 
 # 基线模型（GCN / GAT / SAGE / VGAE / SEAL）
 python scripts/run_baselines.py --dataset cora --baselines gcn gat sage vgae seal
+
+# 论文实验网格：5 数据集 × 3 种子 + 迁移 / 1% 数据 / 攻击
+python scripts/run_experiments.py --datasets cora citeseer usair ns pubmed --seeds 0 1 2
+python scripts/run_experiments.py --transfer cora --targets citeseer pubmed usair ns
+python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
+python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5
 ```
+
+> `--profile paper` 使用表 4 的完整设置（全量数据、全部 MC 步），需要 GPU；
+> `--profile cpu`（默认）保持协议与结构不变，只缩小预算（2000 训练对、8 epoch、
+> 4 个 MC 步、子图 40 节点上限），笔记本即可跑完。
 
 任意配置项都可以在命令行覆盖：
 
@@ -69,20 +100,29 @@ python -m sgdiff train --config configs/sgdiff_cora.yaml \
   --set data.max_train_pairs=2000 structure.num_steps=10 train.epochs=9
 ```
 
-## 本机实测（CPU、小预算；各实验的设置见 `docs/reproduction.md`）
+## 本机实测（CPU 预算档 `--profile cpu`，3 个随机种子均值）
 
 | 实验 | AUC | AP | Hit@100 |
 |------|----:|---:|--------:|
-| Cora 同分布测试 | 0.860 | 0.885 | 0.96 |
-| Citeseer 同分布测试 | 0.805 | 0.854 | 0.97 |
-| Cora → Citeseer 零样本迁移 | 0.834 | 0.857 | 0.73 |
-| USAir 同分布测试 | 0.925 | 0.926 | 0.99 |
-| Cora → USAir 零样本迁移 | 0.674 | 0.619 | 0.62 |
-| Cora 随机攻击 10% | 0.889 | 0.914 | — |
+| Cora | 0.751 | 0.809 | 0.960 |
+| Citeseer | 0.738 | 0.787 | 0.903 |
+| Pubmed | 0.816（2 种子） | 0.813 | 0.810 |
+| USAir | 0.929 | 0.923 | 0.960 |
+| NS | 0.964 | 0.973 | 1.000 |
 
-这些数值**不是**论文报告值，只用于验证实现正确、可学习。与论文的差距主要来自训练预算
-（子图数量、epoch、MC 采样步数）；完整的偏差说明、已修复的 bug 记录见
+无节点特征的 USAir / NS 与论文数值基本一致；两个引文网络低 10–13 个 AUC 点，
+原因按影响从大到小为：`k=1` 子图（表 4；同预算下 `subgraph.hops=2` 时 Cora 可达 0.86）、
+仅 2000 个训练对、8 个 epoch、4 个 Monte-Carlo 步。详细分析与标准差见
 `docs/reproduction.md`。
+
+三个研究问题（同预算，结果在 `results/`）：
+
+| 研究问题 | 实验 | AUC |
+|---|---|---|
+| RQ1 | Cora → Pubmed / NS / USAir / Citeseer（零样本、不含节点特征） | 0.830 / 0.947 / 0.800 / 0.733 |
+| RQ2 | Cora 仅用 1% 训练子图 | 0.725 ± 0.058 |
+| RQ3 | Cora 随机翻转 10% / 25% / 50% | 0.698 / 0.651 / 0.577 |
+| RQ3 | Cora DICE 10% / 25% / 50% | 0.692 / 0.643 / 0.584 |
 
 ## 文档
 

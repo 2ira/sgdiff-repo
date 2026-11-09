@@ -1,7 +1,15 @@
-# Cross-dataset transfer (RQ1): train on Pubmed, evaluate on Cora without retraining.
+# RQ1: zero-shot transfer. The paper trains *without node features* for
+# SGDiff, then evaluates on every other dataset without retraining.
 data:
   name: pubmed
-  max_eval_pairs: 1000
+  max_eval_pairs: null
+subgraph:
+  hops: 1
+  max_nodes_per_hop: 20
+structure:
+  num_steps: 10
+feature:
+  enabled: false
 train:
   epochs: 50
   pretrain_epochs: 10

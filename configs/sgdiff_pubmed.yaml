@@ -1,12 +1,19 @@
-# SGDiff on pubmed (citation network, node attributes available).
+# Pubmed -- Table 4: k=1, ns=20, ds_t=10, feature GCN 64 x 2, ds_g=50.
 data:
   name: pubmed
-  max_eval_pairs: 2000
+  max_eval_pairs: null
+subgraph:
+  hops: 1
+  max_nodes_per_hop: 20
+structure:
+  num_steps: 10
+  num_mc_samples: null
+feature:
+  enabled: true
+  hidden_dim: 64
+  num_layers: 2
+  num_steps: 50
 train:
   epochs: 50
   pretrain_epochs: 10
   batch_size: 32
-structure:
-  num_mc_samples: 8
-feature:
-  num_mc_samples: 8

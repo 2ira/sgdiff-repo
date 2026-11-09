@@ -1,53 +1,44 @@
 #!/usr/bin/env bash
-# Reproduce the three research questions of the paper (small-budget defaults).
+# Reproduce the paper's three research questions end to end.
 #
-#   RQ1  cross-dataset transfer
-#   RQ2  1% training data
-#   RQ3  robustness against structural attacks
+#   RQ1  zero-shot cross-dataset transfer      (Sec. 4.2)
+#   RQ2  1% training data                      (Sec. 4.3)
+#   RQ3  robustness under structural attacks   (Sec. 4.4)
 #
-# Usage: bash scripts/run_all_experiments.sh [DATASET] [EPOCHS]
+# Usage: bash scripts/run_all_experiments.sh [PROFILE] [SEEDS]
+#        PROFILE = cpu (default, laptop friendly) | paper (Table 4, needs a GPU)
+#        SEEDS   = space separated seeds, e.g. "0 1 2"
 set -euo pipefail
 
-DATASET=${1:-cora}
-EPOCHS=${2:-20}
+PROFILE=${1:-cpu}
+SEEDS=${2:-0 1 2}
 PY=${PYTHON:-python}
 OUT=${OUT:-results}
 mkdir -p "$OUT"
 
-echo "== 0. prepare data =="
+echo "== data =="
 $PY -m sgdiff prepare --datasets cora citeseer pubmed usair ns || true
 
-echo "== 1. train on ${DATASET} (${EPOCHS} epochs) =="
-$PY -m sgdiff train --config configs/sgdiff_${DATASET}.yaml \
-  --run-dir runs --set train.run_name=${DATASET}_main train.epochs=${EPOCHS} \
-  | tee "$OUT/train_${DATASET}.log"
+echo "== in-domain (5 datasets x ${SEEDS}) =="
+$PY scripts/run_experiments.py --datasets cora citeseer usair ns pubmed \
+    --seeds ${SEEDS} --profile "${PROFILE}" | tee "$OUT/indomain.log"
 
-CKPT=$(ls -t runs/${DATASET}_main/best.pt | head -1)
-
-echo "== 2. in-domain test =="
-$PY -m sgdiff evaluate --checkpoint "$CKPT" --split test --device cpu \
-  --output "$OUT/test_${DATASET}.json"
-
-echo "== 3. RQ1: zero-shot transfer =="
-$PY -m sgdiff transfer --checkpoint "$CKPT" --targets citeseer pubmed usair ns \
-  --device cpu --output "$OUT/transfer_${DATASET}.json"
-
-echo "== 4. RQ2: 1% training data =="
-$PY -m sgdiff train --config configs/lowdata_cora_1pct.yaml --run-dir runs \
-  --set train.run_name=lowdata_${DATASET} train.epochs=${EPOCHS} \
-  | tee "$OUT/lowdata_train_${DATASET}.log" || true
-LOW=$(ls -t runs/lowdata_${DATASET}/best.pt 2>/dev/null | head -1 || true)
-if [ -n "${LOW}" ]; then
-  $PY -m sgdiff evaluate --checkpoint "$LOW" --split test --device cpu \
-    --output "$OUT/lowdata_test_${DATASET}.json"
-fi
-
-echo "== 5. RQ3: robustness under structural attacks =="
-for RATIO in 0.05 0.10 0.20; do
-  $PY -m sgdiff evaluate --checkpoint "$CKPT" --split test --device cpu \
-    --attack random --ratio "$RATIO" --output "$OUT/attack_random_${RATIO}_${DATASET}.json"
-  $PY -m sgdiff evaluate --checkpoint "$CKPT" --split test --device cpu \
-    --attack dice --ratio "$RATIO" --output "$OUT/attack_dice_${RATIO}_${DATASET}.json"
+echo "== RQ1: zero-shot transfer (structure only) =="
+for SRC in cora citeseer pubmed; do
+  $PY scripts/run_experiments.py --transfer "${SRC}" \
+      --targets cora citeseer pubmed usair ns --profile "${PROFILE}" | tee "$OUT/transfer_${SRC}.log"
 done
 
-echo "== done. results written to $OUT/ =="
+echo "== RQ2: 1% training data =="
+$PY scripts/run_experiments.py --lowdata cora --seeds ${SEEDS} --profile "${PROFILE}" \
+    | tee "$OUT/lowdata_cora.log"
+
+echo "== RQ3: random flip (25%/50%) and DICE (0.1-0.5) =="
+$PY scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 --profile "${PROFILE}" \
+    | tee "$OUT/attack_cora.log"
+
+echo "== baselines =="
+$PY scripts/run_baselines.py --dataset cora --baselines gcn gat sage vgae seal \
+    --output "$OUT/baselines_cora.json" || true
+
+echo "== done: see $OUT/ =="
