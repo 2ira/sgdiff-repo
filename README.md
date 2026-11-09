@@ -120,6 +120,7 @@ pairs, 9 epochs) — **not** the paper's numbers:
 | Cora | 0.860 | 0.885 | 0.96 |
 | Citeseer | 0.805 | 0.854 | 0.97 |
 | Cora → Citeseer (zero-shot) | 0.834 | 0.857 | 0.73 |
+| USAir | 0.925 | 0.926 | 0.99 |
 | Cora → USAir (zero-shot) | 0.674 | 0.619 | 0.62 |
 | Cora under random attack 10% | 0.889 | 0.914 | — |
 

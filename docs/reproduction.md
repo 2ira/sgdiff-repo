@@ -42,6 +42,7 @@ these are **not** the paper's numbers, they only show the implementation learns:
 | Cora (in-domain) | 2k train pairs, 9 epochs | 0.860 | 0.885 | 0.96 |
 | Cora (re-eval of that checkpoint, 100+100 pairs) | — | 0.895 | 0.925 | 0.80 |
 | Citeseer (in-domain) | 2k train pairs, 9 epochs | 0.805 | 0.854 | 0.97 |
+| USAir (in-domain) | 5 epochs, 1.7k train pairs, structural features | 0.925 | 0.926 | 0.99 |
 | Cora → Citeseer (zero-shot) | no retraining | 0.834 | 0.857 | 0.73 |
 | Cora → USAir (zero-shot) | no retraining | 0.674 | 0.619 | 0.62 |
 | Cora, random attack 10% | same checkpoint | 0.889 | 0.914 | — |
@@ -55,6 +56,9 @@ Baselines on Cora:
 | SAGE (120 epochs) | 0.747 | 0.756 |
 | VGAE (`kl_weight=0.001`) | 0.797 | 0.805 |
 | SEAL (3k sub-graphs, 10 epochs) | 0.852 | — |
+
+USAir is the setting where SGDIFF is strongest in the paper as well (no node
+attributes, so the DRNL/structural branch carries the signal).
 
 Paper (Table 1, transfer setting): SGDIFF AUC between 72 and 97 depending on the
 source/target pair, SEAL 56-98. Larger budgets (full 4.2k+4.2k training pairs,

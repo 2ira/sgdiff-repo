@@ -69,13 +69,14 @@ python -m sgdiff train --config configs/sgdiff_cora.yaml \
   --set data.max_train_pairs=2000 structure.num_steps=10 train.epochs=9
 ```
 
-## 本机实测（CPU、小预算：2000 训练对、9 个 epoch）
+## 本机实测（CPU、小预算；各实验的设置见 `docs/reproduction.md`）
 
 | 实验 | AUC | AP | Hit@100 |
 |------|----:|---:|--------:|
 | Cora 同分布测试 | 0.860 | 0.885 | 0.96 |
 | Citeseer 同分布测试 | 0.805 | 0.854 | 0.97 |
 | Cora → Citeseer 零样本迁移 | 0.834 | 0.857 | 0.73 |
+| USAir 同分布测试 | 0.925 | 0.926 | 0.99 |
 | Cora → USAir 零样本迁移 | 0.674 | 0.619 | 0.62 |
 | Cora 随机攻击 10% | 0.889 | 0.914 | — |
 

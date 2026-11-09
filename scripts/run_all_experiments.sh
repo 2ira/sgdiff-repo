@@ -35,7 +35,7 @@ $PY -m sgdiff transfer --checkpoint "$CKPT" --targets citeseer pubmed usair ns \
 echo "== 4. RQ2: 1% training data =="
 $PY -m sgdiff train --config configs/lowdata_cora_1pct.yaml --run-dir runs \
   --set train.run_name=lowdata_${DATASET} train.epochs=${EPOCHS} \
-  --output "$OUT/lowdata_${DATASET}.json" || true
+  | tee "$OUT/lowdata_train_${DATASET}.log" || true
 LOW=$(ls -t runs/lowdata_${DATASET}/best.pt 2>/dev/null | head -1 || true)
 if [ -n "${LOW}" ]; then
   $PY -m sgdiff evaluate --checkpoint "$LOW" --split test --device cpu \
