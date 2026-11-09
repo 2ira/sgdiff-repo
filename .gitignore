@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Environments
+.env
+
+# Caches / artifacts
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Datasets: re-fetchable with `sgdiff prepare`
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+data/dataset_report.json
+
+# Experiment artifacts
+runs/
+results/*.json
+results/*.log
+checkpoints/*.pt
+!checkpoints/.gitkeep
+
+# OS
+.DS_Store

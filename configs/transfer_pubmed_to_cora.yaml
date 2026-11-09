@@ -1,0 +1,7 @@
+# Cross-dataset transfer (RQ1): train on Pubmed, evaluate on Cora without retraining.
+data:
+  name: pubmed
+  max_eval_pairs: 1000
+train:
+  epochs: 50
+  pretrain_epochs: 10

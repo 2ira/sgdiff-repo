@@ -1,0 +1,12 @@
+# SGDiff on citeseer (citation network, node attributes available).
+data:
+  name: citeseer
+  max_eval_pairs: 2000
+train:
+  epochs: 50
+  pretrain_epochs: 10
+  batch_size: 32
+structure:
+  num_mc_samples: 8
+feature:
+  num_mc_samples: 8

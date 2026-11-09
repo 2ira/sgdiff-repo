@@ -1,0 +1,8 @@
+# Train-size constraint (RQ2): only 1% of the training pairs are used.
+data:
+  name: cora
+  train_ratio: 0.01
+  max_eval_pairs: 2000
+train:
+  epochs: 30
+  pretrain_epochs: 8

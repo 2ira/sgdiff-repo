@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this reproduction repository, please cite the original paper."
+title: "SGDiff: Sub-graph Based Diffusion Model for Link Prediction (reproduction)"
+type: software
+license: MIT
+repository-code: "https://github.com/hzlihang99/SGDiff"
+references:
+  - type: conference-paper
+    title: "Sub-graph Based Diffusion Model for Link Prediction"
+    authors:
+      - family-names: Li
+        given-names: Hang
+      - family-names: Jin
+        given-names: Wei
+      - family-names: Skenderi
+        given-names: Geri
+      - family-names: Shomer
+        given-names: Harry
+      - family-names: Tang
+        given-names: Wenzhuo
+      - family-names: Fan
+        given-names: Wenqi
+      - family-names: Tang
+        given-names: Jiliang
+    collection-title: "Proceedings of the Third Learning on Graphs Conference (LoG 2024)"
+    volume: 269
+    year: 2024

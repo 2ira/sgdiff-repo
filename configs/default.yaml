@@ -1,0 +1,75 @@
+# Default hyper-parameters of the SGDiff reproduction.
+# Every key can be overridden from the CLI with `--set section.key=value`.
+data:
+  name: cora            # cora | citeseer | pubmed | usair | ns | router | synthetic
+  root: data
+  val_ratio: 0.05
+  test_ratio: 0.15
+  neg_ratio: 1.0        # negatives per positive edge
+  train_ratio: 1.0      # 0.01 reproduces the "1% training data" study
+  max_train_pairs: null # null = use the whole training split
+  max_eval_pairs: 2000  # cap for faster validation (null = full test set)
+  download: true
+  seed: 0
+
+subgraph:
+  hops: 2
+  max_nodes_per_hop: 50
+  max_label: 16
+  feature_mode: auto     # auto | attribute | structural
+  remove_target_edge: true
+
+structure:               # discrete diffusion over the sub-graph adjacency
+  hidden_dim: 64
+  num_layers: 3
+  edge_dim: 16
+  num_steps: 20
+  # A uniform D3PM schedule must stay in the informative range: with
+  # beta_end=0.5 half of the steps are pure noise and the ELBO score averages
+  # away the class signal.
+  beta_start: 0.0001
+  beta_end: 0.2
+  time_dim: 32
+  dropout: 0.1
+  normalize_score: true
+  num_mc_samples: null   # null = num_steps
+  weight: 1.0
+
+feature:                 # Gaussian diffusion over node features
+  hidden_dim: 64
+  num_layers: 3
+  num_steps: 50
+  beta_start: 0.0001
+  beta_end: 0.02
+  time_dim: 32
+  dropout: 0.1
+  arch: gcn
+  num_mc_samples: null
+  weight: 1.0
+
+model:
+  fusion_learnable: true
+  init_eta: 1.0
+
+train:
+  epochs: 50
+  pretrain_epochs: 10
+  batch_size: 32
+  eval_batch_size: 64
+  lr: 0.001
+  fusion_lr: 0.01
+  weight_decay: 0.0
+  grad_clip: 5.0
+  patience: 15
+  device: auto
+  num_workers: 0
+  seed: 0
+  run_dir: runs
+  run_name: null
+  eval_every: 1
+  save_checkpoint: true
+  # Stage 2 optimises the fused likelihood (Eq. 12) end-to-end. Setting this to
+  # true freezes both denoisers and trains only eta1/eta2/delta, which is stable
+  # but noticeably weaker in our experiments.
+  freeze_diffusion: false
+  finetune_mc_samples: 2

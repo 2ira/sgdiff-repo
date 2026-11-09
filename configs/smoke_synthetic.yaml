@@ -1,0 +1,23 @@
+# Fast end-to-end smoke test (used by `make smoke` and the unit tests).
+data:
+  name: synthetic
+  max_train_pairs: 256
+  max_eval_pairs: 80
+subgraph:
+  max_nodes_per_hop: 10
+structure:
+  hidden_dim: 32
+  num_layers: 2
+  num_steps: 6
+  num_mc_samples: 3
+feature:
+  hidden_dim: 32
+  num_layers: 2
+  num_steps: 6
+  num_mc_samples: 3
+train:
+  epochs: 3
+  pretrain_epochs: 1
+  batch_size: 16
+  eval_batch_size: 16
+  run_dir: runs

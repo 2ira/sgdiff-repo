@@ -1,0 +1,9 @@
+# Runtime dependencies (minimal, no PyG required).
+numpy>=1.23
+scipy>=1.9
+torch>=2.0
+PyYAML>=6.0
+tqdm>=4.65
+
+# Development / testing
+pytest>=7.0
