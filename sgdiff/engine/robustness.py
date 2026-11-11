@@ -76,7 +76,7 @@ def score_variant(
     clean_features: Optional[np.ndarray] = None,
 ) -> dict[str, float]:
     """Score one (model, perturbed graph) pair with the shared metric code."""
-    if kind == "node_pair":
+    if kind in ("node_pair", "robust_node_pair"):
         edge_index = _edge_index(eval_graph, device)
         x = torch.as_tensor(clean_features, device=device)
         metrics = evaluate_node_pair_baseline(
@@ -170,6 +170,7 @@ def run_robustness(
     output_dir: str = "results",
     run_root: str = "runs/robustness",
     ea_max_nodes: int = EA_MAX_NODES,
+    tag: str = "",
     write: bool = True,
     quiet: bool = False,
     verbose: bool = True,
@@ -220,7 +221,7 @@ def run_robustness(
         clean_eval_graph = graph.drop_edges(test_edges)
         clean_features = (
             node_feature_matrix(clean_eval_graph)
-            if any(registry[m].kind == "node_pair" for m in models)
+            if any(registry[m].kind in ("node_pair", "robust_node_pair") for m in models)
             else None
         )
 
@@ -344,7 +345,8 @@ def run_robustness(
     result["markdown"] = format_markdown(result)
 
     if write:
-        stem = f"{output_dir}/robustness_{config.data.name}"
+        suffix = f"_{tag}" if tag else ""
+        stem = f"{output_dir}/robustness_{config.data.name}{suffix}"
         save_json(result, f"{stem}.json")
         with open(f"{stem}.md", "w", encoding="utf-8") as fh:
             fh.write(_header(result) + result["markdown"] + "\n")

@@ -2,6 +2,7 @@
 
 from .node_pair import GATEncoder, GCNEncoder, NodePairLinkPredictor, SAGEEncoder, VGAE
 from .pencil import PENCILBaseline
+from .robust import RGCN
 from .seal import SEALBaseline
 
 __all__ = [
@@ -9,6 +10,7 @@ __all__ = [
     "GCNEncoder",
     "NodePairLinkPredictor",
     "PENCILBaseline",
+    "RGCN",
     "SAGEEncoder",
     "SEALBaseline",
     "VGAE",

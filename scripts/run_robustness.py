@@ -56,6 +56,7 @@ def main() -> int:
     parser.add_argument("--device", default="auto")
     parser.add_argument("--root", default="data")
     parser.add_argument("--output", default="results")
+    parser.add_argument("--tag", default="", help="suffix for the output stem, e.g. 'robust'")
     parser.add_argument("--overrides", nargs="*", default=[], help="extra section.key=value overrides")
     parser.add_argument("--list-models", action="store_true", help="print the model zoo and exit")
     args = parser.parse_args()
@@ -84,6 +85,7 @@ def main() -> int:
         max_pairs=args.max_pairs or None,
         output_dir=args.output,
         ea_max_nodes=args.ea_max_nodes,
+        tag=args.tag,
     )
     print()
     print(result["markdown"])
@@ -92,7 +94,8 @@ def main() -> int:
         for skip in result["skipped"]:
             print(f"skipped {skip['variant']}: {skip['reason']}")
     print()
-    print(f"wrote {args.output}/robustness_{cfg.data.name}.json and .md")
+    suffix = f"_{args.tag}" if args.tag else ""
+    print(f"wrote {args.output}/robustness_{cfg.data.name}{suffix}.json and .md")
     return 0
 
 
