@@ -33,9 +33,13 @@ echo "== RQ2: 1% training data =="
 $PY scripts/run_experiments.py --lowdata cora --seeds ${SEEDS} --profile "${PROFILE}" \
     | tee "$OUT/lowdata_cora.log"
 
-echo "== RQ3: random flip (25%/50%) and DICE (0.1-0.5) =="
-$PY scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 --profile "${PROFILE}" \
-    | tee "$OUT/attack_cora.log"
+echo "== RQ3: SGDiff under random flip / DICE / embedding attack (0.1-0.5) =="
+$PY scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 \
+    --attack-methods rf dice ea --profile "${PROFILE}" | tee "$OUT/attack_cora.log"
+
+echo "== RQ3 (all models): RF / DICE / EA against SGDiff and every baseline =="
+$PY scripts/run_robustness.py --dataset cora --profile "${PROFILE}" --seeds ${SEEDS} \
+    | tee "$OUT/robustness_cora.log"
 
 echo "== baselines =="
 $PY scripts/run_baselines.py --dataset cora --baselines gcn gat sage vgae seal \

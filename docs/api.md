@@ -48,7 +48,7 @@ sgdiff train --config configs/sgdiff_cora.yaml \
 
 sgdiff evaluate --checkpoint runs/cora/best.pt \
                 [--dataset citeseer] [--split test] [--max-pairs 2000] \
-                [--attack none|random|dice] [--attack-mode flip|insert|delete] \
+                [--attack none|random|dice|ea] [--attack-mode flip|insert|delete] \
                 [--ratio 0.1] [--device cpu] [--output results/x.json]
 
 sgdiff transfer --checkpoint runs/cora/best.pt \
@@ -68,7 +68,9 @@ Every sub-command prints a JSON summary on stdout.
 | `sgdiff.data.Subgraph` | extracted sub-graph: `nodes`, `adj`, `labels`, `x`, `u_idx`, `v_idx` |
 | `sgdiff.data.SubgraphExtractor(graph, hops=1, max_nodes_per_hop=None, max_nodes_total=None, max_label=16, feature_mode="auto", target_feature_dim=None)` | builds/caches sub-graphs; `max_nodes_total` is the CPU safety cap |
 | `sgdiff.data.make_link_split(graph, val_ratio=.05, test_ratio=.15, neg_ratio=1.0, seed=0)` | `LinkSplit` |
-| `sgdiff.data.random_perturbation`, `dice_attack` | structural attacks |
+| `sgdiff.data.random_perturbation`, `dice_attack`, `embedding_attack` | structural attacks (RF / DICE / EA) |
+| `sgdiff.data.apply_attack(graph, method, ratio=0.1, mode="flip", seed=0)` | single dispatch point for the three attacks (`"clean"` is a no-op) |
+| `sgdiff.data.default_community(graph)` | DICE partition: `graph.y` → components → label propagation |
 | `sgdiff.data.load_graph(name, root="data", download=True, use_cache=True)` | registry loader |
 
 ### Models
@@ -118,8 +120,15 @@ python scripts/run_experiments.py --transfer-matrix \
     --datasets cora citeseer pubmed usair ns --targets cora citeseer pubmed usair ns \
     --seeds 0 1 2 --profile cpu
 python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
-python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5
+python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 --attack-methods rf dice ea
+python scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2
 ```
+
+`run_robustness.py` applies RF / DICE / EA to **every** model of the zoo
+(`sgdiff seal pencil gcn gat sage vgae`): each model is trained once on the
+clean graph and then re-scored on the perturbed *inference* graph, so the
+`clean` column and the attacked columns are produced by the same code.
+Writes `results/robustness_<dataset>.{json,md}`.
 
 `--profile paper` uses the full Table-4 budget (GPU), `--profile full` the
 CPU-feasible Table-4 data with 20 epochs / 8 MC steps / 60-node cap, and

@@ -1,65 +1,158 @@
 {
   "clean@0.1": {
-    "auc": 0.70512,
-    "ap": 0.7843940097466089,
-    "hit@100": 0.98,
-    "num_pos": 500,
-    "num_neg": 500
-  },
-  "rf@0.1": {
-    "auc": 0.69784,
-    "ap": 0.7770229860132296,
-    "hit@100": 0.98,
-    "num_pos": 500,
-    "num_neg": 500
-  },
-  "dice@0.1": {
-    "auc": 0.69234,
-    "ap": 0.7725868569210617,
-    "hit@100": 0.99,
-    "num_pos": 500,
-    "num_neg": 500
-  },
-  "clean@0.25": {
-    "auc": 0.70512,
-    "ap": 0.7843940097466089,
-    "hit@100": 0.98,
-    "num_pos": 500,
-    "num_neg": 500
-  },
-  "rf@0.25": {
-    "auc": 0.650808,
-    "ap": 0.7413826696344908,
+    "auc": 0.705612,
+    "ap": 0.7854951298124594,
     "hit@100": 0.97,
     "num_pos": 500,
-    "num_neg": 500
+    "num_neg": 500,
+    "perturbation": null
+  },
+  "rf@0.1": {
+    "auc": 0.691908,
+    "ap": 0.7749197089843356,
+    "hit@100": 0.98,
+    "num_pos": 500,
+    "num_neg": 500,
+    "perturbation": {
+      "method": "random",
+      "mode": "flip",
+      "ratio": 0.1,
+      "deleted": 264,
+      "inserted": 264
+    }
+  },
+  "dice@0.1": {
+    "auc": 0.684528,
+    "ap": 0.771092394550693,
+    "hit@100": 0.98,
+    "num_pos": 500,
+    "num_neg": 500,
+    "perturbation": {
+      "method": "dice",
+      "ratio": 0.1,
+      "partition": "targets",
+      "communities": 7,
+      "deleted": 264,
+      "inserted": 264
+    }
+  },
+  "ea@0.1": {
+    "auc": 0.702136,
+    "ap": 0.7837244600236599,
+    "hit@100": 0.97,
+    "num_pos": 500,
+    "num_neg": 500,
+    "perturbation": {
+      "method": "ea",
+      "ratio": 0.1,
+      "dim": 32,
+      "surrogate_steps": 60,
+      "deleted": 264,
+      "inserted": 264
+    }
+  },
+  "clean@0.25": {
+    "auc": 0.705612,
+    "ap": 0.7854951298124594,
+    "hit@100": 0.97,
+    "num_pos": 500,
+    "num_neg": 500,
+    "perturbation": null
+  },
+  "rf@0.25": {
+    "auc": 0.65492,
+    "ap": 0.7450549465514003,
+    "hit@100": 0.98,
+    "num_pos": 500,
+    "num_neg": 500,
+    "perturbation": {
+      "method": "random",
+      "mode": "flip",
+      "ratio": 0.25,
+      "deleted": 660,
+      "inserted": 660
+    }
   },
   "dice@0.25": {
-    "auc": 0.64316,
-    "ap": 0.7415844930433186,
-    "hit@100": 0.98,
+    "auc": 0.664602,
+    "ap": 0.7483386300290377,
+    "hit@100": 0.97,
     "num_pos": 500,
-    "num_neg": 500
+    "num_neg": 500,
+    "perturbation": {
+      "method": "dice",
+      "ratio": 0.25,
+      "partition": "targets",
+      "communities": 7,
+      "deleted": 660,
+      "inserted": 660
+    }
+  },
+  "ea@0.25": {
+    "auc": 0.69466,
+    "ap": 0.7771651630279675,
+    "hit@100": 0.97,
+    "num_pos": 500,
+    "num_neg": 500,
+    "perturbation": {
+      "method": "ea",
+      "ratio": 0.25,
+      "dim": 32,
+      "surrogate_steps": 60,
+      "deleted": 660,
+      "inserted": 660
+    }
   },
   "clean@0.5": {
-    "auc": 0.70512,
-    "ap": 0.7843940097466089,
-    "hit@100": 0.98,
+    "auc": 0.705612,
+    "ap": 0.7854951298124594,
+    "hit@100": 0.97,
     "num_pos": 500,
-    "num_neg": 500
+    "num_neg": 500,
+    "perturbation": null
   },
   "rf@0.5": {
-    "auc": 0.576772,
-    "ap": 0.6916452971434554,
-    "hit@100": 0.98,
+    "auc": 0.578816,
+    "ap": 0.6943280381987869,
+    "hit@100": 0.99,
     "num_pos": 500,
-    "num_neg": 500
+    "num_neg": 500,
+    "perturbation": {
+      "method": "random",
+      "mode": "flip",
+      "ratio": 0.5,
+      "deleted": 1319,
+      "inserted": 1320
+    }
   },
   "dice@0.5": {
-    "auc": 0.583858,
-    "ap": 0.6916937271331955,
-    "hit@100": 0.95,
+    "auc": 0.577988,
+    "ap": 0.6837174116551873,
+    "hit@100": 0.97,
     "num_pos": 500,
-    "num_neg": 500
+    "num_neg": 500,
+    "perturbation": {
+      "method": "dice",
+      "ratio": 0.5,
+      "partition": "targets",
+      "communities": 7,
+      "deleted": 1319,
+      "inserted": 1320
+    }
+  },
+  "ea@0.5": {
+    "auc": 0.683504,
+    "ap": 0.7714172553197669,
+    "hit@100": 0.97,
+    "num_pos": 500,
+    "num_neg": 500,
+    "perturbation": {
+      "method": "ea",
+      "ratio": 0.5,
+      "dim": 32,
+      "surrogate_steps": 60,
+      "deleted": 1319,
+      "inserted": 1320
+    }
   }
 }

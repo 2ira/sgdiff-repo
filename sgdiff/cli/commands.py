@@ -7,7 +7,7 @@ from pathlib import Path
 import torch
 
 from ..config import ExperimentConfig, load_config, save_config
-from ..data.attack import dice_attack, random_perturbation
+from ..data.attack import apply_attack
 from ..data.datasets import DATASETS, available_datasets, describe_dataset, load_graph
 from ..data.splits import make_link_split
 from ..engine.evaluator import evaluate_link_prediction
@@ -99,15 +99,19 @@ def cmd_evaluate(args) -> dict:
         half = args.max_pairs // 2
         pos, neg = pos[:half], neg[:half]
 
-    eval_graph = graph.drop_edges(split.test_pos.tolist())
     attack = None
-    if args.attack in {"random", "dice"}:
-        attack = (
-            random_perturbation(graph, ratio=args.ratio, mode=args.attack_mode, seed=cfg.data.seed)
-            if args.attack == "random"
-            else dice_attack(graph, ratio=args.ratio, seed=cfg.data.seed)
+    if args.attack != "none":
+        # the attacked graph is the inference graph: the test links are still
+        # withheld from the encoders' neighbourhoods, exactly as in run_attack
+        attack = apply_attack(
+            graph,
+            args.attack,
+            ratio=args.ratio,
+            mode=args.attack_mode,
+            seed=cfg.data.seed,
+            device=str(prepared_device),
         )
-        eval_graph = attack
+    eval_graph = (graph if attack is None else attack).drop_edges(split.test_pos.tolist())
 
     extractor = build_extractor(eval_graph, cfg)
     metrics = evaluate_link_prediction(
@@ -121,7 +125,7 @@ def cmd_evaluate(args) -> dict:
     )
     metrics.update({"dataset": cfg.data.name, "split": split_name})
     if attack is not None:
-        metrics["attack"] = {"method": args.attack, "ratio": args.ratio}
+        metrics["attack"] = {"method": args.attack, "ratio": args.ratio, **attack.meta.get("attack", {})}
     if args.output:
         save_json(metrics, args.output)
     return metrics

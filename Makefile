@@ -2,7 +2,7 @@
 PYTHON ?= python
 CONFIG ?= configs/sgdiff_cora.yaml
 
-.PHONY: help install data test smoke train baselines benchmark ablation experiments transfer lowdata attack clean
+.PHONY: help install data test smoke train baselines benchmark ablation experiments transfer lowdata attack robustness clean
 
 help:  ## show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-12s %s\n", $$1, $$2}'
@@ -41,8 +41,11 @@ transfer:  ## RQ1: zero-shot cross-dataset transfer
 lowdata:  ## RQ2: 1% training data
 	$(PYTHON) scripts/run_experiments.py --lowdata cora --seeds 0 1 2 --profile cpu
 
-attack:  ## RQ3: robustness under RF / DICE
-	$(PYTHON) scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 --profile cpu
+attack:  ## RQ3: SGDiff under RF / DICE / EA
+	$(PYTHON) scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 --attack-methods rf dice ea --profile cpu
+
+robustness:  ## RQ3 for every model (SGDiff + all baselines) under RF / DICE / EA
+	$(PYTHON) scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2
 
 clean:  ## remove caches and processed artifacts (keeps raw downloads)
 	find . -name '__pycache__' -type d -prune -exec rm -rf {} +

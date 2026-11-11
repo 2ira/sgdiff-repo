@@ -39,7 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--dataset", default=None)
     e.add_argument("--split", default="test", choices=["train", "val", "test"])
     e.add_argument("--max-pairs", type=int, default=None)
-    e.add_argument("--attack", default="none", choices=["none", "random", "dice"])
+    e.add_argument("--attack", default="none", choices=["none", "random", "dice", "ea"])
     e.add_argument("--attack-mode", default="flip", choices=["flip", "insert", "delete"])
     e.add_argument("--ratio", type=float, default=0.1)
     e.add_argument("--device", default=None)

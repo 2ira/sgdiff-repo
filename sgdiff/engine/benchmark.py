@@ -243,20 +243,25 @@ def capped_train_split(split: LinkSplit, cfg: ExperimentConfig) -> LinkSplit:
     return capped
 
 
-def _fit(
+def fit_model(
     spec: ModelSpec,
     cfg: ExperimentConfig,
     graph: GraphData,
     split: LinkSplit,
     datasets: dict,
     seed: int,
-    sgdiff_epochs: Optional[int],
-    subgraph_epochs: int,
-    node_pair_epochs: int,
-    device: str,
-    run_root: str,
-) -> tuple[dict, int]:
-    """Train one model and return ``(metrics, num_params)``."""
+    sgdiff_epochs: Optional[int] = None,
+    subgraph_epochs: int = 40,
+    node_pair_epochs: int = 300,
+    device="auto",
+    run_root: str = "runs/benchmark",
+) -> tuple[torch.nn.Module, dict, int]:
+    """Train one model and return ``(model, metrics, num_params)``.
+
+    The robustness harness (:mod:`sgdiff.engine.robustness`) trains once through
+    this function and then re-scores the frozen model on perturbed graphs, so the
+    attack comparison reuses the exact training protocol of the benchmark.
+    """
     if spec.kind == "node_pair":
         features = node_feature_matrix(graph)
         model = spec.builder(features.shape[1], cfg)
@@ -283,7 +288,37 @@ def _fit(
         cfg_run.train.run_name = f"{spec.name}-s{seed}"
         trainer = Trainer(model, cfg_run, run_dir=run_root)
         result = trainer.fit(datasets["train"], datasets["val"], datasets["test"])
-    return _metrics_from_result(spec.kind, result), int(num_params)
+    return model, _metrics_from_result(spec.kind, result), int(num_params)
+
+
+def _fit(
+    spec: ModelSpec,
+    cfg: ExperimentConfig,
+    graph: GraphData,
+    split: LinkSplit,
+    datasets: dict,
+    seed: int,
+    sgdiff_epochs: Optional[int],
+    subgraph_epochs: int,
+    node_pair_epochs: int,
+    device: str,
+    run_root: str,
+) -> tuple[dict, int]:
+    """Train one model and return ``(metrics, num_params)``."""
+    _model, metrics, num_params = fit_model(
+        spec,
+        cfg,
+        graph,
+        split,
+        datasets,
+        seed,
+        sgdiff_epochs=sgdiff_epochs,
+        subgraph_epochs=subgraph_epochs,
+        node_pair_epochs=node_pair_epochs,
+        device=device,
+        run_root=run_root,
+    )
+    return metrics, num_params
 
 
 def _aggregate(runs: Sequence[dict]) -> dict:

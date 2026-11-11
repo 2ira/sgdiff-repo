@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sgdiff import api  # noqa: E402
 from sgdiff.config import ExperimentConfig, load_config  # noqa: E402
-from sgdiff.data.attack import dice_attack, random_perturbation  # noqa: E402
+from sgdiff.data.attack import apply_attack  # noqa: E402
 from sgdiff.data.splits import make_link_split  # noqa: E402
 from sgdiff.engine.evaluator import evaluate_link_prediction  # noqa: E402
 from sgdiff.engine.factory import build_extractor  # noqa: E402
@@ -291,25 +291,38 @@ def run_lowdata(dataset: str, seeds, profile, ratio: float = 0.01) -> dict:
     return {dataset: _aggregate(runs)}
 
 
-def run_attack(dataset: str, ratios: list[float], seed: int, profile: str, max_pairs: int = 500) -> dict:
-    """RQ3: random flip (RF) and DICE perturbations of the inference graph."""
+def run_attack(
+    dataset: str,
+    ratios: list[float],
+    seed: int,
+    profile: str,
+    max_pairs: int = 500,
+    attacks: list[str] | None = None,
+) -> dict:
+    """RQ3: RF / DICE / EA perturbations of the inference graph (SGDiff, evasion)."""
     result, _cfg, tag = _train(dataset, seed, profile)
     model, cfg = load_checkpoint(f"{result['run_dir']}/best.pt", device=resolve_device("auto"))
     graph = api.load_graph(dataset)
     split = make_link_split(graph, seed=cfg.data.seed)
     pos, neg = split.test_pos[:max_pairs], split.test_neg[:max_pairs]
+    methods = ["rf", "dice", "ea"] if attacks is None else list(attacks)
     out = {}
     for ratio in ratios:
-        variants = {
-            "clean": graph,
-            "rf": random_perturbation(graph, ratio=ratio, mode="flip", seed=seed),
-            "dice": dice_attack(graph, ratio=ratio, seed=seed),
-        }
-        for name, attacked in variants.items():
+        variants: list[tuple[str, object]] = [("clean", graph)]
+        for method in methods:
+            try:
+                variants.append(
+                    (method, apply_attack(graph, method, ratio=ratio, mode="flip", seed=seed))
+                )
+            except ValueError as exc:  # dense EA on a large graph
+                out[f"{method}@{ratio}"] = {"skipped": str(exc)}
+                print(f"[attack {dataset} {method} {ratio}] skipped: {exc}", flush=True)
+        for name, attacked in variants:
             extractor = build_extractor(attacked.drop_edges(split.test_pos.tolist()), cfg,
                                         seed=cfg.data.seed + 1)
             metrics = evaluate_link_prediction(model, extractor, pos, neg,
                                                batch_size=cfg.train.eval_batch_size, seed=seed)
+            metrics["perturbation"] = attacked.meta.get("attack")
             out[f"{name}@{ratio}"] = metrics
             print(f"[attack {dataset} {name} {ratio}] auc={metrics['auc']:.4f}", flush=True)
     save_json(out, RESULTS / f"attack_{tag}.json")
@@ -327,6 +340,8 @@ def main() -> int:
                         help="RQ1 matrix: every --datasets entry as source, every --targets entry as target")
     parser.add_argument("--lowdata", default=None, help="dataset for RQ2")
     parser.add_argument("--attack", default=None, help="dataset for RQ3")
+    parser.add_argument("--attack-methods", nargs="*", default=["rf", "dice", "ea"],
+                        choices=["rf", "dice", "ea"], help="RQ3 attacks to run")
     parser.add_argument("--ratios", nargs="*", type=float, default=[0.25, 0.5])
     parser.add_argument("--max-pairs", type=int, default=None,
                         help="cap per class (positives and negatives separately); "
@@ -350,7 +365,7 @@ def main() -> int:
         return 0
     if args.attack:
         save_json(run_attack(args.attack, args.ratios, args.seeds[0], args.profile,
-                             args.max_pairs or 500),
+                             args.max_pairs or 500, args.attack_methods),
                   RESULTS / f"summary_attack_{args.attack}.json")
         return 0
 

@@ -53,7 +53,7 @@ sgdiff-repro/
 │   │   ├── graph.py            # Graph container, edge dropping
 │   │   ├── splits.py           # 80/5/15 link split, equal negatives
 │   │   ├── subgraph.py         # enclosing sub-graph + DRNL labels
-│   │   └── attack.py           # random flip / insert / delete, DICE
+│   │   └── attack.py           # random flip / insert / delete, DICE, EA
 │   ├── models/
 │   │   ├── sgdiff.py           # SGDiff = structure + feature + fusion
 │   │   ├── structure_diffusion.py   # D3PM over the adjacency (VLB + CE)
@@ -88,6 +88,7 @@ sgdiff-repro/
 │   ├── api.md                  # Python + CLI reference
 │   ├── reproduction.md         # measured numbers, gaps, known deviations
 │   ├── benchmark.md, ablation.md
+│   ├── robustness.md           # RQ3: RF / DICE / EA for every model
 │   └── related_work.md, references.bib
 ├── checkpoints/                # trained weights (git-ignored)
 ├── runs/                       # per-run output: metrics.jsonl, best.pt (git-ignored)
@@ -129,7 +130,7 @@ graphs are cached as `.npz`. See `data/README.md` for formats and how to plug in
 |---------|---------|-------------|
 | `prepare` | download + preprocess a graph, cache it as `.npz` | `--datasets cora citeseer …`, `--root`, `--no-download` |
 | `train` | train SGDiff on one dataset (writes `runs/<name>/best.pt` + `metrics.jsonl`) | `--config`, `--set KEY=VALUE…`, `--run-dir`, `--max-steps` |
-| `evaluate` | score a checkpoint, optionally on an attacked graph | `--checkpoint`, `--dataset`, `--split {train,val,test}`, `--max-pairs`, `--attack {none,random,dice}`, `--attack-mode {flip,insert,delete}`, `--ratio`, `--device`, `--output` |
+| `evaluate` | score a checkpoint, optionally on an attacked graph | `--checkpoint`, `--dataset`, `--split {train,val,test}`, `--max-pairs`, `--attack {none,random,dice,ea}`, `--attack-mode {flip,insert,delete}`, `--ratio`, `--device`, `--output` |
 | `transfer` | zero-shot cross-dataset scoring | `--checkpoint`, `--targets …`, `--root`, `--max-pairs`, `--device`, `--output` |
 
 Every YAML key is reachable from the command line:
@@ -159,8 +160,9 @@ differ only in the knobs below.
 | — (same script) | RQ1 single-source transfer | `--transfer cora --targets citeseer pubmed usair ns` |
 | — (same script) | RQ1 full matrix (every source trained once, both `ns` variants, full test set) | `--transfer-matrix --datasets cora citeseer pubmed usair ns --targets cora citeseer pubmed usair ns` |
 | — (same script) | RQ2 1 % sub-graphs | `--lowdata cora --seeds 0 1 2` |
-| — (same script) | RQ3 attacks | `--attack cora --ratios 0.1 0.25 0.5` |
+| — (same script) | RQ3 attacks on SGDiff (RF / DICE / EA) | `--attack cora --ratios 0.1 0.25 0.5 --attack-methods rf dice ea` |
 | `run_baselines.py` | GCN/GAT/SAGE/VGAE/SEAL/PENCIL on the same split | `--dataset cora --baselines gcn gat sage vgae --epochs 200` |
+| `run_robustness.py` | RQ3 for **every** model: RF / DICE / EA at 3 budgets, clean column included | `--dataset cora --profile cpu --seeds 0 1 2` |
 | `run_benchmark.py` | SGDiff vs. all baselines on identical data (split + sub-graph fingerprints) | `--dataset cora --profile cpu --seeds 0` |
 | `run_ablation.py` | does the likelihood actually depend on the link condition? | `--dataset cora --profile cpu --seed 0` |
 | `collect_results.py` | markdown table of `results/*.json`; `--merge <profile>` rebuilds the mean/std summary | `--merge full` |
@@ -193,8 +195,9 @@ python -m sgdiff evaluate --checkpoint runs/cora-*/best.pt --split test --device
 # 4. zero-shot transfer to another dataset
 python -m sgdiff transfer --checkpoint runs/cora-*/best.pt --targets citeseer usair
 
-# 5. robustness under structural attacks
+# 5. robustness under structural attacks (random / dice / ea)
 python -m sgdiff evaluate --checkpoint runs/cora-*/best.pt --attack random --ratio 0.1
+python -m sgdiff evaluate --checkpoint runs/cora-*/best.pt --attack ea --ratio 0.1
 
 # 6. baselines on the same splits
 python scripts/run_baselines.py --dataset cora --baselines gcn gat sage vgae seal pencil
@@ -204,7 +207,10 @@ python scripts/run_experiments.py --datasets cora citeseer usair ns pubmed --see
 python scripts/collect_results.py --merge full      # mean/std summary per dataset
 python scripts/run_experiments.py --transfer cora --targets citeseer pubmed usair ns
 python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
-python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5
+python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 --attack-methods rf dice ea
+
+# 7b. RQ3 for every model (SGDiff + all baselines) under the same three attacks
+python scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2
 
 # 8. data-identical benchmark: SGDiff vs. every baseline, one split, one table
 python scripts/run_benchmark.py --dataset cora --profile cpu --seeds 0
@@ -286,8 +292,10 @@ budget; every arm inside a comparison shares it, so the trends are comparable.
 |----|------------|--------|
 | RQ1 | 5 sources × 5 targets (Router unavailable), 3 seeds, full test set, no node features, diagonal excluded | source avg **0.71-0.84**, target avg **0.67-0.92** (`results/transfer_matrix_cpu.json`) |
 | RQ2 | Cora with 1 % of the training sub-graphs (40 epochs) | AUC 0.725 ± 0.058 |
-| RQ3 | Cora under random flip 10 % / 25 % / 50 % | AUC 0.698 / 0.651 / 0.577 |
-| RQ3 | Cora under DICE 10 % / 25 % / 50 % | AUC 0.692 / 0.643 / 0.584 |
+| RQ3 | Cora, SGDiff under random flip 10 % / 25 % / 50 % | AUC 0.692 / 0.655 / 0.579 |
+| RQ3 | Cora, SGDiff under DICE 10 % / 25 % / 50 % | AUC 0.685 / 0.665 / 0.578 |
+| RQ3 | Cora, SGDiff under EA 10 % / 25 % / 50 % | AUC 0.702 / 0.695 / 0.684 |
+| RQ3 | Cora, all 7 models × RF / DICE / EA, 3 seeds (clean 0.737 for SGDiff, 0.828 for GCN) | `results/robustness_cora.{json,md}`, [`docs/robustness.md`](docs/robustness.md) |
 
 RQ1, in one paragraph: transfer never matches the in-domain model — it costs
 1-13 points (NS as a target 0.924 vs 0.964; Citeseer 0.673 vs 0.738; Pubmed
@@ -315,7 +323,7 @@ every known deviation from the paper.
 | ablation (likelihood audit) | done: `results/ablation_*.{json,md}` | `docs/ablation.md` |
 | RQ1 single-source | done (`cpu`, seed 0, 500 pairs/class) — superseded by the matrix below | `results/transfer_cora_seed0_cpu.json` |
 | RQ1 matrix | 5 sources × 5 targets (Router unavailable → 5 of the paper's 6), 3 seeds, full test set, `source_ns` + `target_ns` | `results/transfer_matrix_cpu.json` |
-| RQ2 / RQ3 | done, 3 seeds (`cpu`) | `results/summary_lowdata_cora.json`, `results/summary_attack_cora.json` |
+| RQ2 / RQ3 | done, 3 seeds (`cpu`); RQ3 = SGDiff + all 7 models under RF / DICE / EA | `results/summary_lowdata_cora.json`, `results/summary_attack_cora.json`, `results/robustness_cora.{json,md}` |
 
 ## Where the paper is under-specified
 

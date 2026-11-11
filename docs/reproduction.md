@@ -17,7 +17,7 @@ The parameter-by-parameter mapping is in [`alignment.md`](alignment.md).
 | 10 seeds | Sec. 4.1 | `scripts/run_experiments.py` | supported |
 | RQ1 transfer without features | Sec. 4.2 | `--transfer` | aligned |
 | RQ2 1% training sub-graphs | Sec. 4.3 | `data.train_ratio` | aligned |
-| RQ3 RF / DICE | Sec. 4.4 | `--attack` | RF + DICE (no EA) |
+| RQ3 RF / DICE / EA | Sec. 4.4 | `--attack`, `scripts/run_robustness.py` | aligned (EA: linear surrogate, same budget semantics) |
 | baselines GCN/GAT/SAGE/VGAE/SEAL | Sec. 4.1 | `models/baselines/` | NeoGNN missing |
 
 ## 2. Two budgets
@@ -230,17 +230,58 @@ variance across seeds grows, which is expected from 84 training sub-graphs.
 
 ### RQ3 - robustness under structure attacks (Sec. 4.4)
 
-Cora checkpoint trained on the clean graph, inference graph perturbed:
+Two drivers, one protocol: **evasion**. The weights are trained on the clean
+graph and the perturbation is applied to the *inference* graph only, which is
+what the paper's RQ3 measures. `run_experiments.py --attack` does this for
+SGDiff alone (`results/attack_*_seed0_cpu.json`); `run_robustness.py` does it for
+every model in the zoo with a shared clean column
+(`results/robustness_cora.{json,md}`).
 
-| budget | clean | RF | DICE |
-|-------:|------:|---:|-----:|
-| 10% | 0.705 | 0.698 | 0.692 |
-| 25% | 0.705 | 0.651 | 0.643 |
-| 50% | 0.705 | 0.577 | 0.584 |
+Cora, AUC on 500 test pairs per class, seeds 0-2 (`cpu` profile). Per-variant
+stds, AP / Hit@100 and the full damage analysis are in
+[`robustness.md`](robustness.md); condensed copy:
 
-The model degrades gracefully at 10-25% budget and loses ~13 points at 50%,
-qualitatively matching the paper's "generative models degrade less" finding
-(their RF-50% drop on Cora is ~1.5 points, so the absolute gap is ours).
+| model | clean | RF 10% | DICE 10% | EA 10% | RF 25% | DICE 25% | EA 25% | RF 50% | DICE 50% | EA 50% |
+|-------|------:|-------:|---------:|-------:|-------:|---------:|-------:|-------:|---------:|-------:|
+| GCN | 0.828 ± 0.008 | 0.818 | 0.818 | 0.827 | 0.805 | 0.801 | 0.825 | 0.778 | 0.762 | 0.819 |
+| GAT | 0.801 ± 0.009 | 0.789 | 0.789 | 0.807 | 0.774 | 0.770 | 0.802 | 0.747 | 0.745 | 0.788 |
+| PENCIL | 0.783 ± 0.026 | 0.775 | 0.772 | 0.786 | 0.754 | 0.754 | 0.778 | 0.724 | 0.715 | 0.761 |
+| VGAE | 0.773 ± 0.015 | 0.765 | 0.762 | 0.772 | 0.752 | 0.752 | 0.773 | 0.735 | 0.725 | 0.765 |
+| SEAL | 0.772 ± 0.007 | 0.764 | 0.761 | 0.763 | 0.745 | 0.743 | 0.756 | 0.713 | 0.698 | 0.740 |
+| SAGE | 0.765 ± 0.019 | 0.762 | 0.763 | 0.770 | 0.741 | 0.741 | 0.770 | 0.730 | 0.726 | 0.761 |
+| SGDiff | 0.737 ± 0.035 | 0.726 | 0.716 | 0.734 | 0.662 | 0.680 | 0.728 | 0.594 | 0.598 | 0.694 |
+
+(± std over seeds is shown for the clean column only; the per-variant stds are
+in the JSON.)
+
+A second SGDiff-only table comes from the paper's own driver
+(`run_experiments.py --attack cora --attack-methods rf dice ea`, seed 0, its own
+in-domain checkpoint): clean 0.706, RF 0.692 / 0.655 / 0.579, DICE 0.685 / 0.665
+/ 0.578, EA 0.702 / 0.695 / 0.684 for 10 / 25 / 50 %. Same ordering, slightly
+lower anchor because that checkpoint is trained by the in-domain grid rather
+than by the benchmark protocol; the numbers are in
+`results/summary_attack_cora.json`.
+
+Reading the table:
+
+* **SGDiff is the most fragile model here**: it loses 14 points under RF-50%
+  and 8 points under EA-50%, while the full-graph baselines lose 3-5 points. The
+  model reads a 1-hop enclosing sub-graph per pair, so flips that survive the
+  extraction hit the likelihood directly; GCN/GAT messages are smoothed over the
+  whole graph, which absorbs the same budget better.
+* **DICE ≥ RF at every budget** for the sub-graph models, as intended: rewiring
+  across the class partition removes exactly the links that make two nodes look
+  adjacent.
+* **EA is the weakest attacker in our implementation** (≤ 4 points at 50 %).
+  That is an implementation property, not a claim about DeepRobust's EA: our
+  surrogate is a one-layer linear `Z = A_norm W` with a single meta-gradient
+  step, while DeepRobust fits a NetMF/spectral embedding. The relative ordering
+  RF/DICE > EA should therefore be read as "our EA", and the absolute drop is
+  not comparable to the paper's EA column.
+* The paper reports a ~1.5 point RF-50% drop on Cora; ours is 14. The gap is
+  consistent with the general gap documented in sections 3 and 5 (our SGDiff
+  sits ~2-6 points below the paper on Cora even clean), so we report it rather
+  than tune it away.
 
 ## 5. Baseline numbers (Cora, full graph)
 
@@ -269,8 +310,14 @@ reproduced here, so the two SEAL numbers are not comparable to the paper.
 
 1. Optimisation details (batch 32, Adam `1e-3`, fusion `1e-2`, 50-epoch budget
    in the `paper` profile) are not reported by the paper.
-2. Embedding attack (EA) needs DeepRobust and is not implemented; RF and DICE
-   share its interface.
+2. EA is re-implemented without DeepRobust: a one-layer linear surrogate
+   `Z = A_norm W` is trained with a dot-product link objective, then a single
+   meta-gradient step (`dL/dA`) flips `ratio * |E|` entries (deletions where
+   `dL/dA < 0`, insertions where `dL/dA > 0`). The objective and the budget
+   semantics match DeepRobust's embedding attack; the surrogate (linear instead
+   of NetMF/spectral) and the absence of a PGD inner loop mean the numbers are
+   comparable in trend, not in value. It is dense (`n^2` floats), so graphs
+   above `EA_MAX_NODES = 4000` nodes (Pubmed) are skipped with a note.
 3. `Router` is not redistributable (see `data/README.md`), so it is absent from
    the tables above.
 4. Citeseer counts 4 552 undirected links versus the paper's 9 228/2 = 4 614
@@ -330,7 +377,8 @@ python scripts/run_experiments.py --datasets citeseer pubmed --seeds 0 --profile
 python scripts/collect_results.py --merge full
 python scripts/run_experiments.py --transfer cora --targets citeseer pubmed usair ns
 python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
-python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5
+python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 --attack-methods rf dice ea
+python scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2
 bash scripts/run_all_experiments.sh cpu "0 1 2"
 ```
 
