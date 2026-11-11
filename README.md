@@ -239,6 +239,9 @@ python -m sgdiff train --config configs/sgdiff_cora.yaml \
 
 ## Measured results
 
+One-page synthesis of every claim and every measured number:
+[`docs/findings.md`](docs/findings.md).
+
 In-domain link prediction on this machine, `full` profile, mean ± std over
 seeds. Source `results/summary_indomain_full.json` (rebuild with
 `python scripts/collect_results.py --merge full`). These are **our** numbers,
