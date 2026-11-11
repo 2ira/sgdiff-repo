@@ -28,6 +28,7 @@ import torch
 from ..config import ExperimentConfig
 from ..data.attack import EA_MAX_NODES, apply_attack, supports_attack
 from ..data.splits import LinkSplit
+from ..models.defense import purify_graph, train_purifier
 from ..utils.io import save_json
 from ..utils.seed import resolve_device, set_seed
 from .baseline_trainer import (
@@ -43,6 +44,9 @@ from .factory import build_extractor, load_split, prepare_datasets
 
 #: Attack names as accepted on the command line (``clean`` == no perturbation).
 ATTACKS = ("clean", "rf", "dice", "ea")
+
+#: Purifiers that can be applied to the *inference* graph before scoring.
+DEFENSES = ("none", "gddm", "gpr")
 
 CLEAN = "clean"
 
@@ -162,6 +166,9 @@ def run_robustness(
     attacks: Sequence[str] = ("rf", "dice", "ea"),
     ratios: Sequence[float] = (0.1, 0.25, 0.5),
     seeds: Sequence[int] = (0,),
+    defenses: Sequence[str] = ("none",),
+    purifier_epochs: int = 60,
+    purifier_steps: int = 3,
     sgdiff_epochs: Optional[int] = None,
     subgraph_epochs: int = 40,
     node_pair_epochs: int = 300,
@@ -199,10 +206,17 @@ def run_robustness(
     plan: list[tuple[str, str, float]] = [(CLEAN, CLEAN, 0.0)] + [
         (variant_name(a, r), a, r) for r in ratios for a in attacks if a != CLEAN
     ]
+    defense_names = [d for d in dict.fromkeys(str(x).lower() for x in defenses) if d != "none"]
+    unknown_defenses = [d for d in defense_names if d not in DEFENSES]
+    if unknown_defenses:
+        raise KeyError(f"unknown defenses {unknown_defenses}; available: {DEFENSES}")
+    # every base variant is scored as-is and once per purifier ("rf@50%|gddm")
+    score_plan: list[tuple[str, str, float]] = list(plan)
     variants = [variant for variant, _attack, _ratio in plan]
 
     runs: list[dict] = []
     attack_stats: dict[str, dict] = {}
+    purifier_report: dict[str, dict] = {}
     skipped: list[dict] = []
     num_pos = num_neg = 0
     total = len(seeds) * len(models)
@@ -244,9 +258,49 @@ def run_robustness(
             perturbed[variant] = attacked.drop_edges(test_edges)
             attack_stats[variant] = {"ratio": ratio, **attacked.meta.get("attack", {})}
 
+        # Purifiers are fitted self-supervised on the *evaluation* graph (test
+        # edges removed), so a purifier cannot re-insert a held-out positive it
+        # has seen.  They never see an attacked graph during training.
+        if defense_names:
+            purifier_stats: dict[str, dict] = {}
+            for defense in defense_names:
+                state = train_purifier(
+                    clean_eval_graph,
+                    kind=defense,
+                    epochs=purifier_epochs,
+                    device=str(device),
+                    seed=int(seed),
+                )
+                for variant, _attack, _ratio in plan:
+                    eval_graph = perturbed.get(variant)
+                    if eval_graph is None:
+                        continue
+                    defended = purify_graph(
+                        eval_graph, state, steps=purifier_steps, device=str(device)
+                    )
+                    perturbed[f"{variant}|{defense}"] = defended
+                purifier_stats[defense] = {
+                    "kind": defense,
+                    "epochs": purifier_epochs,
+                    "steps": purifier_steps,
+                    "train_loss_last": float(state["train_loss"][-1]),
+                    "edge_budget": int(state["edge_budget"]),
+                }
+            purifier_report[str(seed)] = purifier_stats
+            score_plan = list(plan) + [
+                (f"{variant}|{defense}", attack, ratio)
+                for defense in defense_names
+                for variant, attack, ratio in plan
+            ]
+            variants = [variant for variant, _attack, _ratio in score_plan]
+
         for index, name in enumerate(models, start=1):
             spec = registry[name]
             started = time.perf_counter()
+            # Re-seed per model: without this, the RNG stream that a model sees
+            # depends on how many models (and purifiers) ran before it, so the
+            # same model gets different weights in different model lists.
+            set_seed(int(seed))
             model, _train_metrics, num_params = fit_model(
                 spec,
                 cfg,
@@ -263,7 +317,8 @@ def run_robustness(
             fit_seconds = time.perf_counter() - started
             clean_metrics: dict[str, float] = {}
 
-            for variant, attack, ratio in plan:
+            for variant, attack, ratio in score_plan:
+                set_seed(int(seed))  # same Monte-Carlo draws for every variant
                 eval_graph = perturbed.get(variant)
                 if eval_graph is None:  # skipped attack (EA on a big graph)
                     continue
@@ -336,8 +391,11 @@ def run_robustness(
                 "node_pair": node_pair_epochs,
             },
             "device": str(device),
+            "defenses": defense_names,
+            "purifier": {"epochs": purifier_epochs, "steps": purifier_steps},
         },
         "attack_stats": attack_stats,
+        "purifiers": purifier_report,
         "skipped": skipped,
         "runs": runs,
         "summary": _aggregate(runs, models, variants),
@@ -364,6 +422,13 @@ def _header(result: dict) -> str:
             "JSON is the AUC lost against the model's own clean column.",
             "",
             f"* models: {', '.join(result['models'])}",
+            (
+                "* purifiers: "
+                + ", ".join(result["protocol"]["defenses"])
+                + " (variant `|gddm` = same attacked graph after the purifier)"
+                if result["protocol"].get("defenses")
+                else "* purifiers: none"
+            ),
             f"* seeds: {result['seeds']}",
             f"* ratios: {', '.join(f'{r * 100:g}%' for r in result['ratios'])}",
             f"* metric: AUC (equal-size random negatives)",

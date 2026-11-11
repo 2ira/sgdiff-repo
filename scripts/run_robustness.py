@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sgdiff.config import load_config  # noqa: E402
 from sgdiff.engine.benchmark import BUDGET_PROFILES as PROFILES  # noqa: E402
 from sgdiff.engine.benchmark import build_registry  # noqa: E402
-from sgdiff.engine.robustness import ATTACKS, run_robustness  # noqa: E402
+from sgdiff.engine.robustness import ATTACKS, DEFENSES, run_robustness  # noqa: E402
 
 DEFAULT_MODELS = ["sgdiff", "seal", "pencil", "gcn", "gat", "sage", "vgae"]
 
@@ -57,6 +57,11 @@ def main() -> int:
     parser.add_argument("--root", default="data")
     parser.add_argument("--output", default="results")
     parser.add_argument("--tag", default="", help="suffix for the output stem, e.g. 'robust'")
+    parser.add_argument("--defense", nargs="*", default=["none"],
+                        choices=list(DEFENSES),
+                        help="purifiers applied to the inference graph before scoring")
+    parser.add_argument("--purifier-epochs", type=int, default=60)
+    parser.add_argument("--purifier-steps", type=int, default=3)
     parser.add_argument("--overrides", nargs="*", default=[], help="extra section.key=value overrides")
     parser.add_argument("--list-models", action="store_true", help="print the model zoo and exit")
     args = parser.parse_args()
@@ -86,6 +91,9 @@ def main() -> int:
         output_dir=args.output,
         ea_max_nodes=args.ea_max_nodes,
         tag=args.tag,
+        defenses=args.defense,
+        purifier_epochs=args.purifier_epochs,
+        purifier_steps=args.purifier_steps,
     )
     print()
     print(result["markdown"])
