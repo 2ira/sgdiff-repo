@@ -139,58 +139,91 @@ summary_attack_cora.json`). Same ordering and almost identical deltas; the
 0.031 anchor difference comes from the training protocol (in-domain grid vs.
 benchmark `fit_model`), not from the attacks.
 
-## 5. Robust-by-design baselines: does anything actually resist?
+## 5. Defences: a 2019 robust classifier vs 2025-2026 purifiers
 
-The 2025-2026 papers in [`related_work.md`](related_work.md) that talk about
-noise are **not** attack-robust link predictors: DiffHGLP and DiffGraph are
-heterogeneous-graph models, FSD-CAP and GGDIFF target feature missingness and
-conditional guidance, and GCCM targets the *conditioning* shortcut. So the
-comparison imports the canonical robust-by-design GNN instead:
+The 2025-2026 papers in [`related_work.md`](related_work.md) are not
+attack-robust link predictors, but the *defence* literature moved after 2024 from
+"train a robust classifier" to **"purify the graph, leave the predictor
+untouched"**. Two recent purifiers are implemented here, alongside the classic
+robust classifier kept as a historical anchor:
 
-* `rgcn` — Bayesian robust GCN (Zhu et al., KDD 2019): Gaussian latent per node,
-  reparameterised sampling while training, `0.1 * mean(sigma)` penalty, `mu` at
-  inference. Implemented as `kind="robust_node_pair"` in
-  `models/baselines/robust.py`.
-* `rgcn_novar` — the same model with `var_weight = 0`, i.e. sampling without the
-  penalty. It isolates whether the penalty is what buys robustness.
+| name | source | mechanism | kind |
+|------|--------|-----------|------|
+| `gddm` | GDDM, KDD 2026 (arXiv:2501.11568) | level-conditioned edge denoiser trained on corrupted graphs (random drop + insert); reverse chain keeps edges by probability, structure-driven refiner pins the edge budget to the clean graph, node-feature-constrained regularizer removes feature-inconsistent edges | purifier |
+| `gpr` | GPR-GAE, ICML 2025 (arXiv:2605.23239) | graph auto-encoder with a generalized-PageRank filter bank (learnable mixture over 1..K hops), self-supervised reconstruction, plug-and-play | purifier |
+| `rgcn` | RGCN, KDD 2019 | Gaussian latent + variance penalty | classifier |
 
-Same protocol, same attacked graphs, same seeds as §2 (`results/robustness_cora_robust.json`):
+Both purifiers are trained **self-supervised on the clean evaluation graph** (test
+edges removed, so they cannot re-insert held-out positives), see no attacked graph
+during training, and are applied to the *inference* graph only. Everything else -
+split, predictor weights, scored pairs - is held fixed, so `rf@50%` and
+`rf@50%|gddm` are a **paired** comparison on the same trained model.
 
-| model | clean | rf@50% | dice@50% | ea@50% | rel. drop (rf / dice / ea) |
-|---|---:|---:|---:|---:|---|
-| gcn | 0.832 ± 0.022 | 0.787 | 0.780 | 0.817 | −5.4% / −6.3% / −1.8% |
-| sgdiff | 0.769 ± 0.021 | 0.657 | 0.674 | 0.740 | −14.6% / −12.4% / −3.8% |
-| seal | 0.768 ± 0.014 | 0.705 | 0.693 | 0.738 | −8.2% / −9.8% / −3.9% |
-| rgcn_novar | 0.758 ± 0.023 | 0.701 | 0.674 | 0.748 | −7.5% / −11.1% / −1.3% |
-| **rgcn** | 0.754 ± 0.010 | 0.700 | 0.673 | 0.740 | −7.2% / −10.7% / −1.9% |
+### 5.1 A purifier can only be as good as its edge discrimination
 
-Reading:
+Measured on Cora (clean 4 486 edges, RF-50 % graph 4 694 edges, 28 % of them
+injected):
 
-1. **No robustness advantage.** RGCN's relative drops sit between GCN's
-   (−5/−6/−2) and SEAL's (−8/−10/−4), and it loses 7.8 clean AUC points to GCN.
-   At every attack budget a plain GCN scores 0.09-0.12 AUC higher than RGCN.
-2. **The variance penalty is inert.** `rgcn` vs `rgcn_novar` differ by ≤0.006 AUC
-   in every cell; tripling the schedule (`--node-pair-epochs 1000`,
-   `results/robustness_cora_rgcn1000.md`) moves clean AUC only 0.754 -> 0.755.
-   Whatever robustness the paper reports does not survive this implementation
-   (single Gaussian head + mean-sigma penalty rather than per-layer variances
-   with a KL to a prior) or this evasion setup.
-3. **SGDiff remains the least robust model** in relative terms, 2-3x GCN's
-   degradation, and the only one whose Hit@100 advantage does not survive.
-4. **Purification defences are not viable on Cora.** The Jaccard pre-filter of
-   Wu et al. (2019) would drop 47% of Cora's edges before any attack
-   (median edge Jaccard 0.022; 47.3% of edges below 0.01), so the defence cannot
-   be evaluated without destroying the clean graph; it is rejected on
-   measurement rather than implemented as a straw man.
+| purifier | AUC at telling clean edges from random pairs | precision after purification | recall of true edges |
+|---|---:|---:|---:|
+| `gddm` | 0.724 | 0.762 (from 0.719) | 0.60 |
+| `gpr` | 0.993 (transductive memorisation) | 0.939 | 0.47 |
 
-Reproduce:
+The trade-off is the whole story: to raise precision from 0.72 to 0.94 the GPR
+purifier has to delete **half of the true edges**. For link prediction that is
+fatal - the enclosing sub-graphs lose the structure the predictors read.
 
-```bash
-python scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2 \
-    --models gcn rgcn rgcn_novar sgdiff seal --tag robust
-python scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2 \
-    --models rgcn rgcn_novar --node-pair-epochs 1000 --tag rgcn1000
-```
+### 5.2 Result: purification makes every model worse
+
+Cora, `cpu` profile, seeds 0-2, AUC (`results/robustness_cora_purify2.md`):
+
+| model | clean | rf@25% | dice@25% | rf@50% | dice@50% | clean +gddm | rf@50% +gddm | dice@50% +gddm | clean +gpr | rf@50% +gpr | dice@50% +gpr |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| gcn | 0.832 | 0.812 | 0.812 | 0.787 | 0.780 | 0.819 | 0.774 | 0.773 | 0.828 | 0.758 | 0.753 |
+| rgcn | 0.755 | 0.721 | 0.727 | 0.702 | 0.675 | 0.752 | 0.669 | 0.651 | 0.756 | 0.638 | 0.595 |
+| sgdiff | 0.750 | 0.681 | 0.694 | 0.618 | 0.624 | 0.732 | 0.590 | 0.612 | 0.743 | 0.576 | 0.546 |
+
+Every one of the 18 defended cells is below its undefended counterpart (-0.005 to
+-0.072 AUC). The purifiers cost accuracy even on the **clean** graph
+(-0.003 to -0.018), i.e. they are not free insurance.
+
+Two mechanisms, both measured rather than assumed:
+
+1. **The attack flips edges.** RF/DICE at 50 % *remove* about a quarter of the
+   true edges while inserting a similar number, so the graph's edge count barely
+   moves (4 486 -> 4 694). A purifier that mainly deletes therefore cannot restore
+   the missing half of the damage, and the deletion it does perform is dominated by
+   true edges (recall 0.47-0.60).
+2. **Purifiers are transductive.** The GPR auto-encoder separates clean from random
+   pairs at AUC 0.993 on the graph it was trained on, but inserting noise edges
+   shifts its GPR-propagated embeddings and the calibrated threshold then removes
+   true edges. More steps make it worse, so the reported runs use a single step.
+
+### 5.3 The 2019 robust classifier does not help either
+
+`rgcn` (clean 0.755) is 7.7 AUC points below plain GCN and degrades slightly faster
+under RF-50 % (-7.0 % vs -5.4 %). Its variance penalty is inert: `rgcn` vs
+`rgcn_novar` differ by <=0.006 AUC in every cell, and a 1000-epoch budget changes
+nothing (`results/robustness_cora_rgcn1000.md`).
+
+### 5.4 Reproducibility: one fix, one residual limit
+
+The harness used to seed **once per seed** and then train models in list order, so
+the RNG stream a model saw depended on how many models (and purifiers) ran before
+it. `run_robustness` now calls `set_seed(seed)` **before every model fit and every
+scoring call**, so a model's numbers no longer depend on the model list.
+
+That fix does not make SGDiff bit-reproducible. Two runs of the same
+single-seed protocol still differ (clean AUC 0.7031 vs 0.7167 for seed 0), and the
+~0.013 gap is **device-level**: the sparse message passing accumulates with
+`Tensor.index_add_`, whose atomic ordering is non-deterministic on MPS, so the same
+weights produce slightly different logits. Consequences:
+
+* seeds fix the *data* and the *initialisation*, not the floating-point order;
+* use `--device cpu` when an exact repeat matters (slower, deterministic for these
+  kernels);
+* treat SGDiff's absolute AUC as +/-0.02 and prefer paired cells from one run,
+  which is what the tables above do.
 
 ## 6. How to reproduce / extend
 
@@ -207,6 +240,11 @@ python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5 --attack-m
 # a single checkpoint, no retraining
 python -m sgdiff evaluate --checkpoint runs/cora_seed0_cpu/best.pt --attack ea --ratio 0.1
 python examples/04_attack.py --checkpoint runs/cora_seed0_cpu/best.pt --attacks rf dice ea
+
+# 2025-2026 purifiers: every attack is scored with and without the defence
+python scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2 \
+    --models gcn rgcn sgdiff --attacks rf dice --ratios 0.25 0.5 \
+    --defense gddm gpr --purifier-epochs 200 --tag purify2
 ```
 
 Other datasets work the same way; EA is dense (`n^2` floats) so Pubmed
@@ -231,15 +269,13 @@ downgraded, while Citeseer (3 327), USAir (332) and NS (1 589) fit under
    of a comparison share that budget; `--profile full` raises it.
 5. The 500-pairs-per-class cap is applied to every variant identically; the full
    test split is available with `--max-pairs 0`.
-6. **Two artifacts, same protocol, different SGDiff anchor.** §2 comes from
-   `results/robustness_cora.{json,md}` (7 models, 15:33) and §5 from
-   `results/robustness_cora_robust.{json,md}` (5 models, 17:50). Both use
-   identical settings, yet SGDiff's clean column differs (0.737 vs 0.769; seed 0
-   alone: 0.699 vs 0.793) while GCN and SEAL agree within 0.004. With 8 epochs
-   SGDiff is the least reproducible model in the zoo, so compare rows **within**
-   one table and treat its absolute AUC as ±0.03. The direction of the
-   robustness finding is identical in both runs (SGDiff loses 15-19% under
-   RF-50%).
+6. **Seeding changed mid-project.** Before the fix in §5.4 the SGDiff anchor
+   moved between runs of the same protocol (0.737 / 0.769 / 0.750) because the
+   RNG stream depended on the model list; the residual +/-0.013 is MPS atomics
+   (see §5.4). Artifacts predating the fix
+   (`robustness_cora.md`, `robustness_cora_robust.md`, `_rgcn1000`) are internally
+   consistent but not comparable with `_purify2`; use `_purify2` for cross-model
+   claims.
 7. RGCN deviations from the paper: one Gaussian head over the final layer and a
    `mean(sigma)` penalty instead of per-layer variances with a KL to a prior;
    no per-dataset tuning of `lr`/`var_weight`/`hidden_dim`.

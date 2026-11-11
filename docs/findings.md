@@ -69,22 +69,30 @@ random-flip and DICE, and it is the only model whose AUC falls below 0.70. Its
 robust" claim has to be made against a baseline set, and against this one it
 does not hold.
 
-A **robust-by-design** baseline was added to test whether the paper simply
-picked weak baselines (`docs/robustness.md` §5, same protocol, 3 seeds):
+Defences were then tested properly, with the 2025-2026 line rather than a 2019
+model: **GDDM** (KDD 2026) and **GPR-GAE** (ICML 2025) purify the inference graph
+before any predictor scores it, and **RGCN** (KDD 2019) is kept as the historical
+anchor (`docs/robustness.md` §5, paired runs, 3 seeds):
 
-| model | clean | rf@50% | dice@50% | ea@50% | rel. drop (rf / dice / ea) |
-|---|---:|---:|---:|---:|---|
-| gcn | 0.832 | 0.787 | 0.780 | 0.817 | −5.4% / −6.3% / −1.8% |
-| sgdiff | 0.769 | 0.657 | 0.674 | 0.740 | −14.6% / −12.4% / −3.8% |
-| seal | 0.768 | 0.705 | 0.693 | 0.738 | −8.2% / −9.8% / −3.9% |
-| rgcn (Zhu et al., KDD 2019) | 0.754 | 0.700 | 0.673 | 0.740 | −7.2% / −10.7% / −1.9% |
-| rgcn, no variance penalty | 0.758 | 0.701 | 0.674 | 0.748 | −7.5% / −11.1% / −1.3% |
+| model | clean | rf@50% | dice@50% | clean +gddm | rf@50% +gddm | dice@50% +gddm | clean +gpr | rf@50% +gpr | dice@50% +gpr |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| gcn | 0.832 | 0.787 | 0.780 | 0.819 | 0.774 | 0.773 | 0.828 | 0.758 | 0.753 |
+| rgcn (2019) | 0.755 | 0.702 | 0.675 | 0.752 | 0.669 | 0.651 | 0.756 | 0.638 | 0.595 |
+| sgdiff | 0.750 | 0.618 | 0.624 | 0.732 | 0.590 | 0.612 | 0.743 | 0.576 | 0.546 |
 
-Robust-by-design does **not** rescue the picture: RGCN is worse than plain GCN
-both clean and attacked, and its variance penalty changes nothing (≤0.006 AUC
-everywhere, unchanged at a 1000-epoch budget). The Jaccard purification defence
-is not viable on Cora at all: 47% of its edges have Jaccard < 0.01, so the
-defence would delete half the clean graph before any attack.
+Three findings, all measured:
+
+1. **Purification lowers accuracy everywhere** - all 18 defended cells are below
+   their undefended counterpart, including on the clean graph. The reason is
+   measurable rather than mysterious: to raise edge precision from 0.72 to 0.94 the
+   GPR purifier has to delete half of the true edges, and RF/DICE remove as many
+   edges as they insert, so deletion-dominated purification cannot restore the
+   damage.
+2. **A 2019 robust classifier is not a fix either**: RGCN is 7.7 points below plain
+   GCN clean and degrades slightly faster under RF-50 %; its variance penalty
+   changes <=0.006 AUC.
+3. **Plain GCN stays the most robust option** at every budget tested, and SGDiff is
+   the least robust in relative terms (-17.6 % under RF-50 % here).
 
 ## 4. Why: the likelihood audit
 

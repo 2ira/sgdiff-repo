@@ -14,9 +14,9 @@ JSON (split / sub-graph fingerprints + per-model metrics). Protocol and caveats:
 `docs/benchmark.md`.
 
 `robustness_<dataset>.md` is the RF / DICE / EA evasion table produced by
-`scripts/run_robustness.py`. Tagged variants: `_robust` (the five-model
-comparison that includes the RGCN baselines) and `_rgcn1000` (the same RGCN
-arms at a 1000-epoch budget). Interpretation: `docs/robustness.md` §5.
+`scripts/run_robustness.py`. Tagged variants: `_robust` (five-model comparison with the RGCN baselines), `_rgcn1000`
+(RGCN at a 1000-epoch budget) and `_purify2` (the 2025-2026 purifiers GDDM /
+GPR-GAE, paired defended vs undefended cells; this is the current reference). Interpretation: `docs/robustness.md` §5.
 
 `ablation_<dataset>.md` is the likelihood audit produced by
 `scripts/run_ablation.py` (condition shuffle, DRNL shuffle, single-step and

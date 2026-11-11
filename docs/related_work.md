@@ -92,23 +92,29 @@ prompting rather than through a dataset-independent structural prior.
 | **AtlasULP** | 2026-11-05 | relation-atlas (global + local) descriptors for universal link prediction with domain-guided prompting | planned: competitor to C1 |
 | **S3GRL / ELPH / BUDDY** | 2023 | simplified sub-graph message passing, sub-graph sketching, precomputed structure features | S3GRL-style speed reference only |
 
-## 7b. Attack-robustness baselines (for RQ3 comparisons)
+## 7b. Attack-robustness: the 2025-2026 line moved to *purification*
 
-None of the 2025-2026 entries above is an *attack-robust* link predictor: DiffHGLP
-and DiffGraph are heterogeneous-graph models, FSD-CAP/GGDIFF address feature
-missingness and conditional guidance, GCCM addresses the conditioning shortcut.
-The robustness literature the paper's Sec. 4.4 competes with is the GNN-defence
-line, so two canonical entries are tracked and measured here:
+None of the 2025-2026 entries above is an attack-robust link predictor (DiffHGLP
+and DiffGraph are heterogeneous, FSD-CAP/GGDIFF handle feature missingness and
+guidance, GCCM handles the conditioning shortcut). But the defence literature
+itself changed direction after 2024: instead of training a robust classifier, it
+**purifies the input graph and leaves the predictor untouched**. Three
+representatives, all recent:
 
-| work | idea | status in this repo |
-|------|------|---------------------|
-| **RGCN** (Zhu et al., KDD 2019) | Gaussian latent per node, reparameterised sampling, variance penalty | **implemented** (`models/baselines/robust.py`), `rgcn` + `rgcn_novar` ablation |
-| **GCN-Jaccard** (Wu et al., 2019, arXiv:1903.01610) | drop edges whose Jaccard similarity is below a threshold before message passing | rejected on measurement: 47% of Cora's edges fall below 0.01, the clean graph would be destroyed |
+| work | venue | idea | status here |
+|------|-------|------|-------------|
+| **GDDM** (He et al.) | KDD 2026, arXiv:2501.11568 | "noise = edges": a level-conditioned denoiser is trained on corrupted graphs, and the reverse chain removes implausible edges and inserts plausible ones. Structure-driven refiner keeps the graph in scope; a node-feature-constrained regularizer strips residual impurities. | **implemented** (`models/defense.py::EdgeDenoiser`, `purify_graph`) |
+| **GPR-GAE** (Lee & Park) | ICML 2025, arXiv:2605.23239 | self-supervised graph auto-encoder whose encoder is a generalized-PageRank filter bank; multi-step, plug-and-play purification before any GNN | **implemented** (`models/defense.py::GPRGAE`) |
+| **ProGAP** (Xue et al.) | arXiv:2608.29054, 2026 | transferable purification via vulnerability-aware graph prompt learning (1-9% over SOTA, up to 2.2x faster) | not implemented: needs a prompt-learning stack |
 
-Measured verdict (`robustness.md` §5, Cora, 3 seeds): RGCN is **not** more robust
-than a plain GCN here — −7.2% vs −5.4% AUC under RF-50%, and 7.8 points worse in
-absolute terms; the variance penalty changes nothing (`rgcn` ≈ `rgcn_novar`).
-SGDiff stays the least robust model of the comparison (−14.6%).
+Historical anchors, kept only for continuity: **RGCN** (Zhu et al., KDD 2019;
+`rgcn` in the zoo) and **GCN-Jaccard** (Wu et al., 2019; rejected on measurement,
+47% of Cora's edges fall below Jaccard 0.01).
+
+Measured verdict: see [`robustness.md`](robustness.md) §5 - a 2019 robust
+classifier does not beat plain GCN, and the 2025-2026 purifiers, implemented
+faithfully, *lower* AUC on Cora in the evasion setting because they delete true
+edges faster than they remove injected ones.
 
 ## 8. Surveys
 
