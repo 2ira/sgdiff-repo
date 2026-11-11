@@ -111,12 +111,34 @@ Key switches:
 ## 4. Experiment runner
 
 ```bash
-python scripts/run_experiments.py --datasets cora citeseer usair ns pubmed --seeds 0 1 2 --profile cpu
+python scripts/run_experiments.py --datasets cora citeseer usair ns pubmed --seeds 0 1 2 --profile full
+python scripts/run_experiments.py --datasets pubmed --seeds 0 --profile full --set data.max_train_pairs=8000
 python scripts/run_experiments.py --transfer cora --targets citeseer pubmed usair ns
+python scripts/run_experiments.py --transfer-matrix \
+    --datasets cora citeseer pubmed usair ns --targets cora citeseer pubmed usair ns \
+    --seeds 0 1 2 --profile cpu
 python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
 python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5
 ```
 
-`--profile paper` uses the full Table-4 budget, `--profile cpu` the reduced one.
-Per-run metrics are written to `results/*.json`, aggregates (mean/std over seeds)
-to `results/summary_*.json`.
+`--profile paper` uses the full Table-4 budget (GPU), `--profile full` the
+CPU-feasible Table-4 data with 20 epochs / 8 MC steps / 60-node cap, and
+`--profile cpu` the smallest budget. `--set KEY=VALUE ...` adds arbitrary config
+overrides on top of the chosen profile.
+
+`--transfer-matrix` trains every `--datasets` entry once per seed (structure only,
+own `runs/transfer_src_*` directory) and evaluates it on every `--targets` entry
+with two extraction variants: `source_ns` (the source's Table 4 `ns` everywhere —
+true zero-shot) and `target_ns` (the target's own `ns`). The diagonal is taken
+from the in-domain grid and excluded from the averages; `--max-pairs` caps
+**per class** and defaults to the full test split. Output:
+`results/transfer_matrix_<profile>.json`.
+
+Per-run metrics are written to `results/<dataset>_seed<k>_<profile>.json`.
+`summary_indomain_<profile>.json` is rewritten by every invocation, so when the
+grid is run in batches rebuild it from the per-seed files:
+
+```bash
+python scripts/collect_results.py --merge full   # -> results/summary_indomain_full.json
+python scripts/collect_results.py --write       # -> results/RESULTS.md
+```

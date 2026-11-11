@@ -39,11 +39,15 @@ class Trainer:
         config: ExperimentConfig,
         device=None,
         run_dir: Optional[str | Path] = None,
+        train_ablation=None,
     ) -> None:
         self.model = model
         self.cfg = config
         self.device = torch.device(device) if device is not None else resolve_device(config.train.device)
         self.model.to(self.device)
+        # Optional scoring-time ablation applied *only* to the diffusion losses
+        # (see engine/ablation.py); the fusion cross-entropy keeps the true label.
+        self.train_ablation = train_ablation
 
         name = config.train.run_name or f"{config.data.name}-{int(time.time())}"
         self.run_dir = ensure_dir(Path(run_dir or config.train.run_dir) / name)
@@ -144,11 +148,15 @@ class Trainer:
         self.model.train()
         totals = {"loss": 0.0, "structure": 0.0, "feature": 0.0, "ce": 0.0}
         count = 0
+        skipped = 0
         for step, batch in enumerate(loader):
             if max_steps is not None and step >= max_steps:
                 break
             batch = batch.to(self.device)
-            losses = self.model.diffusion_losses(batch)
+            diffusion_batch = (
+                self.train_ablation.apply_to_condition(batch) if self.train_ablation is not None else batch
+            )
+            losses = self.model.diffusion_losses(diffusion_batch)
             w_s, w_f = self.cfg.structure.weight, self.cfg.feature.weight
 
             if stage == "pretrain":
@@ -165,6 +173,14 @@ class Trainer:
 
             main_opt.zero_grad(set_to_none=True)
             fusion_opt.zero_grad(set_to_none=True)
+            if not torch.isfinite(loss):
+                # A single non-finite loss used to be written straight into the
+                # parameters, after which every later epoch logged NaN and the
+                # checkpoint scored below chance (NS seed 1).  Drop the update
+                # instead of poisoning the run.
+                skipped += 1
+                LOGGER.warning("non-finite loss in %s step %d; skipping update", stage, step)
+                continue
             loss.backward()
             if self.cfg.train.grad_clip:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.train.grad_clip)
@@ -178,7 +194,10 @@ class Trainer:
             totals["ce"] += float(ce_value.detach())
             count += 1
 
-        return {k: v / max(count, 1) for k, v in totals.items()}
+        metrics = {k: v / max(count, 1) for k, v in totals.items()}
+        if skipped:
+            metrics["skipped"] = float(skipped)
+        return metrics
 
     # -------------------------------------------------------------- evaluation
     @torch.no_grad()

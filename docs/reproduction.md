@@ -25,59 +25,193 @@ The parameter-by-parameter mapping is in [`alignment.md`](alignment.md).
 * `--profile paper` — Table 4 exactly: full training split, all `ds_t` Monte-Carlo
   steps, no sub-graph size cap. Needs a GPU (a 1-hop Cora sub-graph of a hub node
   easily exceeds 150 nodes, so the transformer attention is the bottleneck).
+* `--profile full` — Table-4 data and hyper-parameters with a longer, still
+  CPU-feasible schedule: full training split, `20` epochs (4 pre-train),
+  `8` Monte-Carlo steps, `60`-node cap, evaluation every 4 epochs.
 * `--profile cpu` — same architecture, schedule and scoring rule, with
   `2 000` training pairs, `8` epochs (3 pre-train), `4` Monte-Carlo steps and a
-  `40`-node sub-graph cap. This is what produced the numbers below.
+  `40`-node sub-graph cap.
 
-## 3. Measured results (CPU profile, 3 seeds unless stated)
+Sections 3 and 5 report `full` numbers (Pubmed excepted, see §6.6); section 4
+(the research questions) uses `cpu` for the reason given at its top. The `cpu`
+in-domain numbers are kept in `results/summary_indomain_cpu.json`.
 
-In-domain link prediction (mean ± std over seeds):
+## 3. Measured results (`full` profile, 3 seeds unless stated)
+
+In-domain link prediction (mean ± std over seeds). Source:
+`results/summary_indomain_full.json`, rebuilt from the per-seed runs with
+`python scripts/collect_results.py --merge full`.
 
 | dataset | AUC | AP | Hit@100 | paper (clean AUC) |
 |---------|-----|----|---------|-------------------|
-| Cora | 0.751 ± 0.017 | 0.809 ± 0.014 | 0.960 | 0.884 |
-| Citeseer | 0.738 ± 0.019 | 0.787 ± 0.022 | 0.903 | 0.871 |
-| Pubmed | 0.822 (seed 0) | 0.821 | 0.830 | 0.951 |
-| USAir | 0.929 ± 0.004 | 0.923 ± 0.006 | 0.960 | ~0.95 |
-| NS | 0.964 ± 0.006 | 0.973 ± 0.004 | 1.000 | ~0.97 |
+| Cora | 0.730 ± 0.030 | 0.794 ± 0.014 | 0.973 | 0.884 |
+| Citeseer | 0.778 ± 0.016 | 0.814 | 0.937 | 0.871 |
+| Pubmed | 0.827 (seed 0, 8 000 pairs) | 0.817 | 0.900 | 0.951 |
+| USAir | 0.929 ± 0.002 | 0.924 | 0.967 | ~0.95 |
+| NS | 0.985 ± 0.002 | 0.987 | 1.000 | ~0.97 |
 
-Paper values are the clean-Cora/Citeseer/Pubmed AUC column of Table 2 (the RF
-25% column is within ~1 point of clean) and the USAir/NS in-domain AUC of
-Figure 2. The attribute-free graphs (USAir, NS) match the paper; the citation
-graphs are 10-13 points lower under the CPU budget.
+Paper values are the clean-AUC column of Table 2 (the RF 25% column is within
+~1 point of clean) and the USAir/NS in-domain AUC of Figure 2. The
+attribute-free graphs (USAir, NS) match or beat the paper; the citation graphs
+stay below it, Cora by 15 points and Citeseer by 9.
+
+Moving from `cpu` to `full` (all training pairs, 20 epochs, 8 MC steps, 60-node
+cap) buys **+4.0** points on Citeseer (0.738 → 0.778) and **+2.1** on NS,
+nothing measurable on USAir, and **-2.1** on Cora, where the per-seed spread
+(0.690 / 0.736 / 0.763) swamps the difference between profiles: on Cora the
+extra budget buys variance, not accuracy.
+
+A data-identical comparison against the baselines (same split, same sub-graphs,
+verified by fingerprints) lives in [`benchmark.md`](benchmark.md). On the same
+Cora CPU budget SGDiff reaches AUC 0.731 / AP 0.793 / Hit@100 0.950 versus
+GCN 0.830 / 0.835 / 0.930, so the Hit@100 ranking is where the generative
+scoring pays off at this budget.
+
+The likelihood itself is audited in [`ablation.md`](ablation.md): the score does
+depend on the link condition (AUC 0.725 -> 0.500 when both classes share it),
+but a single diffusion step is as good as the full Monte-Carlo average (0.7298
+at `t = 0.05T` vs 0.7179 for the MC average on the full training split),
+permuting the DRNL labels costs nothing (0.7288 shuffled vs 0.7179), and the
+feature stream contributes 0.000 of the logit variance while still carrying
+`eta_1 = 0.61` (`feature_only` = 0.467, score std 0.004). Training stage 1 with
+a randomized condition and freezing the denoisers drops AUC to chance, while
+leaving them unfrozen recovers 0.720 - the fusion cross-entropy, not the
+conditional likelihood, is what separates the classes.
 
 ### Where the gap comes from
 
-1. **k = 1 sub-graphs.** With the target edge removed, a 1-hop sub-graph of a
-   Cora positive contains the two endpoints and their (mostly disjoint)
-   neighbourhoods; common-neighbour AUC on this split is 0.733, so the task is
-   much harder than the 2-hop setting used by SEAL. Ablation (same CPU budget,
-   Cora, seed 0): `hops=2` reaches **0.859-0.878** AUC versus 0.726-0.75 with
-   `hops=1`.
-   Table 4 specifies `k = 1`; the config exposes both.
-2. **Training pairs.** 2 000 of 4 222 positives (plus 2 000 negatives) instead of
-   the full split.
-3. **Finetune epochs.** 5 (of 8) versus an unspecified, larger budget in the
-   paper; validation AUC is still rising when the run stops.
-4. **Monte-Carlo steps.** 4 of 20 at inference; on a fixed checkpoint this
-   changes AUC by <0.02 (0.789 / 0.772 / 0.780 for 4 / 8 / 20 samples).
+The gap only exists on the **attributed** graphs; USAir and NS (no features)
+match the paper. That points at the feature stream, and the feature stream is
+provably broken here — see item 1.
+
+0. **The feature branch never learns.** For every attributed run the DDPM loss is
+   `1.0000 ± 0.0003` across all epochs, i.e. `eps_theta ≡ 0` and the feature
+   likelihood is a constant, so the fusion can only use the structure branch.
+   Cause: `eps` has `feature_dim` dimensions (1 433 for Cora) but passes through
+   `feature_dim → hidden_dim` (256) before the output, so it cannot be
+   reconstructed; the trivial predictor is the optimum. Measured variant: adding a
+   per-feature `sqrt(1-ā)·x_t` skip lets the loss fall to 0.69 (it was pinned at
+   1.00) but Cora AUC *drops* from 0.736 to 0.704 — at this budget the branch is
+   uninformative whatever it does, so the skip was reverted and the finding kept
+   in the bug journal. Quantitatively: `feature_only` AUC is 0.467 and the feature
+   stream explains 0.000 of the logit variance (`docs/ablation.md`).
+1. **`k = 1` is not the reason we differ from the paper.** Table 4 sets `k = 1`
+   for every dataset, and the config matches it. What `k = 1` explains is why we
+   sit below SEAL's *2-hop* numbers (ablation, CPU budget, Cora seed 0: `hops=2`
+   reaches 0.859-0.878 versus 0.726-0.75 at `hops=1`), and why the 1-hop task is
+   hard at all (common-neighbour AUC on this split is 0.733).
+2. **Sub-graph cap.** The paper keeps whole 1-hop neighbourhoods (Cora hubs exceed
+   150 nodes); `full` caps them at 60 nodes, `cpu` at 40. This is the largest
+   remaining structural deviation and it hits Cora hardest.
+3. **Monte-Carlo steps.** 8 of the 20 (`ds_t`) steps at inference; on a fixed
+   checkpoint this changes AUC by <0.02 (0.789 / 0.772 / 0.780 for 4 / 8 / 20
+   samples). The ablation shows a *single* step is as good as the full average,
+   so this is not the explanation either.
+4. **Pubmed training pairs.** 8 000 of ~62 000 (positives + negatives). At the
+   full split a single fine-tuning epoch takes ~18 min on this CPU (≈6 h per
+   seed), so the cap is a compute safeguard, not a protocol choice.
+5. **Schedule length.** 20 epochs (4 pre-train) is our choice; the paper reports
+   neither number. Cora validation AUC is still moving at epoch 19 (0.750 at
+   epoch 15, 0.772 at 19), so ~2-4 points on Cora are plausibly schedule, not
+   method.
+6. **Unreported optimisation.** Batch 32 / Adam `1e-3` / fusion `1e-2` are ours.
+   The paper states none of them, and stage 2 is exactly where the discriminative
+   signal is created (`docs/ablation.md`), so this is not a neutral choice.
+
+Bottom line: the gap is *not* explained by any single documented deviation. The
+one defect we could reproduce (dead feature branch) does not move AUC when
+repaired, so the honest status of the attributed graphs is **unreproduced, with
+the cause narrowed to the likelihood formulation of the feature/step-2 stages
+rather than to the data, the split or the sub-graph extraction** — SEAL reaches
+0.855 on the very same 1-hop sub-graphs (`docs/benchmark.md`), so the information
+is present in our inputs.
 
 ## 4. Research questions
 
+RQ1-RQ3 repeat the same protocol but were measured with the `cpu` profile:
+they need a fresh training run per seed/ratio combination, and the `full`
+schedule would turn each of them into a multi-hour job. The qualitative
+comparisons below are unaffected (all arms of a comparison share one budget).
+
 ### RQ1 - zero-shot cross-dataset transfer (Sec. 4.2)
 
-Trained on Cora **without node features** (`feature.enabled=false`), evaluated
-on every other dataset without any retraining:
+Protocol: every source is trained **once per seed** without node features
+(`feature.enabled=false`) and then scored on every target's own test split, using
+the **full test set** and seeds 0-2 (`cpu` profile). Router is not
+redistributable, so the matrix is 5×5 — 5 of the paper's 6 graphs. The diagonal
+(source = target) is in-domain, taken from `summary_indomain_cpu.json` and
+**excluded** from both averages. Command:
 
-| target | AUC | AP | paper trend |
-|--------|----:|---:|-------------|
-| Citeseer | 0.733 | 0.782 | SGDIFF transfers best from large sources |
-| Pubmed | 0.830 | 0.849 | |
-| USAir | 0.800 | 0.715 | the weakest target for SGDIFF in the paper |
-| NS | 0.947 | 0.964 | |
+```bash
+python scripts/run_experiments.py --transfer-matrix \
+    --datasets cora citeseer pubmed usair ns --targets cora citeseer pubmed usair ns \
+    --profile cpu --seeds 0 1 2      # -> results/transfer_matrix_cpu.json
+```
 
-The structure branch transfers well even though the feature branch is disabled,
-which is the qualitative claim of Sec. 3.2.
+Test-set sizes: Cora 792, Citeseer 683, Pubmed 6 649, USAir 319, NS 411
+(positives; negatives are equal in number).
+
+Two extraction variants, because the paper does not say which `ns` is used at
+test time:
+
+* **`source_ns`** — the source's Table 4 `ns` applies to every target. This is
+  the strict "no target knowledge at all" reading.
+* **`target_ns`** — the target's own Table 4 `ns`. Zero-shot in weights, but the
+  extraction statistics of the target are assumed known.
+
+AUC, mean ± std over seeds 0-2 (`results/transfer_matrix_cpu.json`):
+
+**`source_ns`**
+
+| source \ target | Cora | Citeseer | Pubmed | USAir | NS | source avg |
+|---|---:|---:|---:|---:|---:|---:|
+| Cora | — | 0.695 ± 0.023 | 0.847 ± 0.011 | 0.814 ± 0.011 | 0.942 ± 0.003 | 0.824 |
+| Citeseer | 0.768 ± 0.012 | — | 0.793 ± 0.028 | 0.837 ± 0.036 | 0.953 ± 0.003 | **0.838** |
+| Pubmed | 0.692 ± 0.028 | 0.601 ± 0.020 | — | 0.807 ± 0.009 | 0.870 ± 0.063 | 0.742 |
+| USAir | 0.737 ± 0.040 | 0.683 ± 0.041 | 0.684 ± 0.100 | — | 0.933 ± 0.017 | 0.759 |
+| NS | 0.718 ± 0.005 | 0.716 ± 0.004 | 0.628 ± 0.041 | 0.789 ± 0.029 | — | 0.713 |
+| **target avg** | 0.729 | 0.673 | 0.738 | 0.812 | **0.924** | |
+
+**`target_ns`**
+
+| source \ target | Cora | Citeseer | Pubmed | USAir | NS | source avg |
+|---|---:|---:|---:|---:|---:|---:|
+| Cora | — | 0.694 ± 0.015 | 0.812 ± 0.013 | 0.812 ± 0.011 | 0.911 ± 0.005 | 0.807 |
+| Citeseer | 0.777 ± 0.017 | — | 0.793 ± 0.028 | 0.849 ± 0.048 | 0.918 ± 0.015 | **0.835** |
+| Pubmed | 0.671 ± 0.047 | 0.601 ± 0.020 | — | 0.794 ± 0.012 | 0.893 ± 0.020 | 0.739 |
+| USAir | 0.737 ± 0.040 | 0.678 ± 0.045 | 0.628 ± 0.138 | — | 0.914 ± 0.007 | 0.739 |
+| NS | 0.763 ± 0.007 | 0.699 ± 0.021 | **0.494 ± 0.038** | 0.899 ± 0.016 | — | 0.714 |
+| **target avg** | 0.737 | 0.668 | 0.682 | **0.838** | 0.909 | |
+
+In-domain diagonal (same budget, for reference): Cora 0.750, Citeseer 0.738,
+Pubmed 0.817, USAir 0.929, NS 0.964.
+
+What the matrix says:
+
+1. **Transfer works, but costs 1-13 points** against the in-domain model. Best
+   case NS as a target (0.924 vs 0.964 in-domain), worst case Citeseer (0.673 vs
+   0.738) and Pubmed (0.682-0.738 vs 0.817).
+2. **It is a property of the pair, not of the model.** Pubmed → NS is
+   `0.494 ± 0.038` under `target_ns` — indistinguishable from chance — while
+   NS → NS is 0.964. The paper's "transfers without re-training" is true on
+   average (source averages 0.71-0.84) but not uniformly, and one cell collapses.
+3. **Better in-domain sources transfer *worse*.** Ranking by source average:
+   Citeseer 0.838 > Cora 0.824 > USAir 0.759 > Pubmed 0.742 > NS 0.713, which is
+   almost the reverse of the in-domain ranking (NS 0.964, USAir 0.929, Cora 0.750,
+   Pubmed 0.817). Small, high-accuracy sources overfit to their own degree
+   distribution instead of learning a transferable structural prior.
+4. **The `ns` choice is not free.** Using the target's `ns` helps the low-degree
+   targets (USAir +2.6, Cora +0.8, on the target average) and hurts Pubmed (−5.6)
+   and NS (−1.5). So "no re-training" still hides a per-dataset knob whose setting
+   the paper does not report.
+5. Structurally, the numbers reproduce the paper's *qualitative* claim (structure
+   alone carries transfer signal at all) but not its *quantitative* one: we cannot
+   show a setting in which transfer matches in-domain accuracy, except for NS as
+   a target under `source_ns`.
+
+The earlier single-source table (Cora → 4 targets, seed 0, 500 pairs/class) is
+superseded by this matrix and is kept only as
+`results/transfer_cora_seed0_cpu.json`.
 
 ### RQ2 - 1% training sub-graphs (Sec. 4.3)
 
@@ -114,9 +248,22 @@ qualitatively matching the paper's "generative models degrade less" finding
 |-------|----:|----:|
 | GCN | 0.811 | 0.826 |
 | GAT | 0.846 | 0.858 |
-| SAGE | 0.747 | 0.756 |
-| VGAE (`kl_weight=1e-3`) | 0.797 | 0.805 |
-| SEAL (3k sub-graphs, 10 epochs, 2 hops) | 0.852 | — |
+| SAGE | 0.749 | 0.758 |
+| VGAE (`kl_weight=1e-3`) | 0.798 | 0.810 |
+| SEAL (1-hop sub-graphs, 20 epochs) | 0.855 | 0.885 |
+
+Rows 1-4 come from `results/baselines_cora_full.json` and row 5 from
+`results/baselines_cora_seal.json` (`scripts/run_baselines.py --dataset cora
+--baselines gcn gat sage vgae --epochs 200`, then `--baselines seal`). Every
+model uses the same Cora split as the diffusion runs.
+
+SEAL beats SGDiff on this split (0.855 vs 0.730), and the same ordering shows up
+in the data-identical benchmark (`docs/benchmark.md`: 0.788 vs 0.731 at a shared
+short budget). Both models read the same 1-hop sub-graphs, so this is a
+modelling result, not a data leak: with `k = 1` (Table 4) a supervised sub-graph
+classifier out-scores the generative likelihood at our budget. SEAL's own
+published protocol (3 000 sub-graphs, 2 hops, ranking loss) is **not**
+reproduced here, so the two SEAL numbers are not comparable to the paper.
 
 ## 6. Known deviations
 
@@ -128,14 +275,59 @@ qualitatively matching the paper's "generative models degrade less" finding
    the tables above.
 4. Citeseer counts 4 552 undirected links versus the paper's 9 228/2 = 4 614
    because Planetoid's pickled graph has 248 self-loops and 56 asymmetric pairs.
-5. `subgraph.max_nodes_total` in the CPU profile is a compute safeguard that the
-   paper does not have.
+5. `subgraph.max_nodes_total` (60 in `full`, 40 in `cpu`) is a compute safeguard
+   that the paper does not have.
+6. Pubmed uses 8 000 of ~62 000 training pairs (`--set data.max_train_pairs=8000`);
+   the full split needs ~6 h per seed on this machine.
+7. NS seed 1 diverged to NaN under the original KL formulation. The KL term is
+   now evaluated in log-space (`sgdiff/models/structure_diffusion.py::_kl`) and
+   non-finite batches are skipped instead of being written into the weights
+   (`sgdiff/engine/trainer.py::_train_epoch`); the re-run scores 0.985 instead of
+   0.223. Cora and USAir (and NS seeds 0/2) were trained before that change,
+   Citeseer/Pubmed and the NS re-run after it. The two forms are algebraically
+   identical, so the fix only moves runs that sit in the saturated regime.
+8. The feature diffusion branch is inert (§3 item 0). The reported numbers are
+   therefore structure-only in practice, even though `feature.enabled: true` and
+   the reported config match Table 4. This is the most likely place where the
+   paper's attributed-graph accuracy is lost, and it is **not** fixed here.
+9. `make_link_split` draws train/val/test negatives with three independent
+   `seen` sets, so a test negative can also be a train negative (Cora 1/792,
+   USAir 12/319). All three sets avoid *edges*, so labels stay correct; the
+   overlap biases AUC slightly upward and was left unchanged to keep the
+   published numbers reproducible.
+
+## 6b. Where the paper is under-specified
+
+Kept separate from our own deviations because these are properties of the paper,
+and they bound how precisely anyone can call a run "reproduced" (same list as the
+English README):
+
+1. no reference implementation (the official repo is a two-line README);
+2. optimisation details, epoch counts and the two-stage schedule are not reported;
+3. tables give a single number without std, test-set size or the negative-sampling
+   rule (Sec. 4.1 mentions 10 seeds but never reports variance);
+4. RQ1 does not state whether the diagonal (source = target) is excluded from the
+   Source/Target averages;
+5. RQ1's feature handling is not neutral (no features for SGDIFF/SEAL, random
+   projection + row normalisation for VGAE, Gaussian noise for featureless graphs),
+   so the experiment measures *structural* transferability and VGAE's cross-dataset
+   score is largely noise;
+6. RQ1 "without re-training" still assumes target-side knowledge if the target's
+   Table 4 `ns` is used at test time — the paper does not say which it uses (we
+   report both, §4.1);
+7. Source/Target averages are unweighted over targets of very different difficulty
+   (per-target AUC spans 0.80-0.99 in our runs).
 
 ## 7. Reproducing
 
 ```bash
 python -m sgdiff prepare --datasets cora citeseer pubmed usair ns
-python scripts/run_experiments.py --datasets cora citeseer pubmed usair ns --seeds 0 1 2
+# in-domain grid (`full` profile); batches are fine -- `--merge` rebuilds the
+# mean/std summary from the per-seed files, which a fresh run would overwrite
+python scripts/run_experiments.py --datasets cora --seeds 0 1 2 --profile full
+python scripts/run_experiments.py --datasets usair ns --seeds 0 1 2 --profile full
+python scripts/run_experiments.py --datasets citeseer pubmed --seeds 0 --profile full
+python scripts/collect_results.py --merge full
 python scripts/run_experiments.py --transfer cora --targets citeseer pubmed usair ns
 python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
 python scripts/run_experiments.py --attack cora --ratios 0.1 0.25 0.5
@@ -159,3 +351,30 @@ mean/std are stored in `results/summary_*.json`.
   on CPU (one epoch took hours); `subgraph.max_nodes_total` fixes it.
 * The likelihood scores are Monte-Carlo estimates: evaluation fixes the RNG seed
   (`score_pairs(..., seed=0)`) so checkpoints are reproducible.
+* `log((1 - pq) / (1 - sigmoid(z)))` looks harmless but `1 - (1 - 1e-8)` is
+  exactly `0` in float32, so a confident logit gives `+inf` KL and then NaN
+  weights. On NS seed 1 one such batch was enough: every later epoch logged NaN
+  and the checkpoint scored AUC 0.223. Keep the KL in log-space
+  (`log(1 - p) = -softplus(z)`) and never optimise a non-finite loss.
+* `run_experiments.py --profile full` writes `summary_indomain_full.json` once
+  per invocation, so running the datasets in batches silently drops the earlier
+  datasets from the summary; `collect_results.py --merge <profile>` rebuilds it
+  from the per-seed files.
+* The DDPM feature branch reports `loss ≈ 1.0000` forever and nobody notices,
+  because 1.0 is exactly the MSE of predicting zero: the branch is dead, the
+  training curve looks "converged", and the fusion just down-weights it
+  (`eta_1 = 0.61`, variance share 0.000). Diagnose it by checking whether the loss
+  ever leaves 1.0, not by looking at AUC. The rank bottleneck
+  (`feature_dim → 256`) makes the noise unrecoverable; a `sqrt(1-ā)·x_t` skip
+  makes the loss fall but cost 3 AUC points on Cora, so the defect is deeper than
+  the parameterisation and is left open (`docs/reproduction.md` §3 item 0).
+* A transfer sweep that calls `_train(source, ...)` reuses the in-domain run tag,
+  so it silently overwrites `runs/<dataset>_seed<k>_<profile>/best.pt` with a
+  feature-free model (the in-domain JSON then no longer matches its checkpoint).
+  `scripts/run_experiments.py` now trains transfer sources under
+  `train.run_name=transfer_src_<src>_seed<k>_<profile>`.
+* The CLI `transfer` used to score *with* the checkpoint's feature stream by
+  randomly projecting the target attributes onto the source dimension. That is
+  the opposite of Sec. 4.2 (SGDIFF is transferred without node features) and the
+  projection carries no cross-dataset semantics; it now disables the stream and
+  warns. `--max-pairs` means *per class* in both entry points.

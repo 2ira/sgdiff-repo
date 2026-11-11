@@ -1,0 +1,220 @@
+@inproceedings{li2024sgdiff,
+  title         = {Sub-graph Based Diffusion Model for Link Prediction},
+  author        = {Li, Hang and Jin, Wei and Skenderi, Geri and Shomer, Harry and Tang, Wenzhuo and Fan, Wenqi and Tang, Jiliang},
+  booktitle     = {Proceedings of the Third Learning on Graphs Conference (LoG)},
+  series        = {Proceedings of Machine Learning Research},
+  volume        = {269},
+  year          = {2024},
+  eprint        = {2409.08487},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG}
+}
+
+% --------------------------------------------------------------------------
+% Line A: diffusion as a discriminative predictor
+% --------------------------------------------------------------------------
+@misc{ma2026gccm,
+  title         = {{GCCM}: Enhancing Generative Graph Prediction via Contrastive Consistency Model},
+  author        = {Ma, Shaozhen and Huang, Wei and Wang, Hanchen and Wen, Dong and Zhang, Wenjie},
+  year          = {2026},
+  eprint        = {2605.05689},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+  note          = {Diagnoses the shortcut of conditional diffusion graph predictors; contrastive consistency + feature perturbation}
+}
+
+@misc{diffusioncom2025,
+  title         = {{DiffusionCom}: Structure-Aware Multimodal Diffusion Model for Multimodal Knowledge Graph Completion},
+  year          = {2025},
+  eprint        = {2504.06543},
+  archivePrefix = {arXiv},
+  note          = {Joint generative + discriminative objective for p((h,r),(t))}
+}
+
+@misc{ddiff2024,
+  title         = {Improving Information Diffusion Prediction by Tackling Noise and Sparsity},
+  year          = {2024},
+  eprint        = {2410.18492},
+  archivePrefix = {arXiv},
+  note          = {Denoising module for diffusion prediction; the authors flag an error in Eq. 20}
+}
+
+% --------------------------------------------------------------------------
+% Line B: discrete / masked diffusion, set-level link prediction
+% --------------------------------------------------------------------------
+@misc{whang2026krepe,
+  title         = {Generative Representation Learning on Hyper-relational Knowledge Graphs via Masked Discrete Diffusion},
+  author        = {Whang, Joyce Jiyoung and others},
+  year          = {2026},
+  eprint        = {2605.24064},
+  archivePrefix = {arXiv},
+  note          = {KREPE; fact generation unified with link prediction (ICML 2026, unverified)}
+}
+
+@misc{difftsp2026,
+  title         = {One Pass for All: A Discrete Diffusion Model for Knowledge Graph Triple Set Prediction},
+  year          = {2026},
+  eprint        = {2604.18344},
+  archivePrefix = {arXiv},
+  note          = {Conditional discrete diffusion over masked relation states conditioned on supporting sub-graphs}
+}
+
+@misc{radd2026,
+  title         = {Retrieval-Anchored Discrete Diffusion for Multi-Modal Knowledge Graph Completion},
+  year          = {2026},
+  eprint        = {2604.25693},
+  archivePrefix = {arXiv},
+  note          = {RADD; retrieval distribution as probability anchor, coverage-aware inference}
+}
+
+@misc{latzdiff2026,
+  title         = {From Local Recovery to Unified Generation: Discovering Triple Set in Knowledge Graphs via Observation-Anchored Latent Diffusion},
+  year          = {2026},
+  eprint        = {2610.39114},
+  archivePrefix = {arXiv}
+}
+
+@misc{chen2026tagdlm,
+  title         = {{TAG-DLM}: Diffusion Language Models for Text-Attributed Graph Learning},
+  author        = {Chen, Lingjie and Bei, Yuanchen and Xu, Haobo and Zhao, Yanjun and Chen, Yuzhong and Tong, Hanghang},
+  year          = {2026},
+  eprint        = {2606.31166},
+  archivePrefix = {arXiv},
+  note          = {Masked diffusion LM with topology-aware attention; link prediction by prompt, cross-dataset transfer without fine-tuning}
+}
+
+% --------------------------------------------------------------------------
+% Line C: diffusion on graph structure
+% --------------------------------------------------------------------------
+@inproceedings{li2025diffgraph,
+  title         = {{DiffGraph}: Heterogeneous Graph Diffusion Model},
+  author        = {Li, Zongwei and Xia, Lianghao and Hua, Hua and Zhang, Shijie and Wang, Shuangyang and Huang, Chao},
+  booktitle     = {Proceedings of the 18th ACM International Conference on Web Search and Data Mining (WSDM)},
+  year          = {2025},
+  eprint        = {2501.02313},
+  archivePrefix = {arXiv}
+}
+
+@article{diffhglp2026,
+  title   = {Robust link prediction in heterogeneous graphs via diffusion-based generative fusion and relation-aware guidance},
+  journal = {Scientific Reports},
+  year    = {2026},
+  doi     = {10.1038/s41598-026-74179-y},
+  note    = {DiffHGLP}
+}
+
+@misc{qiao2026fscap,
+  title         = {{FSD-CAP}: Fractional Subgraph Diffusion with Class-Aware Propagation for Graph Feature Imputation},
+  author        = {Qiao, Xin and Sun, Shijie and Dong, Anqi and Hua, Cong and Zhao, Xia and Zhang, Longfei and Zhu, Guangming and Zhang, Liang},
+  year          = {2026},
+  eprint        = {2601.18938},
+  archivePrefix = {arXiv},
+  note          = {Fractional sub-graph diffusion for feature imputation; link prediction under 99.5\% missing features}
+}
+
+@misc{nguyen2026sdg,
+  title         = {Sequence Diffusion Model for Temporal Link Prediction in Continuous-Time Dynamic Graph},
+  author        = {Nguyen, Minh Duc and Ta, Viet Cuong},
+  year          = {2026},
+  eprint        = {2601.23233},
+  archivePrefix = {arXiv},
+  note          = {SDG; sequence-level diffusion over interaction histories}
+}
+
+@misc{ggdiff2025,
+  title         = {Graph Guided Diffusion: Unified Guidance for Conditional Graph Generation},
+  year          = {2025},
+  note          = {GGDiff; gradient / control / zeroth-order guidance, link prediction among the tasks}
+}
+
+% --------------------------------------------------------------------------
+% Line D: non-diffusion generative / energy competitors
+% --------------------------------------------------------------------------
+@misc{chen2026cpdpifm,
+  title         = {Feasible Flow Matching for Graph Reconstruction via Within-Sampling Primal-Dual Guidance},
+  author        = {Chen, Haoming and Zilberstein, Nicolas and Paternain, Santiago and Segarra, Santiago},
+  year          = {2026},
+  eprint        = {2609.32980},
+  archivePrefix = {arXiv},
+  note          = {CPD-PIFM; constrained flow matching, evaluated on link-prediction benchmarks}
+}
+
+@misc{li2025fms,
+  title         = {Flow-Modulated Scoring for Semantic-Aware Knowledge Graph Completion},
+  author        = {Li, Siyuan and Liu, Ruitong and Wen, Yan and Sun, Te and Zhang, Andi and Ma, Yanbiao and Hao, Xiaoshuai},
+  year          = {2025},
+  eprint        = {2506.23137},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{demirci2026concorde,
+  title         = {Concorde: Geometry-Aware Link Prediction via Decoupled Energy Minimization},
+  author        = {Demirci, Ege and Singh, Ambuj},
+  booktitle     = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year          = {2026},
+  eprint        = {2610.36204},
+  archivePrefix = {arXiv},
+  note          = {Energy-based; spectral anchor + mixed-curvature residual + hyperbolic vector field, N-pair ranking loss}
+}
+
+@inproceedings{nguyen2024dmns,
+  title     = {Diffusion-based Negative Sampling on Graphs for Link Prediction},
+  author    = {Nguyen, Trung-Kien and Fang, Yuan},
+  booktitle = {Proceedings of the ACM Web Conference (WWW)},
+  year      = {2024},
+  doi       = {10.1145/3589334.3645650}
+}
+
+% --------------------------------------------------------------------------
+% Line E: discriminative SOTA
+% --------------------------------------------------------------------------
+@inproceedings{truong2026pencil,
+  title         = {Plain Transformers are Surprisingly Powerful Link Predictors},
+  author        = {Truong, Quang and Song, Yu and Loveland, Donald and Ju, Mingxuan and Zhao, Tong and Shah, Neil and Tang, Jiliang},
+  booktitle     = {International Conference on Machine Learning (ICML)},
+  year          = {2026},
+  eprint        = {2602.01553},
+  archivePrefix = {arXiv},
+  note          = {PENCIL}
+}
+
+@misc{ferrini2025sp4lp,
+  title         = {{GNNs} Meet Sequence Models Along the Shortest-Path: an Expressive Method for Link Prediction},
+  author        = {Ferrini, Francesco and others},
+  year          = {2025},
+  note          = {SP4LP}
+}
+
+@misc{shao2026eognn,
+  title         = {Edge-Level Automorphism in {GNNs}: A Quantitative Framework and Effective Designs For Link Prediction},
+  author        = {Shao, Chen and others},
+  year          = {2026},
+  note          = {EO-GNN; edge orbits and the EAR metric}
+}
+
+@misc{liu2026atlasulp,
+  title         = {{AtlasULP}: Domain-aware Universal Link Prediction via Relation Atlas},
+  author        = {Liu, Yujing and others},
+  year          = {2026}
+}
+
+@misc{louis2023s3grl,
+  title         = {Simplifying Subgraph Representation Learning for Scalable Link Prediction},
+  author        = {Louis, Paul and Jacob, Shweta Ann and Salehi-Abari, Amirali},
+  year          = {2023},
+  eprint        = {2301.12562},
+  archivePrefix = {arXiv},
+  note          = {S3GRL}
+}
+
+% --------------------------------------------------------------------------
+% Surveys
+% --------------------------------------------------------------------------
+@article{shou2026surveydiffusion,
+  title   = {Graph diffusion models: A comprehensive survey of methods and applications},
+  author  = {Shou, Yuntao and Ai, Wei and Meng, Tao and Li, Keqin},
+  journal = {Computer Science Review},
+  volume  = {59},
+  year    = {2026},
+  doi     = {10.1016/j.cosrev.2025.100854}
+}

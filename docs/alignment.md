@@ -74,12 +74,13 @@ Two implementation details of the appendix are reproduced as well:
    Adam learning rates (`1e-3`, fusion `1e-2`), the 50-epoch budget and the
    two-stage schedule are our choices; every one of them is a config key.
 2. **Monte-Carlo timesteps.** Algorithm 1 averages over all `ds_t` steps
-   (`num_mc_samples: null`). The CPU profile uses 4 samples for speed; this is
-   the only change that affects the score definition.
+   (`num_mc_samples: null`). The `full` profile uses 8 samples and the `cpu`
+   profile 4 for speed; this is the only change that affects the score
+   definition.
 3. **`subgraph.max_nodes_total`.** The paper keeps whole 1-hop neighbourhoods
-   (Cora hub nodes have degree > 150), which is intractable on a laptop CPU. The
-   CPU profile caps the sub-graph at 40 nodes (`null` = unbounded, paper
-   behaviour).
+   (Cora hub nodes have degree > 150), which is intractable on a laptop CPU.
+   `full` caps the sub-graph at 60 nodes and `cpu` at 40 (`null` = unbounded,
+   paper behaviour).
 4. **Embedding attack (EA)** requires DeepRobust and is not implemented; RF and
    DICE share its interface.
 5. **Router** is not redistributable; see `data/README.md`.
@@ -88,10 +89,15 @@ Two implementation details of the appendix are reproduced as well:
 ## 5. How to run
 
 ```bash
-# paper settings (Table 4, full data, all MC steps) -- needs a GPU
+# paper settings (Table 4, full data, all MC steps, no sub-graph cap) -- needs a GPU
 python scripts/run_experiments.py --datasets cora --seeds 0 1 2 --profile paper
 
-# CPU profile: same protocol/architecture, smaller budget
+# `full`: Table-4 data and hyper-parameters, longer schedule, 8 MC steps and a
+# 60-node cap so it also finishes on a laptop CPU
+python scripts/run_experiments.py --datasets cora citeseer usair ns pubmed \
+                                  --seeds 0 1 2 --profile full
+
+# `cpu`: same protocol/architecture, smallest budget (quick sanity runs)
 python scripts/run_experiments.py --datasets cora citeseer usair ns pubmed \
                                   --seeds 0 1 2 --profile cpu
 python scripts/run_experiments.py --transfer cora --targets citeseer pubmed usair ns

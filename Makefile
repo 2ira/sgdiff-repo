@@ -2,7 +2,7 @@
 PYTHON ?= python
 CONFIG ?= configs/sgdiff_cora.yaml
 
-.PHONY: help install data test smoke train baselines experiments transfer lowdata attack clean
+.PHONY: help install data test smoke train baselines benchmark ablation experiments transfer lowdata attack clean
 
 help:  ## show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-12s %s\n", $$1, $$2}'
@@ -24,6 +24,12 @@ train:  ## train SGDiff with CONFIG=configs/xxx.yaml
 
 baselines:  ## train the baseline link predictors on Cora
 	$(PYTHON) scripts/run_baselines.py --dataset cora --epochs 60
+
+benchmark:  ## data-identical comparison of SGDiff vs baselines (Cora, CPU profile)
+	$(PYTHON) scripts/run_benchmark.py --dataset cora --profile cpu --seeds 0
+
+ablation:  ## GCCM shortcut check: is the likelihood really conditioned on y?
+	$(PYTHON) scripts/run_ablation.py --dataset cora --profile cpu --seed 0
 
 experiments:  ## in-domain grid (5 datasets x 3 seeds, CPU profile)
 	$(PYTHON) scripts/run_experiments.py --datasets cora citeseer usair ns pubmed \

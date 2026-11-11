@@ -146,6 +146,8 @@ class ExperimentConfig:
 
 
 def _coerce(raw: str, current: Any) -> Any:
+    if raw.strip().lower() in {"none", "null", "~"}:
+        return None
     if isinstance(current, bool):
         return raw.lower() in {"1", "true", "yes", "y"}
     if isinstance(current, int) and not isinstance(current, bool):

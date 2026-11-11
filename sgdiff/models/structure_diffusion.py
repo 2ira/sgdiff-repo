@@ -175,8 +175,14 @@ class StructureDiffusionModel(nn.Module):
         if logits is None:
             logits = self.edge_logits(x_t, labels, mask, y, t)
         pq = self.posterior_state1(x0, x_t, t).unsqueeze(-1)
-        p = torch.sigmoid(logits).unsqueeze(-1).clamp(EPS, 1 - EPS)
-        kl = pq * torch.log((pq + EPS) / p) + (1 - pq) * torch.log((1 - pq + EPS) / (1 - p))
+        # ``log p`` / ``log(1 - p)`` come straight from the logits: writing the
+        # KL as a difference of logs is algebraically identical to
+        # ``log((pq + eps) / p)`` but stays finite when the sigmoid saturates.
+        # Dividing by ``p ~ 1e-8`` instead produces gradients of order 1e8, which
+        # ``clip_grad_norm_`` turns into inf and then NaN (observed on NS seed 1).
+        log_p = -F.softplus(-logits).unsqueeze(-1)
+        log_1mp = -F.softplus(logits).unsqueeze(-1)
+        kl = pq * (torch.log(pq + EPS) - log_p) + (1 - pq) * (torch.log(1 - pq + EPS) - log_1mp)
 
         cmask = self.candidate_mask(mask)
         total = (kl * cmask).sum(dim=(1, 2, 3))

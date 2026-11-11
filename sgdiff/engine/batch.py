@@ -23,6 +23,9 @@ class SubgraphBatch:
     y: torch.Tensor  # (B,) link labels
     src: torch.Tensor  # (B,) global node ids
     dst: torch.Tensor  # (B,) global node ids
+    nodes: torch.Tensor  # (B, n) global ids of the sub-graph nodes (0 = padding)
+    u_idx: torch.Tensor  # (B,) local index of the source endpoint
+    v_idx: torch.Tensor  # (B,) local index of the destination endpoint
 
     @property
     def batch_size(self) -> int:
@@ -41,6 +44,9 @@ class SubgraphBatch:
             y=self.y.to(device),
             src=self.src.to(device),
             dst=self.dst.to(device),
+            nodes=self.nodes.to(device),
+            u_idx=self.u_idx.to(device),
+            v_idx=self.v_idx.to(device),
         )
 
 
@@ -61,12 +67,18 @@ def collate_subgraphs(
     x = np.zeros((b, n, feature_dim), dtype=np.float32)
     labels = np.zeros((b, n), dtype=np.int64)
     mask = np.zeros((b, n), dtype=bool)
+    nodes = np.zeros((b, n), dtype=np.int64)
+    u_idx = np.zeros(b, dtype=np.int64)
+    v_idx = np.zeros(b, dtype=np.int64)
 
     for i, sub in enumerate(subs):
         k = sub.num_nodes
         adj[i, :k, :k] = sub.adj
         labels[i, :k] = sub.labels
         mask[i, :k] = True
+        nodes[i, :k] = sub.nodes
+        u_idx[i] = sub.u_idx
+        v_idx[i] = sub.v_idx
         if sub.x is not None:
             x[i, :k] = sub.x
         else:  # structural features: one-hot DRNL label
@@ -80,6 +92,9 @@ def collate_subgraphs(
         y=torch.as_tensor(ys, dtype=torch.long),
         src=torch.as_tensor([s.src for s in subs], dtype=torch.long),
         dst=torch.as_tensor([s.dst for s in subs], dtype=torch.long),
+        nodes=torch.from_numpy(nodes),
+        u_idx=torch.as_tensor(u_idx, dtype=torch.long),
+        v_idx=torch.as_tensor(v_idx, dtype=torch.long),
     )
 
 

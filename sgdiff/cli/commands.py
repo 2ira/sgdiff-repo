@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+
+import torch
+
 from ..config import ExperimentConfig, load_config, save_config
 from ..data.attack import dice_attack, random_perturbation
 from ..data.datasets import DATASETS, available_datasets, describe_dataset, load_graph
@@ -127,6 +130,21 @@ def cmd_evaluate(args) -> dict:
 def cmd_transfer(args) -> dict:
     prepared_device = resolve_device(args.device or "auto")
     model, source_cfg = load_checkpoint(args.checkpoint, device=prepared_device)
+    if getattr(model, "feature", None) is not None:
+        # Sec. 4.2: node features are incompatible across datasets, so the paper
+        # evaluates SGDIFF structure-only.  A checkpoint trained *with* the
+        # feature stream is scored with that stream switched off (a random
+        # projection of the target attributes would be pure noise).
+        LOGGER.warning(
+            "checkpoint has a feature stream: disabling it for transfer "
+            "(the paper evaluates SGDIFF without node features)"
+        )
+        model.feature = None
+        model.feature_enabled = False
+        model.fusion.use_feature = False
+        if hasattr(model.fusion, "eta1"):
+            with torch.no_grad():
+                model.fusion.eta1.zero_()
     results = {}
     targets = args.targets or [n for n in available_datasets() if n != source_cfg.data.name]
     for target in targets:
@@ -141,14 +159,10 @@ def cmd_transfer(args) -> dict:
             seed=cfg.data.seed,
         )
         eval_graph = graph.drop_edges(split.test_pos.tolist())
-        extractor = build_extractor(
-            eval_graph, cfg, seed=cfg.data.seed + 1,
-            target_feature_dim=int(model.feature_dim),
-        )
+        extractor = build_extractor(eval_graph, cfg, seed=cfg.data.seed + 1)
         pos, neg = split.test_pos, split.test_neg
-        if args.max_pairs:
-            half = args.max_pairs // 2
-            pos, neg = pos[:half], neg[:half]
+        if args.max_pairs:  # per class, same meaning as scripts/run_experiments.py
+            pos, neg = pos[:args.max_pairs], neg[:args.max_pairs]
         metrics = evaluate_link_prediction(
             model, extractor, pos, neg, batch_size=cfg.train.eval_batch_size,
             device=prepared_device, seed=cfg.train.seed,

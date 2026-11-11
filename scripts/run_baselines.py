@@ -23,7 +23,12 @@ from sgdiff.engine.baseline_trainer import (  # noqa: E402
     train_subgraph_classifier,
 )
 from sgdiff.engine.factory import prepare_datasets  # noqa: E402
-from sgdiff.models.baselines import NodePairLinkPredictor, SEALBaseline, VGAE  # noqa: E402
+from sgdiff.models.baselines import (  # noqa: E402
+    NodePairLinkPredictor,
+    PENCILBaseline,
+    SEALBaseline,
+    VGAE,
+)
 from sgdiff.utils.io import save_json  # noqa: E402
 from sgdiff.utils.seed import set_seed  # noqa: E402
 
@@ -56,9 +61,16 @@ def main() -> int:
                 model, graph, split, device=args.device, epochs=args.epochs,
                 is_vgae=(name == "vgae"), seed=args.seed,
             )
-        elif name == "seal":
+        elif name in {"seal", "pencil"}:
             datasets = prepare_datasets(graph, split, cfg)
-            model = SEALBaseline(datasets["train"].feature_dim, num_labels=cfg.subgraph.max_label + 1)
+            if name == "seal":
+                model = SEALBaseline(
+                    datasets["train"].feature_dim, num_labels=cfg.subgraph.max_label + 1
+                )
+            else:
+                model = PENCILBaseline(
+                    datasets["train"].feature_dim, num_labels=cfg.subgraph.max_label + 1
+                )
             results[name] = train_subgraph_classifier(
                 model, datasets, device=args.device, epochs=max(args.epochs // 10, 10), seed=args.seed
             )

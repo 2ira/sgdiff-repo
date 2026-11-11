@@ -104,17 +104,7 @@ def prepare_datasets(
     train_extractor = build_extractor(train_graph, cfg)
     eval_extractor = build_extractor(eval_graph, cfg, seed=cfg.data.seed + 1)
 
-    if cfg.data.train_ratio < 1.0:
-        pos = subsample_pairs(split.train_pos, cfg.data.train_ratio, seed=cfg.data.seed)
-        neg = subsample_pairs(split.train_neg, cfg.data.train_ratio, seed=cfg.data.seed)
-    else:
-        pos, neg = split.train_pos, split.train_neg
-    train_pairs = _stack(pos, neg)
-    train_labels = _labels(len(pos), len(neg))
-    if cfg.data.max_train_pairs is not None:
-        train_pairs, train_labels = _cap_eval(
-            train_pairs, train_labels, int(cfg.data.max_train_pairs), cfg.data.seed
-        )
+    train_pairs, train_labels = training_pairs(split, cfg)
 
     datasets = {"train": PairSubgraphDataset(train_pairs, train_labels, train_extractor)}
     for name in ("val", "test"):
@@ -123,6 +113,26 @@ def prepare_datasets(
             pairs, labels = _cap_eval(pairs, labels, int(cfg.data.max_eval_pairs))
         datasets[name] = PairSubgraphDataset(pairs, labels, eval_extractor)
     return datasets
+
+
+def training_pairs(split: LinkSplit, cfg: ExperimentConfig) -> tuple[np.ndarray, np.ndarray]:
+    """The exact ``(pairs, labels)`` used to train the sub-graph models.
+
+    Applies ``data.train_ratio`` (the 1% study) and ``data.max_train_pairs``
+    (the compute cap) in the same order as :func:`prepare_datasets`.  The
+    benchmark harness reuses it so that full-graph baselines are trained on the
+    very same pairs instead of the full split.
+    """
+    if cfg.data.train_ratio < 1.0:
+        pos = subsample_pairs(split.train_pos, cfg.data.train_ratio, seed=cfg.data.seed)
+        neg = subsample_pairs(split.train_neg, cfg.data.train_ratio, seed=cfg.data.seed)
+    else:
+        pos, neg = split.train_pos, split.train_neg
+    pairs = _stack(pos, neg)
+    labels = _labels(len(pos), len(neg))
+    if cfg.data.max_train_pairs is not None:
+        pairs, labels = _cap_eval(pairs, labels, int(cfg.data.max_train_pairs), cfg.data.seed)
+    return pairs, labels
 
 
 def load_split(cfg: ExperimentConfig):
