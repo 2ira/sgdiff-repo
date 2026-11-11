@@ -61,7 +61,7 @@ sgdiff-repro/
 │   │   ├── transformer_denoiser.py  # paper's denoiser (App. A.3)
 │   │   ├── fusion.py           # Bayesian fusion, Eq. 12-13
 │   │   ├── layers.py, schedules.py
-│   │   └── baselines/          # GCN / GAT / SAGE / VGAE / SEAL / PENCIL
+│   │   └── baselines/          # GCN / GAT / SAGE / VGAE / SEAL / PENCIL / RGCN
 │   ├── engine/
 │   │   ├── factory.py          # build model/extractor, prepare datasets
 │   │   ├── batch.py            # collate sub-graph pairs

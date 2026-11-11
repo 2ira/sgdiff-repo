@@ -139,7 +139,60 @@ summary_attack_cora.json`). Same ordering and almost identical deltas; the
 0.031 anchor difference comes from the training protocol (in-domain grid vs.
 benchmark `fit_model`), not from the attacks.
 
-## 5. How to reproduce / extend
+## 5. Robust-by-design baselines: does anything actually resist?
+
+The 2025-2026 papers in [`related_work.md`](related_work.md) that talk about
+noise are **not** attack-robust link predictors: DiffHGLP and DiffGraph are
+heterogeneous-graph models, FSD-CAP and GGDIFF target feature missingness and
+conditional guidance, and GCCM targets the *conditioning* shortcut. So the
+comparison imports the canonical robust-by-design GNN instead:
+
+* `rgcn` — Bayesian robust GCN (Zhu et al., KDD 2019): Gaussian latent per node,
+  reparameterised sampling while training, `0.1 * mean(sigma)` penalty, `mu` at
+  inference. Implemented as `kind="robust_node_pair"` in
+  `models/baselines/robust.py`.
+* `rgcn_novar` — the same model with `var_weight = 0`, i.e. sampling without the
+  penalty. It isolates whether the penalty is what buys robustness.
+
+Same protocol, same attacked graphs, same seeds as §2 (`results/robustness_cora_robust.json`):
+
+| model | clean | rf@50% | dice@50% | ea@50% | rel. drop (rf / dice / ea) |
+|---|---:|---:|---:|---:|---|
+| gcn | 0.832 ± 0.022 | 0.787 | 0.780 | 0.817 | −5.4% / −6.3% / −1.8% |
+| sgdiff | 0.769 ± 0.021 | 0.657 | 0.674 | 0.740 | −14.6% / −12.4% / −3.8% |
+| seal | 0.768 ± 0.014 | 0.705 | 0.693 | 0.738 | −8.2% / −9.8% / −3.9% |
+| rgcn_novar | 0.758 ± 0.023 | 0.701 | 0.674 | 0.748 | −7.5% / −11.1% / −1.3% |
+| **rgcn** | 0.754 ± 0.010 | 0.700 | 0.673 | 0.740 | −7.2% / −10.7% / −1.9% |
+
+Reading:
+
+1. **No robustness advantage.** RGCN's relative drops sit between GCN's
+   (−5/−6/−2) and SEAL's (−8/−10/−4), and it loses 7.8 clean AUC points to GCN.
+   At every attack budget a plain GCN scores 0.09-0.12 AUC higher than RGCN.
+2. **The variance penalty is inert.** `rgcn` vs `rgcn_novar` differ by ≤0.006 AUC
+   in every cell; tripling the schedule (`--node-pair-epochs 1000`,
+   `results/robustness_cora_rgcn1000.md`) moves clean AUC only 0.754 -> 0.755.
+   Whatever robustness the paper reports does not survive this implementation
+   (single Gaussian head + mean-sigma penalty rather than per-layer variances
+   with a KL to a prior) or this evasion setup.
+3. **SGDiff remains the least robust model** in relative terms, 2-3x GCN's
+   degradation, and the only one whose Hit@100 advantage does not survive.
+4. **Purification defences are not viable on Cora.** The Jaccard pre-filter of
+   Wu et al. (2019) would drop 47% of Cora's edges before any attack
+   (median edge Jaccard 0.022; 47.3% of edges below 0.01), so the defence cannot
+   be evaluated without destroying the clean graph; it is rejected on
+   measurement rather than implemented as a straw man.
+
+Reproduce:
+
+```bash
+python scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2 \
+    --models gcn rgcn rgcn_novar sgdiff seal --tag robust
+python scripts/run_robustness.py --dataset cora --profile cpu --seeds 0 1 2 \
+    --models rgcn rgcn_novar --node-pair-epochs 1000 --tag rgcn1000
+```
+
+## 6. How to reproduce / extend
 
 ```bash
 # the table above (7 models x 3 attacks x 3 budgets x 3 seeds, ~12 min on CPU/MPS)
@@ -161,7 +214,7 @@ Other datasets work the same way; EA is dense (`n^2` floats) so Pubmed
 downgraded, while Citeseer (3 327), USAir (332) and NS (1 589) fit under
 `EA_MAX_NODES = 4000`.
 
-## 6. Caveats
+## 7. Caveats
 
 1. **Evasion, not poisoning.** Weights are trained clean and the graph is
    perturbed at inference. Retraining on the poisoned graph is a different (and
@@ -178,3 +231,15 @@ downgraded, while Citeseer (3 327), USAir (332) and NS (1 589) fit under
    of a comparison share that budget; `--profile full` raises it.
 5. The 500-pairs-per-class cap is applied to every variant identically; the full
    test split is available with `--max-pairs 0`.
+6. **Two artifacts, same protocol, different SGDiff anchor.** §2 comes from
+   `results/robustness_cora.{json,md}` (7 models, 15:33) and §5 from
+   `results/robustness_cora_robust.{json,md}` (5 models, 17:50). Both use
+   identical settings, yet SGDiff's clean column differs (0.737 vs 0.769; seed 0
+   alone: 0.699 vs 0.793) while GCN and SEAL agree within 0.004. With 8 epochs
+   SGDiff is the least reproducible model in the zoo, so compare rows **within**
+   one table and treat its absolute AUC as ±0.03. The direction of the
+   robustness finding is identical in both runs (SGDiff loses 15-19% under
+   RF-50%).
+7. RGCN deviations from the paper: one Gaussian head over the final layer and a
+   `mean(sigma)` penalty instead of per-layer variances with a KL to a prior;
+   no per-dataset tuning of `lr`/`var_weight`/`hidden_dim`.

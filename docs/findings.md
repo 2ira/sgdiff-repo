@@ -20,7 +20,7 @@ Budgets, because several of them differ:
 |-------|-------|-------------------|----------|
 | **C1** structure alone transfers without re-training | Table 1 | **partially holds**: source averages 0.713-0.838, i.e. 1-13 points below in-domain, and one cell (Pubmed -> NS) is at chance (0.494) | `reproduction.md` §RQ1, `results/transfer_matrix_cpu.json` |
 | **C2** generative scoring wins with 1% of the labels | Fig. 2 | **holds, but is schedule-sensitive**: 0.725 ± 0.058 vs 0.751 ± 0.017 at 40 epochs; at 8 epochs the 1% run collapses to 0.49 | `reproduction.md` §RQ2 |
-| **C3** likelihood scoring is robust to structural attack | Sec. 4.4 | **reversed**: the least robust model of the seven tested | §3 below, `results/robustness_cora.md` |
+| **C3** likelihood scoring is robust to structural attack | Sec. 4.4 | **reversed**: the least robust model of the nine tested, including a robust-by-design RGCN | §3 below, `results/robustness_cora*.md` |
 | **C4** sub-graph modelling fixes automorphic nodes / memory | Sec. 2-3 | **not supported as stated** at `k = 1`: the DRNL labels carry no measurable information and the model costs 40x SEAL's parameters | §4 below, `ablation.md` |
 
 Accuracy context (in-domain, `full`, seeds 0-2): Cora 0.730 ± 0.030, Citeseer
@@ -68,6 +68,23 @@ random-flip and DICE, and it is the only model whose AUC falls below 0.70. Its
 `Hit@100` advantage from §2 does not protect it. Any "generative scoring is more
 robust" claim has to be made against a baseline set, and against this one it
 does not hold.
+
+A **robust-by-design** baseline was added to test whether the paper simply
+picked weak baselines (`docs/robustness.md` §5, same protocol, 3 seeds):
+
+| model | clean | rf@50% | dice@50% | ea@50% | rel. drop (rf / dice / ea) |
+|---|---:|---:|---:|---:|---|
+| gcn | 0.832 | 0.787 | 0.780 | 0.817 | −5.4% / −6.3% / −1.8% |
+| sgdiff | 0.769 | 0.657 | 0.674 | 0.740 | −14.6% / −12.4% / −3.8% |
+| seal | 0.768 | 0.705 | 0.693 | 0.738 | −8.2% / −9.8% / −3.9% |
+| rgcn (Zhu et al., KDD 2019) | 0.754 | 0.700 | 0.673 | 0.740 | −7.2% / −10.7% / −1.9% |
+| rgcn, no variance penalty | 0.758 | 0.701 | 0.674 | 0.748 | −7.5% / −11.1% / −1.3% |
+
+Robust-by-design does **not** rescue the picture: RGCN is worse than plain GCN
+both clean and attacked, and its variance penalty changes nothing (≤0.006 AUC
+everywhere, unchanged at a 1000-epoch budget). The Jaccard purification defence
+is not viable on Cora at all: 47% of its edges have Jaccard < 0.01, so the
+defence would delete half the clean graph before any attack.
 
 ## 4. Why: the likelihood audit
 

@@ -92,6 +92,24 @@ prompting rather than through a dataset-independent structural prior.
 | **AtlasULP** | 2026-11-05 | relation-atlas (global + local) descriptors for universal link prediction with domain-guided prompting | planned: competitor to C1 |
 | **S3GRL / ELPH / BUDDY** | 2023 | simplified sub-graph message passing, sub-graph sketching, precomputed structure features | S3GRL-style speed reference only |
 
+## 7b. Attack-robustness baselines (for RQ3 comparisons)
+
+None of the 2025-2026 entries above is an *attack-robust* link predictor: DiffHGLP
+and DiffGraph are heterogeneous-graph models, FSD-CAP/GGDIFF address feature
+missingness and conditional guidance, GCCM addresses the conditioning shortcut.
+The robustness literature the paper's Sec. 4.4 competes with is the GNN-defence
+line, so two canonical entries are tracked and measured here:
+
+| work | idea | status in this repo |
+|------|------|---------------------|
+| **RGCN** (Zhu et al., KDD 2019) | Gaussian latent per node, reparameterised sampling, variance penalty | **implemented** (`models/baselines/robust.py`), `rgcn` + `rgcn_novar` ablation |
+| **GCN-Jaccard** (Wu et al., 2019, arXiv:1903.01610) | drop edges whose Jaccard similarity is below a threshold before message passing | rejected on measurement: 47% of Cora's edges fall below 0.01, the clean graph would be destroyed |
+
+Measured verdict (`robustness.md` §5, Cora, 3 seeds): RGCN is **not** more robust
+than a plain GCN here — −7.2% vs −5.4% AUC under RF-50%, and 7.8 points worse in
+absolute terms; the variance penalty changes nothing (`rgcn` ≈ `rgcn_novar`).
+SGDiff stays the least robust model of the comparison (−14.6%).
+
 ## 8. Surveys
 
 * Shou et al., *Graph diffusion models: a comprehensive survey of methods and applications*, Computer Science Review, 2026 (`10.1016/j.cosrev.2025.100854`).

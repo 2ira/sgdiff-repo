@@ -208,6 +208,28 @@
 }
 
 % --------------------------------------------------------------------------
+% Robustness baselines (RQ3 comparison)
+% --------------------------------------------------------------------------
+@inproceedings{zhu2019rgcn,
+  title     = {Robust Graph Convolutional Networks Against Adversarial Attacks},
+  author    = {Zhu, Dingyuan and Zhang, Ziwei and Cui, Peng and Zhu, Wenwu},
+  booktitle = {Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)},
+  pages     = {1399--1407},
+  year      = {2019},
+  doi       = {10.1145/3292500.3330851},
+  note      = {RGCN: Gaussian latent + variance penalty; the robust baseline reproduced here}
+}
+
+@misc{wu2019jaccard,
+  title         = {Adversarial Examples on Graph Neural Networks for Node and Graph Classification},
+  author        = {Wu, Huijun and Wang, Chen and Tyshetskiy, Yuriy and Docherty, Andrew and Lu, Kai and Zhu, Liming},
+  year          = {2019},
+  eprint        = {1903.01610},
+  archivePrefix = {arXiv},
+  note          = {Source of the GCN-Jaccard preprocessing defence (rejected here: it removes 47\% of Cora's edges)}
+}
+
+% --------------------------------------------------------------------------
 % Surveys
 % --------------------------------------------------------------------------
 @article{shou2026surveydiffusion,

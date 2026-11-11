@@ -13,6 +13,11 @@ comparison produced by `scripts/run_benchmark.py` and is committed next to its
 JSON (split / sub-graph fingerprints + per-model metrics). Protocol and caveats:
 `docs/benchmark.md`.
 
+`robustness_<dataset>.md` is the RF / DICE / EA evasion table produced by
+`scripts/run_robustness.py`. Tagged variants: `_robust` (the five-model
+comparison that includes the RGCN baselines) and `_rgcn1000` (the same RGCN
+arms at a 1000-epoch budget). Interpretation: `docs/robustness.md` §5.
+
 `ablation_<dataset>.md` is the likelihood audit produced by
 `scripts/run_ablation.py` (condition shuffle, DRNL shuffle, single-step and
 single-stream scoring, randomized-condition retrain), together with the learned
