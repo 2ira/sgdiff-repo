@@ -34,6 +34,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from scipy.stats import rankdata
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -92,7 +93,7 @@ def analyse(dataset: str, scores_dir: Path) -> dict:
 
     out: dict[str, dict] = {}
     for model in models:
-        per_model: dict[str, object] = {"fit": {}, "residual": {}, "nullsub": {}}
+        per_model: dict[str, object] = {"fit": {}, "residual": {}, "nullsub": {}, "gated_penalty": {}, "gated_resid": {}, "stratified": {}}
         r2_runs = []
         for payload in dumps:
             labels = payload["labels"]
@@ -116,15 +117,33 @@ def analyse(dataset: str, scores_dir: Path) -> dict:
                 s_hat = x @ w
                 lcn = np.log1p(feat["null_cn"])
                 z_lcn = (lcn - stats["lcn"][0]) / stats["lcn"][1]
+                sigma = float(s.std() or 1.0)
+                gate = (feat["cn"] == 0).astype(np.float64)
                 for lam in LAMBDAS:
                     for family, corrected in (
                         ("residual", s - lam * s_hat),
                         ("nullsub", s - lam * z_lcn),
+                        # gated: touch only the pairs that have no observed evidence
+                        ("gated_penalty", s - lam * gate * sigma),
+                        ("gated_resid", s - lam * gate * s_hat),
                     ):
                         auc = float(summarize_scores(labels, corrected)["auc"])
                         per_model[family].setdefault(variant, {}).setdefault(lam, []).append(auc)
+                # stratified percentile: rank inside expected-evidence bins, which
+                # removes the cross-bin prior while keeping the within-bin order
+                expected = np.log1p(feat["null_cn"])
+                for bins in (5, 10):
+                    edges_q = np.quantile(expected, np.linspace(0.0, 1.0, bins + 1)[1:-1])
+                    bucket = np.searchsorted(edges_q, expected)
+                    ranks = np.zeros_like(s)
+                    for b in range(bins):
+                        mask = bucket == b
+                        if mask.sum() > 1:
+                            ranks[mask] = rankdata(s[mask]) / mask.sum()
+                    auc = float(summarize_scores(labels, ranks)["auc"])
+                    per_model["stratified"].setdefault(variant, {}).setdefault(bins, []).append(auc)
         per_model["fit"]["r2"] = float(np.mean(r2_runs))
-        for family in ("residual", "nullsub"):
+        for family in ("residual", "nullsub", "gated_penalty", "gated_resid", "stratified"):
             per_model[family] = {
                 variant: {lam: float(np.mean(vals)) for lam, vals in per_lam.items()}
                 for variant, per_lam in per_model[family].items()
@@ -202,6 +221,48 @@ def to_markdown(result: dict) -> str:
             cells = " | ".join(f"{res[variant][lam]:.3f}" for lam in LAMBDAS)
             lines.append(f"| {PRETTY.get(variant, variant)} | {cells} |")
         lines.append("")
+
+    lines += [
+        "## 5. Evidence-gated correction: only touch the pairs with no observed evidence",
+        "",
+        "`s − λ·σ·1[CN = 0]`, i.e. a constant penalty applied *only* to pairs whose shared",
+        "neighbour is gone on the graph being scored. Unlike §2-4 this leaves pairs that",
+        "still have evidence untouched.",
+        "",
+        "| model | clean (λ=1) | probe | damage λ=0 | damage λ=0.5 | damage λ=1 |",
+        "|---|---:|---|---:|---:|---:|",
+    ]
+    for model in models:
+        res = result["results"][model]["gated_penalty"]
+        for variant in ("del@50%", "del_hub@50%", "ins_hub@50%"):
+            if variant not in res:
+                continue
+            base = res["clean"][0.0]
+            lines.append(
+                f"| {model} | {res['clean'][1.0]:.3f} | {PRETTY.get(variant, variant)} | "
+                f"{base - res[variant][0.0]:+.3f} | {res['clean'][0.5] - res[variant][0.5]:+.3f} | "
+                f"{res['clean'][1.0] - res[variant][1.0]:+.3f} |"
+            )
+
+    lines += [
+        "",
+        "## 6. Stratified percentile: rank only against pairs with similar expected evidence",
+        "",
+        "| model | clean (5 bins) | del (5) | del_hub (5) | ins_hub (5) | clean (10) | del (10) |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for model in models:
+        res = result["results"][model]["stratified"]
+        if "clean" not in res:
+            continue
+        lines.append(
+            f"| {model} | {res['clean'].get(5, float('nan')):.3f} | "
+            f"{res.get('del@50%', {}).get(5, float('nan')):.3f} | "
+            f"{res.get('del_hub@50%', {}).get(5, float('nan')):.3f} | "
+            f"{res.get('ins_hub@50%', {}).get(5, float('nan')):.3f} | "
+            f"{res['clean'].get(10, float('nan')):.3f} | "
+            f"{res.get('del@50%', {}).get(10, float('nan')):.3f} |"
+        )
     return "\n".join(lines)
 
 

@@ -694,9 +694,10 @@ class Adaptive:
         return list(self.raw["models"])
 
     def budgets(self) -> list[str]:
-        if not self.raw["models"]:
-            return []
-        return sorted(next(iter(self.raw["models"].values()))["by_budget"])
+        keys: set[str] = set()
+        for payload in self.raw["models"].values():
+            keys.update(payload.get("by_budget", {}))
+        return sorted(keys, key=float)
 
 
 class Calibration:
@@ -776,7 +777,9 @@ def adaptive_panel(adaptive: "Adaptive") -> str:
             rnd = adaptive.cell(model, budget, "random", "damage")
             hub = adaptive.cell(model, budget, "hub", "damage")
             ada = adaptive.cell(model, budget, "adaptive", "damage")
-            extra = None if None in (rnd, ada) else ada - rnd
+            if ada is None:
+                continue
+            extra = None if rnd is None else ada - rnd
             rows.append(
                 "".join(
                     [

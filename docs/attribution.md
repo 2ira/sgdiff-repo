@@ -865,20 +865,33 @@ deletes the one that costs the most AUC. 200 + 200 working pairs, seeds 0-1.
 
 | dataset | model | random 5 % | hub 5 % | adaptive 5 % | adaptive 10 % | fixed probe `del@50%` | adaptive 10 % ÷ probe |
 |---|---|---:|---:|---:|---:|---:|---:|
-| Cora | `gcn` | +0.003 | +0.005 | +0.112 | **+0.220** | +0.042 | **5.3×** |
-| Cora | `sage` | +0.007 | −0.002 | +0.152 | **+0.268** | +0.035 | **7.7×** |
-| Citeseer | `gcn` | −0.000 | +0.004 | +0.085 | +0.161 | +0.027 | 5.9× |
-| Citeseer | `sage` | +0.001 | +0.007 | +0.127 | +0.217 | +0.013 | **17.0×** |
+| Cora | `gcn` | +0.003 | +0.005 | +0.115 | **+0.218** | +0.042 | **5.2×** |
+| Cora | `sage` | +0.004 | +0.001 | +0.154 | **+0.282** | +0.035 | **8.1×** |
+| Citeseer | `gcn` | −0.000 | +0.004 | +0.085 | +0.161 | +0.027 | 6.0× |
+| Citeseer | `sage` | +0.001 | +0.007 | +0.127 | +0.217 | +0.013 | **16.7×** |
 | USAir | `gcn` | +0.001 | +0.008 | +0.077 | +0.145 | +0.062 | 2.3× |
-| USAir | `sage` | +0.001 | +0.004 | +0.080 | +0.124 | +0.036 | 3.5× |
+| USAir | `sage` | +0.001 | +0.004 | +0.080 | +0.124 | +0.036 | 3.4× |
+
+GCN on Cora across four budgets (seed 0): **2 % → 0.037, 5 % → 0.115, 10 % →
+0.218, 20 % → 0.314** — clean AUC 0.826, so a targeted attacker with a fifth of
+the edges drives GCN to 0.51, i.e. chance. The curve is near-linear up to 10 %
+(≈2.2 points of AUC per percent of edges) and saturates after that; the random
+probe never exceeds 0.04 at 50 %.
+
+The sub-graph family can be attacked the same way, but every candidate costs a
+sub-graph extraction, so the budget is spent instead on breadth
+(`seal`, Cora, seed 0, 100 + 100 working pairs, 5 % budget, 8 candidates/step):
+random **+0.008**, hub **+0.003**, adaptive **+0.290** — 36× the random
+per-edge efficiency, and 2.1× the damage of the fixed 50 % probe (0.140) at a
+tenth of the budget.
 
 Four consequences, and the first one revises an earlier conclusion:
 
 1. **A tenth of the budget beats half the graph.** Adaptive deletion at 10 % costs
    every model more than the fixed 50 % probe does, by 2.3-17×. The ordering
    "GCN is barely affected by deletion" is a statement about *random* deletion,
-   not about GCN: with 5 % of the edges chosen by feedback, GCN loses 0.112-0.077,
-   i.e. more than the 50 % random probe ever managed.
+   not about GCN: with 5 % of the edges chosen by feedback, GCN loses
+   0.077-0.115, i.e. more than the 50 % random probe ever managed.
 2. **Per-edge efficiency differs by 1.5-2 orders of magnitude.** Random deletion
    buys 0.003-0.013 AUC for 5 % of the edges; targeted deletion buys 0.077-0.152.
    Any statement of the form "the attack needs 50 % of the edges" is really a
@@ -894,6 +907,12 @@ Four consequences, and the first one revises an earlier conclusion:
    gradient or betweenness-guided attacker with the full edge set would do at
    least this well. So the numbers in §3-7.7 should be read as *how the models
    respond to damage*, not as *how fragile they are*.
+5. **Selection rule ≫ budget, and that is a measurement problem, not a modelling
+   one.** At 5 % the adaptive attacker beats random deletion by 36-40× per edge on
+   every model tested (node-pair and sub-graph), and at 10 % it beats the 50 %
+   random probe itself. A robustness number without its attacker is therefore
+   uninterpretable — which is also the honest reading of the paper's own Table 4:
+   RF and DICE are random-selection attackers, so their damage is a floor.
 
 ### 7.9 Can the scoring rule be fixed? A null-model calibration attempt (negative)
 
@@ -937,10 +956,29 @@ difference against a moving baseline. The cheaper parametric form
 expectation is nearly constant across pairs on a sparse graph.
 
 So the simple form of the §7.6 proposal is **falsified**: subtracting the prior is
-not the same as knowing that evidence is missing. What survives is the
-*localised* version — apply a correction only to pairs whose evidence collapsed
-(the stratum of §7.7a), i.e. a conditional re-ranker rather than a global score
-transform. That is untested here and is the concrete next experiment.
+not the same as knowing that evidence is missing.
+
+**The localised version also fails, for a reason that is worth stating.** Gating
+the correction on the observed evidence — `s − λ·σ·1[CN = 0]`, so that pairs which
+still have a shared neighbour are untouched — makes deletion damage *worse*
+(`gcn` 0.042 → 0.059, `sage` 0.035 → 0.073 at λ = 1) and only mildly helps the
+insertion channel (`rgcn` 0.085 → 0.054, `vgae` 0.052 → 0.033). Ranking inside
+expected-evidence strata (5 or 10 bins, i.e. "compare a pair only against pairs
+with similar degree product") behaves the same way as the global correction:
+*relative* damage shrinks (`gcn` 0.036 → 0.026) while absolute accuracy falls on
+both graphs (`clean` 0.826 → 0.792, `del` 0.790 → 0.766).
+
+The reason is structural, not a matter of tuning: on Cora **54 % of the true
+positives already have CN = 0** (270/500) versus 99 % of the negatives (495/500).
+"Evidence vanished" is therefore not an observable anomaly at the pair level —
+it is the normal state of the data — so a gate built on it cannot separate the
+pairs that were attacked from the pairs that never had evidence. The information
+needed for that separation is exactly the prior the score already encodes, which
+closes the loop: on a sparse graph, the score's structural prior is not noise to
+be calibrated away, it is the only thing standing in for the missing evidence.
+Any real fix has to come from the *deployment side* (an evidence-complete
+extraction, or an attacker-aware retraining objective), not from a post-hoc
+re-ranking of the same scores.
 
 ## 8. What this changes about the robustness story
 
@@ -1000,11 +1038,15 @@ transform. That is untested here and is the concrete next experiment.
     GCN loses 0.145-0.220 and SAGE 0.124-0.268 — 2.3-17× the fixed 50 % probe.
     The correct reading of §3-7.7 is "how the model responds to a given damage",
     not "how fragile the model is".
-11. **The one repair the section proposed does not work in its simple form**
-    (§7.9). Subtracting a degree-preserving null-model prior moves the
-    clean/probe trade-off along a frontier instead of lifting it, and the
-    parametric variant is a no-op. The localised (evidence-gated) version is the
-    remaining candidate, and it is untested.
+11. **The one repair the report proposed does not work in any of its four forms**
+    (§7.9). Subtracting a degree-preserving null-model prior, its parametric
+    variant, a gate that only touches pairs with `CN = 0`, and ranking inside
+    expected-evidence strata all move the clean/probe trade-off along a frontier
+    instead of lifting it; the gate makes deletion *worse*. The diagnosis is the
+    contribution: on Cora 54 % of the positives already have `CN = 0`, so "the
+    evidence vanished" is not an observable per-pair anomaly, and no post-hoc
+    re-ranking of the same scores can recover it. The fix has to move to the
+    deployment side (evidence-complete extraction) or into the training objective.
 
 ## 9. Caveats
 

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import json
 import sys
 import time
 from collections import Counter
@@ -153,7 +154,11 @@ def main() -> int:
         n_edges = int(clean.num_edges)
 
         def score(g) -> np.ndarray:
-            return rp.score_model("node_pair", model, cfg_seed, g, pairs, device, int(seed), features=features)
+            # ``features`` is ignored by the sub-graph path, so the same call works
+            # for node-pair and sub-graph models; the extractor is rebuilt inside
+            # ``score_model`` for every graph, which is what keeps the sub-graph
+            # cache from serving stale neighbourhoods.
+            return rp.score_model(spec.kind, model, cfg_seed, g, pairs, device, int(seed), features=features)
 
         def auc_of(g) -> float:
             return float(summarize_scores(labels, score(g))["auc"])
@@ -227,6 +232,24 @@ def main() -> int:
 
     summary = _summarise(args.dataset, args.budgets, results)
     stem = f"{args.output}/adaptive_{args.dataset}"
+    # merge with an existing artifact so that a per-model invocation (e.g. only the
+    # sub-graph model, which is 20x more expensive) does not drop the other models
+    existing = Path(f"{stem}.json")
+    if existing.exists():
+        try:
+            previous = json.loads(existing.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            previous = {}
+        merged = previous.get("models", {})
+        for name, payload in summary["models"].items():
+            if name in merged:
+                # merge per budget: a later invocation may cover other budgets
+                merged[name]["by_budget"].update(payload["by_budget"])
+                merged[name]["clean_auc"] = payload["clean_auc"]
+            else:
+                merged[name] = payload
+        summary["models"] = merged
+        summary["budgets"] = sorted({*previous.get("budgets", []), *summary["budgets"]})
     save_json(summary, f"{stem}.json")
     Path(f"{stem}.md").write_text(to_markdown(summary) + "\n", encoding="utf-8")
     print(to_markdown(summary))

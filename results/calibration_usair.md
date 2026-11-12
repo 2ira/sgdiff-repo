@@ -173,3 +173,52 @@ Damage = clean(λ=0) − probe(λ), so the clean row also reports the accuracy t
 | del_hub | 0.818 | 0.807 | 0.793 | 0.775 | 0.753 |
 | ins_hub | 0.790 | 0.735 | 0.639 | 0.521 | 0.406 |
 
+## 5. Evidence-gated correction: only touch the pairs with no observed evidence
+
+`s − λ·σ·1[CN = 0]`, i.e. a constant penalty applied *only* to pairs whose shared
+neighbour is gone on the graph being scored. Unlike §2-4 this leaves pairs that
+still have evidence untouched.
+
+| model | clean (λ=1) | probe | damage λ=0 | damage λ=0.5 | damage λ=1 |
+|---|---:|---|---:|---:|---:|
+| gat | 0.906 | del | +0.025 | +0.024 | +0.027 |
+| gat | 0.906 | del_hub | +0.038 | +0.018 | +0.011 |
+| gat | 0.906 | ins_hub | +0.017 | +0.046 | +0.058 |
+| gcn | 0.921 | del | +0.062 | +0.060 | +0.058 |
+| gcn | 0.921 | del_hub | +0.063 | +0.055 | +0.047 |
+| gcn | 0.921 | ins_hub | +0.035 | +0.057 | +0.062 |
+| pencil | 0.923 | del | +0.008 | +0.008 | +0.009 |
+| pencil | 0.923 | del_hub | -0.005 | -0.004 | -0.004 |
+| pencil | 0.923 | ins_hub | +0.184 | +0.185 | +0.185 |
+| rgcn | 0.892 | del | +0.025 | +0.023 | +0.024 |
+| rgcn | 0.892 | del_hub | +0.042 | +0.027 | +0.018 |
+| rgcn | 0.892 | ins_hub | +0.104 | +0.128 | +0.137 |
+| rgcn_novar | 0.902 | del | +0.022 | +0.024 | +0.026 |
+| rgcn_novar | 0.902 | del_hub | +0.031 | +0.019 | +0.013 |
+| rgcn_novar | 0.902 | ins_hub | +0.043 | +0.072 | +0.082 |
+| sage | 0.916 | del | +0.036 | +0.035 | +0.038 |
+| sage | 0.916 | del_hub | +0.038 | +0.026 | +0.025 |
+| sage | 0.916 | ins_hub | -0.002 | +0.030 | +0.033 |
+| seal | 0.949 | del | +0.065 | +0.056 | +0.052 |
+| seal | 0.949 | del_hub | +0.054 | +0.051 | +0.049 |
+| seal | 0.949 | ins_hub | +0.096 | +0.096 | +0.095 |
+| sgdiff | 0.935 | del | +0.030 | +0.028 | +0.028 |
+| sgdiff | 0.935 | del_hub | +0.029 | +0.025 | +0.023 |
+| sgdiff | 0.935 | ins_hub | +0.070 | +0.070 | +0.069 |
+| vgae | 0.897 | del | +0.017 | +0.026 | +0.029 |
+| vgae | 0.897 | del_hub | +0.023 | +0.019 | +0.014 |
+| vgae | 0.897 | ins_hub | +0.051 | +0.088 | +0.097 |
+
+## 6. Stratified percentile: rank only against pairs with similar expected evidence
+
+| model | clean (5 bins) | del (5) | del_hub (5) | ins_hub (5) | clean (10) | del (10) |
+|---|---:|---:|---:|---:|---:|---:|
+| gat | 0.574 | 0.557 | 0.596 | 0.581 | 0.557 | 0.547 |
+| gcn | 0.604 | 0.561 | 0.580 | 0.585 | 0.587 | 0.551 |
+| pencil | 0.648 | 0.637 | 0.659 | 0.597 | 0.633 | 0.624 |
+| rgcn | 0.553 | 0.540 | 0.537 | 0.552 | 0.537 | 0.533 |
+| rgcn_novar | 0.556 | 0.546 | 0.547 | 0.550 | 0.534 | 0.540 |
+| sage | 0.595 | 0.557 | 0.578 | 0.583 | 0.581 | 0.546 |
+| seal | 0.693 | 0.637 | 0.662 | 0.635 | 0.680 | 0.616 |
+| sgdiff | 0.666 | 0.625 | 0.637 | 0.610 | 0.653 | 0.607 |
+| vgae | 0.550 | 0.540 | 0.553 | 0.531 | 0.533 | 0.527 |

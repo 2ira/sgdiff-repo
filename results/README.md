@@ -55,9 +55,10 @@ edge deletion at a matched budget (`scripts/run_adaptive_attack.py`), which is t
 lower-bound check on every "the model is fragile to X" claim.
 
 `calibration_<dataset>.md` tests whether the scoring rule can be fixed without
-retraining, by subtracting a degree-preserving null-model prior
-(`scripts/run_evidence_calibration.py`). Interpretation: `docs/attribution.md`
-§7.7-7.9.
+retraining (`scripts/run_evidence_calibration.py`): four corrections — global
+null-model residual, parametric null subtraction, an evidence gate
+(`CN = 0`) and stratified percentile ranking — each with the clean-accuracy cost
+it pays. Interpretation: `docs/attribution.md` §7.9 (all four fail, and why).
 
 `probe_report.html` is the same content rendered for reading — one self-contained
 page (styled tables + inline SVG, no CDN, works offline), built by
