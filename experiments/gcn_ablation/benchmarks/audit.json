@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "completed_training_runs": 240,
+  "completed_evaluations": 660,
+  "expected_evaluations": 660,
+  "raw_hashes_verified": 15,
+  "all_prediction_metrics_recomputed": true,
+  "all_checkpoints_selected_on_source_validation": true
+}

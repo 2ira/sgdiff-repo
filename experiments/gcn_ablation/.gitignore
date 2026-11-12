@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.log
+*.tar.gz
+*.sha256
+data/raw/
+data/processed/
+results/
+shared_results/
+smoke_results/
+pilot*/
+validation_pilot/
+shard_seed*/

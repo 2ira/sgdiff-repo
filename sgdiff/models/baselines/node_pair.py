@@ -58,6 +58,25 @@ class GCNEncoder(_SparseEncoder):
             [nn.Linear(self.dims[i], self.dims[i + 1]) for i in range(len(self.dims) - 1)]
         )
 
+    def forward_preaggregated(self, x, normalized_adjacency=None):
+        """Encode cached ``A_norm X`` (possibly sparse), or ``X`` for an MLP.
+
+        The first aggregation is supplied by the caller. Later layers use the
+        same normalized adjacency; passing None disables all propagation.
+        This avoids materializing an N-by-N identity feature matrix. Biases
+        are added after aggregation, as in ``forward``. No input dropout is
+        applied, so caching the first aggregation is exact.
+        """
+        for i, lin in enumerate(self.lins):
+            x = torch.sparse.mm(x, lin.weight.T) if x.is_sparse else x @ lin.weight.T
+            if i and normalized_adjacency is not None:
+                x = normalized_adjacency @ x
+            if lin.bias is not None:
+                x = x + lin.bias
+            if i < len(self.lins) - 1:
+                x = F.dropout(F.relu(x), p=self.dropout, training=self.training)
+        return x
+
     def forward(self, x, edge_index, num_nodes):
         row, col, weights = sparse_normalize(edge_index, num_nodes)
         for i, lin in enumerate(self.lins):

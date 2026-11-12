@@ -1,0 +1,129 @@
+{
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.cora.allx",
+      "file": "data/raw/ind.cora.allx",
+      "sha256": "9419ba2f26f5c35243db64aba110e0f35a04851609e0dc5433450676ca6b8543"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.cora.tx",
+      "file": "data/raw/ind.cora.tx",
+      "sha256": "b9afbaa4a400df991f6f02ef677e1e44da55ffc04801fd02f9e673987829226a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.cora.graph",
+      "file": "data/raw/ind.cora.graph",
+      "sha256": "58f13302f39dde8852dad6fe6d15b89b077b6d7f837626bce671ef80344b383d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.cora.test.index",
+      "file": "data/raw/ind.cora.test.index",
+      "sha256": "297ce89af2b51a6a194181c7dbe1796c6a1cf9cd9349a88383b1b1e227867875"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.citeseer.allx",
+      "file": "data/raw/ind.citeseer.allx",
+      "sha256": "2ac30345d95c9ec933a817ee0bdd6a5f077f8c184a20e696910192d534414668"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.citeseer.tx",
+      "file": "data/raw/ind.citeseer.tx",
+      "sha256": "539a8906a2da97628d212f2fdd668c109a8b3f0d36574b59e5d3fd5b5303da21"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.citeseer.graph",
+      "file": "data/raw/ind.citeseer.graph",
+      "sha256": "d79a4ef9d3e7169aee8946145f6b7306e35bc79bffad26346cfb94e10e9912a7"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.citeseer.test.index",
+      "file": "data/raw/ind.citeseer.test.index",
+      "sha256": "2af990671580b6b2df5d158d1038f8292e30c9cd821b5453f399659b25b723d4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.pubmed.allx",
+      "file": "data/raw/ind.pubmed.allx",
+      "sha256": "508e538e2abdccdd54c4d3e9f49d638b4af7107d85845f66ddea5a5152658b7e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.pubmed.tx",
+      "file": "data/raw/ind.pubmed.tx",
+      "sha256": "4eb5f5d0f30f26497eb0ac6ac9719d09c67e284f1ed0385c93f3ef27a671da3d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.pubmed.graph",
+      "file": "data/raw/ind.pubmed.graph",
+      "sha256": "5b89f0036ca22909471f1e6558eb42fa06e0c730a577bde5b058b40638f81dc9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kimiyoung/planetoid/af6abf468a772cc055bec88c52e4d6f51b7c37e3/data/ind.pubmed.test.index",
+      "file": "data/raw/ind.pubmed.test.index",
+      "sha256": "b101d421688bbaecbd82e8a18f1e282378d6830f3a37666f28ebc47f844341b5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/muhanzhang/SEAL/ca1f019a15fb0c21796042165b4e6bee73981dd3/Python/data/Router.mat",
+      "file": "data/raw/Router.mat",
+      "sha256": "bae603199c2ddb0f8776acb1962c9c6ed89773da9d41377d6a7f8cc2b1e3a1c1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/muhanzhang/SEAL/ca1f019a15fb0c21796042165b4e6bee73981dd3/Python/data/USAir.mat",
+      "file": "data/raw/USAir.mat",
+      "sha256": "6b48a37e2bb398234e5383787c30dca087de704366a2b7b05d64cc2f53210e0b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/muhanzhang/SEAL/ca1f019a15fb0c21796042165b4e6bee73981dd3/Python/data/NS.mat",
+      "file": "data/raw/NS.mat",
+      "sha256": "c69258a674e13115e34ec11343c92f352bcec635baf3fe40f0adf6e8a5037019"
+    }
+  ],
+  "datasets": [
+    {
+      "name": "Cora",
+      "nodes": 2708,
+      "raw_nonzeros": 10556,
+      "undirected_edges": 5278,
+      "symmetric_nonzeros": 10556,
+      "feature_dim": 1433
+    },
+    {
+      "name": "Citeseer",
+      "nodes": 3327,
+      "raw_nonzeros": 9228,
+      "undirected_edges": 4552,
+      "symmetric_nonzeros": 9104,
+      "feature_dim": 3703
+    },
+    {
+      "name": "Pubmed",
+      "nodes": 19717,
+      "raw_nonzeros": 88651,
+      "undirected_edges": 44324,
+      "symmetric_nonzeros": 88648,
+      "feature_dim": 500
+    },
+    {
+      "name": "Router",
+      "nodes": 5022,
+      "raw_nonzeros": 12516,
+      "undirected_edges": 6258,
+      "symmetric_nonzeros": 12516,
+      "feature_dim": 0
+    },
+    {
+      "name": "USAir",
+      "nodes": 332,
+      "raw_nonzeros": 4252,
+      "undirected_edges": 2126,
+      "symmetric_nonzeros": 4252,
+      "feature_dim": 0
+    },
+    {
+      "name": "NS",
+      "nodes": 1589,
+      "raw_nonzeros": 5484,
+      "undirected_edges": 2742,
+      "symmetric_nonzeros": 5484,
+      "feature_dim": 0
+    }
+  ]
+}

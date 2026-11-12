@@ -1,0 +1,31 @@
+{
+  "unit_tests": {
+    "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q test_experiment.py",
+    "passed": 7
+  },
+  "checkpoint_replay_checks": [
+    {
+      "protocol": "transfer",
+      "source": "Cora",
+      "mode": "combined",
+      "seed": 0,
+      "targets": [
+        "Cora",
+        "Citeseer",
+        "Pubmed"
+      ],
+      "passed": true
+    },
+    {
+      "protocol": "within",
+      "source": "Pubmed",
+      "mode": "combined",
+      "seed": 6,
+      "targets": [
+        "Pubmed"
+      ],
+      "passed": true
+    }
+  ],
+  "training_code_hash_verified": true
+}
