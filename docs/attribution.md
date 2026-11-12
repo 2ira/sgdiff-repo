@@ -11,8 +11,11 @@ Artifacts (produced by `scripts/run_probe.py`, `cpu` profile, seeds 0-2):
 | file | content |
 |------|---------|
 | `results/probe_cora.{json,md}` | Cora: 7 models × 7 probes, property heuristics, component ablations, sub-graph availability |
+| `results/probe_citeseer.{json,md}` | Citeseer: the same probe grid on a second attributed/labelled graph (stability check) |
 | `results/probe_usair.{json,md}` | USAir: the same without node attributes and labels (probes that need them are skipped) |
-| `results/probe_report.html` | the same numbers as one self-contained page (heatmaps, sub-graph availability, ablation panel, hub-insertion scatter); rebuild with `python scripts/make_probe_report.py` |
+| `results/deep_<dataset>.{json,md}` | Cora / Citeseer / USAir: layer-level linear probes + representation drift, propagation-operator substitution, triadic-vs-bridging deletion, and the repair experiments (`scripts/run_deep_probe.py`) |
+| `results/redesign_<dataset>.{json,md}` | Cora / Citeseer / USAir: one-component-at-a-time retraining (depth, normalisation, self-loop, input augmentation, robust training) re-probed with the same suite (`scripts/run_redesign.py`) |
+| `results/probe_report.html` | all of the above as one self-contained page; rebuild with `python scripts/make_probe_report.py` |
 
 ## 1. Protocol
 
@@ -404,32 +407,412 @@ degree-blind by construction**: their features are DRNL one-hots, so zeroing the
 "node features" leaves them bit-identical. Their degree dependence is indirect
 (`drnl_permuted` costs SEAL 0.953 → 0.884), and `del_hub` is what attacks it.
 
-## 6. What this changes about the robustness story
+## 6. Stability: the same probes on three graphs
 
-1. **"Robustness to attacks" was mostly "robustness to deletion" — on sparse
-   graphs.** On Cora the *largest* damage of every one of the seven models is a
-   deletion probe (`del` or `del_hub`), and insertion contributes 0.02-0.05. On
-   USAir the ranking flips for the sub-graph family (insertion dominates, §5.2),
-   so the honest statement is: *which half of the attack does the damage is a
-   property of the graph's density*, and neither RF nor DICE reports it.
-2. **Model capacity is not the axis; the input supply is.** SEAL (54 k params)
-   and SGDiff (2.3 M params) read the *same* sub-graphs and lose 0.14 vs 0.24;
-   the difference is the scoring rule, not the architecture size.
-3. **Sub-graph models are one-sided readers — and which side depends on the
-   graph.** On sparse Cora they cannot be fooled by added edges (≤0.03) and
-   cannot survive removed ones (0.14-0.24). On dense USAir the same family is hit
-   by *hub insertion* (PENCIL −0.19), because there the damage is to
-   degree-normalised connectivity rather than to evidence supply. A defence
-   therefore has to do two different things — restore missing edges on a sparse
-   graph, denoise hub edges on a dense one. The GDDM-style purifiers in
-   `docs/robustness.md` §5 only do the second, and on Cora they made every model
-   worse.
-4. **Nothing in this zoo reads homophily directly.** `ins_homo` — an edge that
-   *looks* right — is invisible (≤0.036 damage for every model, a gain for GAT).
-   Homophily shows up only as the assumption that makes smoothing useful, and
-   only implausible edges (`ins_hetero`) cost anything.
+Cora and Citeseer are both attributed, labelled BoW citation graphs; USAir is a
+featureless, label-free airport network with three times their mean degree. If a
+conclusion is an artefact of one graph, these columns disagree.
 
-## 7. Caveats
+ΔAUC (clean − probe), means over seeds 0-2:
+
+| model | probe | Cora (deg 3.31) | Citeseer (deg 2.33) | USAir (deg 10.89) |
+|-------|-------|----------------:|--------------------:|------------------:|
+| GCN | `feature_shuffle` | 0.193 | **0.214** | – |
+| VGAE | `feature_shuffle` | 0.195 | **0.209** | – |
+| SEAL | `feature_shuffle` | 0.045 | **0.214** | – |
+| PENCIL | `feature_shuffle` | 0.026 | **0.211** | – |
+| SEAL | `del` | 0.142 | 0.074 | 0.061 |
+| SGDiff | `del` | **0.236** | 0.137 | 0.036 |
+| SGDiff | `del_hub` | 0.176 | **0.207** | 0.026 |
+| SGDiff | `ins` | 0.023 | **0.108** | 0.028 |
+| SGDiff | `ins_homo` | 0.036 | **0.101** | – |
+| PENCIL | `ins_hub` | 0.008 | 0.020 | **0.190** |
+
+Four of the earlier claims survive, three do not.
+
+**Stable.** (i) The GCN family's attribute dependence is quantitatively the same
+on both attributed graphs: `feature_shuffle` costs GCN 0.19 / 0.21, VGAE 0.20 /
+0.21, GAT 0.17 / 0.14. (ii) SGDiff's feature branch is dead on *every* graph:
+`feature_only` 0.515 / 0.499 / 0.500 (chance) and `structure_only` 0.744 / 0.757 /
+0.938 (= clean AUC). (iii) `ins_hub` never hurts SGDiff (−0.034 / −0.015 /
++0.077 — the last only on the dense graph, see §5.2). (iv) Nothing in the zoo is
+harmed by `ins_homo` on Cora *or* Citeseer.
+
+**Not stable, and now corrected.**
+
+1. *"The sub-graph family reads structure, not attributes"* is **only true on
+   Cora**. On Citeseer the same SEAL/PENCIL lose 0.21 to `feature_shuffle`, as
+   much as GCN does. The reason is visible in the property table: Citeseer's
+   features are *more* informative than Cora's (`featcos` AUC 0.890 vs 0.802), so
+   the encoders actually use them there.
+2. *"Insertion contributes ~0.02-0.04"* is **Cora-specific**. On the sparsest
+   graph (Citeseer, mean degree 2.33) *adding* 50 % of |E| costs SGDiff 0.108,
+   and even a homophilous insertion costs 0.101. Deletion is no longer the
+   dominant half of the attack there.
+3. *"`features_zeroed` measures the attribute channel"* **understates it**.
+   PENCIL on Citeseer loses 0.022 when its features are zeroed but 0.211 when
+   they are shuffled: a zero input can be absorbed by the learned bias, whereas a
+   *wrong* input actively misleads. Attribute corruption is worse than attribute
+   removal, which is why `feature_shuffle` (not the zeroing ablation) is the
+   probe that reveals the channel.
+
+The unifying statement that does survive all three graphs: **damage tracks how
+far a probe moves the model's input distribution, and which half of a
+delete/insert attack does that depends on the graph.** Simple heuristics explain
+the deletion side (`cn` AUC 0.729 → 0.570 on Cora, 0.667 → 0.556 on Citeseer,
+0.928 → 0.860 on USAir, with damage shrinking in the same order for the sub-graph
+family). They do *not* explain the insertion side on Citeseer, where every
+heuristic stays flat (CN 0.667 → 0.667) while SGDiff still loses 0.108 — an
+off-distribution effect of the class-conditional likelihood that no first-order
+graph statistic captures.
+
+## 7. Down to layers, operators and edge kinds
+
+Everything in this section comes from `scripts/run_deep_probe.py`
+(`results/deep_cora.{json,md}` seeds 0-1, `results/deep_citeseer.{json,md}` and
+`results/deep_usair.{json,md}` seeds 0-1) plus `scripts/run_redesign.py`
+(§7.6, seeds 0-7 on three graphs). Weights are trained once per model and never updated; each
+measurement in §7.1-7.5 is an intervention on the frozen network, and §7.6 is the
+retraining counterpart that turns the mechanism claims into causal tests.
+
+### 7.1 Which layer does the damage enter?
+
+Two numbers per layer: the **drift** (1 − mean cosine between the layer
+representation on the probe graph and on the clean graph) and a **linear probe**
+trained on the *clean* layer and applied to the probe layer (how much link signal
+is still linearly readable there).
+
+| model | probe | L1 drift | L2 drift | L1 AUC | L2 AUC |
+|-------|-------|---------:|---------:|-------:|-------:|
+| GCN | `del` | 0.092 | 0.092 | 0.839 | **0.809** |
+| GCN | `del_hub` | 0.068 | 0.074 | 0.827 | 0.802 |
+| GCN | `ins_hub` | 0.036 | 0.049 | 0.841 | 0.830 |
+| GCN | `feature_shuffle` | **1.001** | 0.962 | **0.614** | 0.668 |
+| SAGE | `del` | 0.065 | 0.132 | 0.744 | 0.750 |
+| SAGE | `feature_shuffle` | **0.994** | 0.963 | **0.557** | 0.587 |
+| GAT | `del` | 0.000* | 0.331 | 0.754* | **0.688** |
+| GAT | `del_hub` | 0.000* | 0.256 | 0.754* | 0.702 |
+| GAT | `feature_shuffle` | **0.994** | 0.882 | **0.525** | 0.617 |
+
+\* GAT's layer-1 hook sits on the linear projection *before* the attention
+normalisation, so its L1 representation cannot move when only the adjacency
+changes; L1 is informative only for the attribute probes there.
+
+Three statements, all layer-specific:
+
+* **The attribute damage happens before the first aggregation.** `feature_shuffle`
+  moves layer 1 by a cosine distance of ≈1.0 and drops the readable signal from
+  0.839 to 0.614 already at L1. The encoder is not "confused by propagation": it
+  is fed an input whose per-node identity is gone. Layer 2 changes nothing
+  further.
+* **The structural damage enters at the second hop.** For `del`, GCN's L1 barely
+  moves (drift 0.09) and its readable signal (0.839) sits within 0.01 of the
+  other structural probes (`del_hub` 0.827, `ins_hub` 0.841) — i.e. L1 is
+  effectively unchanged — while L2 drops to 0.809. A 50 % deletion costs almost
+  nothing at 1 hop and 3 points at 2 hops — the signature of an evidence channel
+  (`has_cn`), not of a weight-space perturbation.
+* **GAT is the only model whose L2 is hit twice as hard** (0.754 → 0.688, −0.066
+  vs GCN's −0.030) — the layer-level confirmation of the softmax-renormalisation
+  mechanism from §4.1.
+
+### 7.2 Which operator is the robustness carrier? (a hypothesis that dies)
+
+Same trained weights, only the propagation operator is swapped during inference:
+
+| model | operator | clean | `del` | `feature_shuffle` | `ins_hub` |
+|-------|----------|------:|------:|------------------:|----------:|
+| GCN | sym (as trained) | 0.832 | 0.790 | 0.628 | 0.806 |
+| GCN | row-mean | 0.821 | 0.777 | 0.637 | 0.783 |
+| GCN | unnormalised sum | 0.806 | **0.773** | **0.703** | 0.754 |
+| GCN | no self-loops | 0.811 | **0.718** | 0.647 | 0.788 |
+| SAGE | sym / noloop | 0.768 | 0.729 | 0.570 | 0.740 |
+| SAGE | sum | 0.781 | 0.732 | 0.671 | 0.718 |
+| VGAE | sym | 0.783 | 0.746 | 0.569 | 0.731 |
+| VGAE | no self-loops | 0.768 | **0.694** | 0.573 | 0.709 |
+
+The mechanism I assumed in §4.1 — "symmetric normalisation `1/√(d_i d_j)`
+absorbs the perturbation" — is **wrong**. Under `del`, symmetric (0.790),
+row-mean (0.777) and unnormalised sum (0.773) are within 0.02 of each other; the
+normalisation is not what protects the model. What *does* protect it on Cora is
+the **self-loop**: removing it costs GCN 0.072 (−9 %) and VGAE 0.052 on the same
+weights, because the self-loop is the identity path that keeps a node's own
+signal when its neighbourhood is damaged. SAGE is the control: it is trained
+without self-loops, and its `noloop` and `sym` rows are identical by construction.
+
+The same table contains the reverse effect: under `feature_shuffle`, dropping the
+normalisation *helps* (GCN 0.628 → 0.703, SAGE 0.570 → 0.671, VGAE 0.569 → 0.662).
+An unnormalised sum makes high-degree structure dominate the message, which
+partially substitutes for the destroyed attribute signal. Robustness is therefore
+operator- and probe-dependent, not a property of "GCN" — and a claim that a
+specific normalisation buys robustness would have been a false positive if it had
+only been inferred from the architecture.
+
+**Cross-graph check of the self-loop claim (USAir, `results/deep_usair.md`).**
+On the dense graph the same substitution gives GCN `sym` 0.825 / `noloop` 0.821 /
+`sum` **0.854** under `del`. The self-loop advantage disappears (−0.004, not
+−0.072) and the unnormalised sum is *better* than the trained operator. This is
+consistent with §7.1 rather than with a universal operator claim: on USAir a 50 %
+deletion barely changes the local evidence (CN AUC 0.928 → 0.860), so there is
+nothing for a self-loop to protect; the only effect left is the `sum` operator
+amplifying the still-informative degree signal. **The self-loop is the carrier of
+Cora's deletion robustness, not of robustness in general.**
+
+### 7.3 Which edges carry the evidence? (also mostly a negative result)
+
+Deleting 50 % of the *triadic* edges (endpoints share a neighbour, i.e. the CN
+evidence) versus 50 % of the *bridging* edges (CN = 0, reachability only),
+same budget:
+
+| model | clean | delete triadic | delete bridging |
+|-------|------:|---------------:|----------------:|
+| SGDiff | 0.739 | 0.650 | 0.630 |
+| SEAL | 0.780 | 0.720 | 0.707 |
+| PENCIL | 0.779 | 0.727 | 0.721 |
+| GCN | 0.832 | 0.823 | 0.796 |
+| GAT | 0.802 | 0.772 | 0.739 |
+| SAGE | 0.768 | 0.753 | 0.730 |
+| VGAE | 0.783 | 0.780 | 0.747 |
+
+Triadic edges are not privileged: for every model, deleting 50 % of the bridging
+edges is as bad or slightly worse than deleting 50 % of the triadic ones. Damage
+tracks the *amount* of local evidence removed, not its closure type. The
+"triangles are the evidence" reading of §4.3 is therefore not supported at this
+granularity — what the sub-graph family needs is a short path, and a bridge edge
+removal breaks the path for *both* endpoints, not just for one triangle.
+
+This probe is only interpretable when both populations are comparable. On Cora
+they are (1 992 triadic vs 2 494 bridging edges); on USAir the graph is so dense
+that it contains 1 724 triadic and only **83** bridging edges, so the two columns
+measure different budgets and the comparison is degenerate (`results/deep_usair.md`
+§3: deleting half of 83 bridges changes nothing). Reported here as a null result
+with its scope condition, not as a positive finding.
+
+### 7.4 The repairs, and why they are the causal test
+
+Every repair is applied to the *inference* graph only (no retraining, test pairs
+excluded from the candidate set). The point is not the absolute gain — it is that
+**the same repair helps the models the attribution predicts and does nothing for
+the others.**
+
+| repair | SGDiff | SEAL | PENCIL | GCN | GAT | SAGE | VGAE |
+|--------|-------:|-----:|-------:|----:|----:|-----:|-----:|
+| `del` + CN edge completion | **+0.113** | +0.006 | +0.009 | −0.006 | +0.008 | −0.002 | −0.006 |
+| `del_hub` + CN edge completion | +0.038 | **+0.046** | **+0.039** | −0.002 | +0.004 | +0.009 | +0.003 |
+| `feature_shuffle` + structure-smoothed features | 0.000 | −0.008 | +0.010 | **+0.054** | **+0.030** | **+0.065** | **+0.058** |
+| `del` + CN prior added to the score | +0.000 | +0.007 | +0.002 | +0.012 | +0.009 | +0.012 | +0.013 |
+
+Read the rows, not the columns:
+
+* **Restoring the deleted edges rescues exactly the model whose damage was
+  evidence starvation.** SGDiff goes 0.521 → 0.634 (+0.113). That is above the
+  CN prior's own AUC on the same damaged graph (0.572), i.e. the model is not
+  merely being replaced by the heuristic: it uses the repaired local structure
+  better than the heuristic does. The GCN family moves by ±0.01 — they never read
+  CN, so repairing it is irrelevant to them.
+* **Rebuilding the corrupted attributes from the structure rescues exactly the
+  attribute-driven models.** GCN +0.054, SAGE +0.065, VGAE +0.058, GAT +0.030,
+  while SGDiff (dead feature branch) moves by exactly 0.000 and SEAL/PENCIL by
+  ≤0.01. The same intervention, opposite effects, predicted in advance by §4 —
+  this is the cleanest falsification test in the document. It also shows the
+  limit of the repair: smoothing recovers 0.628 → 0.683 against a clean 0.832, so
+  roughly a quarter of the attribute damage is recoverable from structure (as it
+  must be: a permutation destroys information, it does not hide it).
+* **Adding the CN prior to the score is the weakest repair** (+0.000 to +0.013),
+  and it is *zero for SGDiff* — because SGDiff's ranking already is the CN
+  ranking (ρ = 0.72, §4.3). A model cannot be helped by a heuristic it already
+  implements.
+
+### 7.5 Model-side repair: more hops raise the ceiling, not the floor
+
+SEAL and PENCIL retrained on 2-hop enclosing sub-graphs (`k = 2` instead of the
+paper's `k = 1`), Cora, seeds 0-1:
+
+| model | probe | k = 1 | k = 2 | Δ |
+|-------|-------|------:|------:|--:|
+| SEAL | clean | 0.780 | **0.850** | +0.070 |
+| SEAL | `del` | 0.639 | 0.661 | +0.022 |
+| SEAL | `del_hub` | 0.628 | 0.636 | +0.008 |
+| SEAL | `ins_hub` | 0.763 | 0.791 | +0.028 |
+| PENCIL | clean | 0.779 | **0.845** | +0.066 |
+| PENCIL | `del` | 0.668 | 0.672 | +0.004 |
+| PENCIL | `del_hub` | 0.636 | 0.638 | +0.002 |
+| PENCIL | `ins_hub` | 0.792 | 0.806 | +0.014 |
+
+Two hops buy ~7 points of clean accuracy, but the *damage* does not shrink: SEAL's
+deletion gap goes 0.141 → 0.189 and PENCIL's 0.111 → 0.173. Richer input raises
+the ceiling and the floor together, so fragility is not simply "too few hops".
+Consistent with §7.1: the evidence channel is restored, but the model's reliance
+on it grows at the same time. A real fix has to change *how* the model uses the
+evidence (calibrate against its absence), not only how much it sees.
+
+**Citeseer replication.** §7.1-7.5 were re-run with all seven models on Citeseer
+(seeds 0-1, `results/deep_citeseer.{json,md}`). Every mechanism above replicates
+in sign; two magnitudes differ, in the direction the mechanism predicts:
+
+| mechanism | statistic | Cora | Citeseer |
+|---|---|---:|---:|
+| attribute damage happens before L1 | GCN `feature_shuffle` L1 probe AUC | 0.614 | 0.592 |
+| structural damage enters at hop 2 | GCN `del` L1 → L2 probe AUC | 0.839 → 0.809 | 0.847 → 0.827 |
+| attention renormalisation costs more | GAT `del` L2 probe AUC (drop vs clean) | 0.688 (−0.066) | 0.686 (−0.117) |
+| the self-loop is the carrier | GCN `del`, sym → no self-loops | 0.790 → 0.718 | 0.787 → 0.675 |
+| the normalisation is not | GCN `del`, sym → row-mean | 0.790 → 0.777 | 0.787 → 0.779 |
+| bridging edges ≥ triadic ones | GCN `del_tri` / `del_bridge` | 0.823 / 0.796 | 0.812 / 0.795 |
+| edge completion rescues SGDiff | `del_hub` CN completion gain | +0.038 | +0.058 |
+| feature smoothing rescues GCN | `feature_shuffle` smooth2 gain | +0.054 | +0.021 |
+| k = 2 raises ceiling, not floor | SEAL clean / `del` | 0.780 → 0.850 / 0.639 → 0.661 | 0.740 → 0.814 / 0.654 → 0.632 |
+
+The two weakened magnitudes are informative rather than contradictory: the
+structure-smoothing repair is smaller on Citeseer (0.021 vs 0.054), and the k = 2
+retrain *widens* SEAL's deletion gap there (0.086 → 0.182), which is the same
+"more input ≠ less fragile" claim with a sharper sign.
+
+### 7.6 Component-level redesign: change one part, retrain, re-probe
+
+Everything above reads a *frozen* network. That localises the damage but cannot
+say whether a component is *causally* responsible. This subsection retrains a GCN
+from scratch once per configuration, with exactly one component changed
+(`scripts/run_redesign.py`, `results/redesign_<dataset>.{json,md}`, seeds 0-7,
+same probes, same pair budget, augmented inputs rebuilt from the graph being
+scored):
+
+| config | what changes vs `base` |
+|---|---|
+| `base` | 2 layers, symmetric `1/√(d_i d_j)`, self-loops, raw attributes |
+| `depth-L1` / `depth-L3` | one or three propagation steps |
+| `noloop` | trained with `add_self_loops = False` |
+| `row` | trained with row-mean normalisation |
+| `+cnfeat` | input = raw X ‖ 6 structural descriptors (degree, mean/max CN over incident edges, clustering, 2-hop reach, mean neighbour degree) |
+| `+smooth` | input = structure-smoothed attributes (1 round, α = 0.5) |
+| `+cnfeat+smooth` | both data-side changes |
+| `+edgedropout` | robust training: 30 % of the training edges dropped per epoch |
+
+Damage (clean − probe), means over seeds 0-7 (per-seed spread ≤ 0.03):
+
+| config | clean AUC (Cora / Citeseer) | Cora `del` | Cora `del_hub` | Cora `feat_shuffle` | Citeseer `del` | Citeseer `del_hub` | Citeseer `feat_shuffle` |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `base` | 0.813 / 0.799 | 0.056 | 0.067 | 0.167 | 0.031 | 0.043 | 0.189 |
+| `depth-L1` | 0.833 / 0.862 | 0.044 | 0.048 | **0.236** | 0.025 | 0.035 | **0.289** |
+| `depth-L3` | 0.824 / 0.805 | **0.040** | **0.042** | **0.225** | **0.019** | **0.026** | **0.214** |
+| `noloop` | 0.810 / 0.733 | **0.114** | **0.121** | 0.167 | **0.052** | **0.083** | 0.147 |
+| `row` | 0.802 / 0.781 | 0.061 | 0.063 | 0.157 | 0.028 | 0.035 | 0.174 |
+| `+cnfeat` | 0.806 / 0.786 | 0.062 | 0.068 | 0.160 | 0.028 | 0.036 | 0.178 |
+| `+smooth` | 0.813 / 0.786 | 0.053 | 0.072 | 0.147 | 0.024 | 0.045 | 0.169 |
+| `+cnfeat+smooth` | 0.807 / 0.775 | 0.063 | 0.075 | **0.130** | 0.021 | 0.039 | **0.145** |
+| `+edgedropout` | 0.839 / 0.818 | 0.055 | 0.061 | 0.206 | 0.034 | 0.046 | 0.213 |
+
+The same grid on USAir (dense, no attributes, so no `feature_shuffle` column) is
+the control for the self-loop claim — §7.2 predicted that the self-loop advantage
+belongs to the sparse graphs, not to GNNs in general:
+
+| config | USAir clean | USAir `del` | USAir `del_hub` |
+|---|---:|---:|---:|
+| `base` | 0.886 | 0.049 | 0.036 |
+| `noloop` | 0.882 | 0.038 | **0.028** |
+| `row` | 0.840 | **0.083** | **0.144** |
+| `depth-L3` | 0.875 | 0.033 | 0.031 |
+| `+edgedropout` | 0.878 | 0.045 | 0.035 |
+
+On the dense graph removing the self-loop **does not hurt** (0.049 → 0.038,
+`del_hub` 0.036 → 0.028) — the train-time counterpart of the inference-swap
+cross-check, and a third independent confirmation that the self-loop is a
+sparse-graph carrier. The dense graph has the opposite sensitivity: there the
+normalisation matters, and training with row-mean doubles the deletion damage and
+quadruples the `del_hub` damage.
+
+Five readings, four of them causal confirmations of §7 and one a new trade-off:
+
+1. **The self-loop is causal, not correlational — and only on sparse graphs.**
+   Removing it *at training time* doubles the deletion damage: Cora `del` 0.056 →
+   0.114, `del_hub` 0.067 → 0.121; Citeseer `del_hub` 0.043 → 0.083; USAir
+   `del_hub` 0.036 → 0.028 (no penalty). On Cora the clean AUC is essentially
+   unchanged (0.813 vs 0.810), so this is not a weaker model — it is the missing
+   identity path. On Citeseer the clean AUC does fall (0.799 → 0.733), so the
+   honest statement is: the self-loop carries a large part of the deletion
+   robustness on both sparse graphs, and part of the Citeseer gap is the budget
+   lost with it.
+2. **The normalisation is not causal on the sparse graphs, and it is on the
+   dense one.** Swapping `sym` → `row` *in training* moves the deletion damage
+   0.056 → 0.061 (Cora) and 0.031 → 0.028 (Citeseer) — different signs, inside the
+   seed spread, so the §7.2 negative result survives the train-time test. On USAir
+   the same swap costs 0.083 / 0.144 (vs 0.049 / 0.036) — there the normalisation
+   *is* the carrier, which is exactly the graph-dependence §7.2 predicted.
+3. **Depth moves damage between the two channels.** At equal-or-better clean AUC,
+   both a 1-step and a 3-step encoder cut the deletion damage (Cora 0.056 →
+   0.044 / 0.040, Citeseer 0.031 → 0.025 / 0.019) and both raise the attribute
+   damage (0.167 → 0.236 / 0.225, 0.189 → 0.289 / 0.214). More propagation means
+   the representation leans more on smoothed structure and less on the per-node
+   attributes, so the two robustness axes are **traded off, not jointly
+   improved** — the clearest evidence that the two damages have different
+   carriers. Note that the "1-step" encoder is not a smaller model here (Cora
+   0.833, Citeseer 0.862 clean), so this is not a capacity artefact.
+4. **Strengthening the input fixes the attribute channel, not the deletion
+   channel.** `+cnfeat` — handing the model the CN/degree descriptors it was
+   accused of not reading — leaves `del` where it was (0.056 → 0.062, 0.031 →
+   0.028). What does work is the data-side rebuild: `+cnfeat+smooth` cuts the
+   `feature_shuffle` damage from 0.167 to 0.130 (Cora) and from 0.189 to 0.145
+   (Citeseer) — the only row that improves on both graphs by more than the
+   per-seed spread — but it costs 0.006 / 0.024 of clean AUC. `+smooth` alone is
+   roughly half that effect (0.147 / 0.169) and sits within one seed standard
+   deviation. Partial fix, attribute channel only: a permutation destroys
+   information, so no input transform can restore all of it.
+5. **Robust training raises the ceiling and leaves the floor.** Edge dropout is
+   the one configuration that clearly improves clean accuracy (Cora 0.813 →
+   0.839, Citeseer 0.799 → 0.818) — and it does not shrink the deletion damage
+   (0.055 / 0.034) while making the attribute probe *worse* (0.206 / 0.213).
+   Same pattern as the k = 2 sub-graph retrain in §7.5, now on the GCN side:
+   "train harder / see more" is not "be less fragile".
+
+Put together, the redesign grid says the fragility is a property of *how* the
+model uses the identity path and the attribute channel — not of its capacity, its
+normalisation, or the richness of its input. The only intervention that moved a
+damage channel in the predicted direction on both attributed graphs is the
+structure-smoothed input plus structural descriptors (attribute channel), and it
+buys that with clean accuracy. Nothing tested closes the structural-evidence
+gap: the candidate that follows from §7.1/§7.4 is to calibrate the score against
+the *absence* of evidence (score a pair relative to a null model of its expected
+local evidence), which is a change in the scoring rule and is left as an untested
+proposal, not a result.
+
+## 8. What this changes about the robustness story
+
+1. **"Robustness to attacks" was mostly "robustness to deletion" — on Cora.**
+   There the *largest* damage of every model is a deletion probe and insertion
+   contributes 0.02-0.05. On Citeseer (sparsest) insertion costs SGDiff 0.108, on
+   USAir (densest) hub insertion costs PENCIL 0.190. Which half of an attack does
+   the damage is a property of the graph, and neither RF nor DICE reports it.
+2. **Model capacity is not the axis; the scoring rule and the input supply are.**
+   SEAL (54 k params) and SGDiff (2.3 M params) read the *same* sub-graphs and
+   lose 0.14 vs 0.24 on Cora; the difference is the scoring rule. And the
+   component that decides whether a model survives is which *channel* it reads
+   (attributes vs local evidence), not its size.
+3. **The robustness carrier inside a GCN is the self-loop, not the
+   normalisation** (§7.2). Symmetric, row-mean and unnormalised propagation are
+   within 0.02 under deletion; removing the self-loop costs 0.07. Claims that
+   attribute robustness to `1/√(d_i d_j)` would have been a false positive.
+4. **Repairs are channel-specific, and that is the causal evidence.** Restoring
+   deleted edges rescues SGDiff (+0.113) and does nothing for GCN (±0.01);
+   rebuilding corrupted attributes from structure rescues GCN/SAGE/VGAE
+   (+0.05-0.07) and does exactly nothing for SGDiff (0.000). Same intervention,
+   opposite effects, predicted by the attribution.
+5. **More input is not a fix.** Giving the sub-graph family 2-hop sub-graphs
+   raises clean AUC by 0.07 *and* leaves the deletion gap unchanged (0.141 →
+   0.189 for SEAL). Fragility tracks how the model uses evidence, not how much it
+   is given.
+6. **Nothing in this zoo reads homophily directly.** `ins_homo` — an edge that
+   *looks* right — is invisible on Cora and Citeseer (≤0.036 for every model, a
+   gain for GAT). Homophily shows up only as the assumption that makes smoothing
+   useful.
+7. **The two damage channels are separable, and only one of them is repairable
+   from the input side** (§7.6). Retraining confirms the self-loop carries the
+   deletion robustness (removing it doubles the damage) and that normalisation
+   does not, on the sparse graphs. But no input augmentation closes the deletion
+   gap: `+cnfeat` leaves it where it was, and the structure-smoothed input that
+   does cut the attribute damage (0.167 → 0.130 Cora, 0.189 → 0.145 Citeseer)
+   pays 0.006-0.024 of clean AUC for it. Depth only trades one channel for the
+   other. Fragility here is about how evidence is turned into a score, not about
+   capacity or input supply.
+
+## 9. Caveats
 
 1. **Evasion only.** Weights are trained clean; poisoned retraining is a
    different question.
@@ -446,21 +829,56 @@ degree-blind by construction**: their features are DRNL one-hots, so zeroing the
    inertness; they do not say what a *working* feature branch would do.
 5. **`homo` / `hetero` use the ground-truth labels**, which a real attacker may
    not have; here they are diagnostic interventions, not attacks.
-6. **Single attributed dataset for the attribute claims.** Cora and Citeseer
-   share the BoW channel; Pubmed is 6× larger and was not re-run. Re-run with
-   `--dataset citeseer` to check.
+6. **Two attributed datasets, one feature type.** Cora and Citeseer both use the
+   standardised BoW channel, so the attribute claims cannot separate "BoW" from
+   "attributes". Pubmed (6× larger) is prepared but was not re-run; a second graph
+   with a different feature type is the missing control.
+7. **The layer probe is a hook on the linear block.** For GCN/SAGE the hook
+   captures the aggregated representation; for GAT it captures the projection
+   *before* attention, so GAT's L1 cannot move under structural probes (marked
+   with an asterisk, and not used to support any claim). VGAE has a single
+   propagation block and is excluded from the layer table.
+8. **Deep-probe runs use two seeds** (Cora / Citeseer / USAir) because each seed
+   costs a full SGDiff fit (~5-8 min on CPU). The effects the section relies on are
+   0.03-0.11 AUC — an order of magnitude above the seed spread at that budget
+   (≤0.02 for everything except SGDiff's deletion column, ±0.09), but the exact
+   decimals are not seed-converged.
+9. **The `k = 2` repair changes the paper's setting** (Table 4 uses `k = 1` for
+   every dataset). It is reported as a repair experiment, not as a proposed
+   configuration.
+10. **§7.6 retrains a GCN only.** The redesign grid holds the architecture family
+    fixed (the one §7 localises the mechanism in), so the numbers say nothing
+    about whether a different aggregator (attention, sub-graph classifier) would
+    respond differently to the same component change. Each row is ≈1 s/fit, so the
+    grid covers three graphs × eight seeds (per-seed spread ≤ 0.03 on the damage
+    columns): the self-loop effect (0.05-0.09) and the `+cnfeat+smooth` effect
+    (0.037-0.044) sit above it, the `+smooth`-only effect (0.020) does not.
 
-## 8. Reproduce / extend
+## 10. Reproduce / extend
 
 ```bash
 # the Cora table (~20 min on CPU; SGDiff's fit dominates)
 python scripts/run_probe.py --dataset cora --profile cpu --seeds 0 1 2 --device cpu
 
+# the stability check: the same grid on two other graphs
+python scripts/run_probe.py --dataset citeseer --profile cpu --seeds 0 1 2 --device cpu
+python scripts/run_probe.py --dataset usair --profile cpu --seeds 0 1 2 --device cpu
+
 # cheap passes only: graph statistics + sub-graph availability, no training
 python scripts/run_probe.py --dataset cora --seeds 0 1 2 --device cpu --diagnostics
 
-# the featureless / label-free control
-python scripts/run_probe.py --dataset usair --profile cpu --seeds 0 1 2 --device cpu
+# layer-level attribution, operator substitution, edge kinds, repairs (~13 min/2 seeds)
+python scripts/run_deep_probe.py --dataset cora --profile cpu --seeds 0 1 --device cpu
+python scripts/run_deep_probe.py --dataset citeseer --profile cpu --seeds 0 1 --device cpu
+python scripts/run_deep_probe.py --dataset usair --profile cpu --seeds 0 1 --device cpu
+
+# component-level redesign: retrain one-part-changed GCNs and re-probe (~40 s / 8 seeds)
+python scripts/run_redesign.py --dataset cora --seeds 0 1 2 3 4 5 6 7
+python scripts/run_redesign.py --dataset citeseer --seeds 0 1 2 3 4 5 6 7
+python scripts/run_redesign.py --dataset usair --seeds 0 1 2 3 4 5 6 7
+
+# rebuild the HTML report
+python scripts/make_probe_report.py
 
 # a single mechanism question
 python scripts/run_probe.py --models sgdiff seal --variants del@50% ins_hub@50% --seeds 0

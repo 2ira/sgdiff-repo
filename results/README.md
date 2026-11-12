@@ -31,6 +31,20 @@ the property heuristics scored on the same perturbed graphs, the component
 ablations, and what the sub-graph extractor could see. Interpretation:
 `docs/attribution.md`.
 
+`deep_<dataset>.md` is the layer/operator/edge-kind + repair audit produced by
+`scripts/run_deep_probe.py` (layer-wise linear probes and representation drift,
+propagation-operator substitution under the trained weights, triadic-vs-bridging
+deletion, CN/AA edge completion, feature smoothing, CN-prior blending, and the
+k = 2 sub-graph retrain). Interpretation: `docs/attribution.md` §7.
+
+`redesign_<dataset>.md` is the component-level redesign grid produced by
+`scripts/run_redesign.py`: depth (1/2/3 hops), normalisation (sym / row),
+self-loops (on / off), input augmentation (raw / structure-smoothed / +2-hop
+structural descriptors) and robust training (30 % edge dropout), each retrained
+from scratch and re-probed with the same suite. Interpretation:
+`docs/attribution.md` §7.6.
+
 `probe_report.html` is the same content rendered for reading — one self-contained
 page (styled tables + inline SVG, no CDN, works offline), built by
-`scripts/make_probe_report.py` from the `probe_*.json` files.
+`scripts/make_probe_report.py` from the `probe_*.json`, `deep_*.json` and
+`redesign_*.json` files.

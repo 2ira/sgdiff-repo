@@ -349,7 +349,313 @@ def scatter_panel(dense: Probe) -> str:
     return f'<div class="card">{svg}</div>'
 
 
-def insight_cards(cora: Probe, dense: Probe | None) -> str:
+# --------------------------------------------------------------------------- #
+# Deep-instrument sections (scripts/run_deep_probe.py artifacts)
+# --------------------------------------------------------------------------- #
+class Deep:
+    def __init__(self, payload: dict, dataset: str):
+        self.raw = payload
+        self.dataset = dataset
+
+    def base(self, model: str, variant: str = "clean") -> float | None:
+        return mean(self.raw["base"].get(model, {}).get(variant))
+
+    def layer(self, model: str, variant: str, layer: str, key: str) -> float | None:
+        return mean(self.raw["layers"].get(model, {}).get(variant, {}).get(layer, {}).get(key))
+
+    def operator(self, model: str, mode: str, variant: str) -> float | None:
+        return mean(self.raw["operators"].get(model, {}).get(mode, {}).get(variant))
+
+    def op_variants(self) -> list[str]:
+        variants: set[str] = set()
+        for per_mode in self.raw["operators"].values():
+            for per_variant in per_mode.values():
+                variants.update(per_variant)
+        return [v for v in ("clean", "del@50%", "ins_hub@50%", "feature_shuffle") if v in variants]
+
+    def kind(self, model: str, variant: str, key: str = "auc") -> float | None:
+        return mean(self.raw["edge_kinds"].get(model, {}).get(variant, {}).get(key))
+
+    def repair(self, model: str, key: str) -> float | None:
+        return mean(self.raw["repairs"].get(model, {}).get(key))
+
+    def repair_keys(self, needle: str) -> list[str]:
+        keys: list[str] = []
+        for per_model in self.raw["repairs"].values():
+            keys += [k for k in per_model if needle in k]
+        return sorted(set(keys))
+
+    def defence(self, model: str, variant: str) -> float | None:
+        return mean(self.raw.get("defence", {}).get(model, {}).get(variant))
+
+    def defence_models(self) -> list[str]:
+        return list(self.raw.get("defence", {}))
+
+    def models(self) -> list[str]:
+        return list(self.raw["models"])
+
+
+def stability_panel(probes: dict[str, Probe]) -> str:
+    """ΔAUC of the four headline probes, one small table per dataset."""
+    order = ["del@50%", "del_hub@50%", "ins_hub@50%", "feature_shuffle"]
+    models = list(next(iter(probes.values())).models)
+    blocks = []
+    for name, probe in probes.items():
+        deg = probe.graph_stat("clean", "mean_degree")
+        variants = [v for v in order if v in probe.variants]
+        header = ["模型"] + [PRETTY.get(v, v) for v in variants]
+        rows = []
+        for model in models:
+            cells = [f"<td><b>{html.escape(model)}</b></td>"]
+            for variant in variants:
+                value = probe.damage(model, variant)
+                cells.append(f'<td class="hm" style="{damage_style(value, 0.24)}">{fmt(value, 3, signed=True)}</td>')
+            rows.append("".join(cells))
+        title = f"{name}（平均度 {fmt(deg, 2)}）"
+        blocks.append(f"<h3>{html.escape(title)}</h3>" + table(header, rows))
+    note = (
+        '<p class="note">同一模型在不同图上的伤害量级：若结论只在单图上成立，各表会互相矛盾。'
+        "USAir 无属性无标签，因此没有特征探针那一列。</p>"
+    )
+    return "".join(blocks) + note
+
+
+def layer_panel(deep: Deep) -> str:
+    blocks = []
+    for model in deep.models():
+        variants = [v for v in deep.raw["layers"].get(model, {})]
+        if not variants:
+            continue
+        layers = sorted({layer for v in variants for layer in deep.raw["layers"][model][v]})
+        header = ["探针"] + [f"{layer} drift" for layer in layers] + [f"{layer} 线性探针 AUC" for layer in layers]
+        rows = []
+        for variant in variants:
+            cells = [f"<td><b>{PRETTY.get(variant, variant)}</b></td>"]
+            for layer in layers:
+                cells.append(f'<td class="bar" style="{bar_style(deep.layer(model, variant, layer, "drift"), 0.0, 0.8, "190,18,60")}">{fmt(deep.layer(model, variant, layer, "drift"))}</td>')
+            for layer in layers:
+                cells.append(f'<td class="hm" style="{auc_style(deep.layer(model, variant, layer, "probe_auc"))}">{fmt(deep.layer(model, variant, layer, "probe_auc"))}</td>')
+            rows.append("".join(cells))
+        blocks.append(f"<h3>{html.escape(model)}</h3>" + table(header, rows))
+    note = (
+        '<p class="note">drift = 该层表示在扰动图与干净图之间的余弦距离（0.0 = 未移动）；'
+        "线性探针 = 用干净图的该层表示训练一个线性读出，再在该探针图的同层表示上评估——"
+        "它回答“信号在哪一层已经没了”。</p>"
+    )
+    return "".join(blocks) + note
+
+
+def operator_panel(deep: Deep) -> str:
+    variants = deep.op_variants()
+    header = ["模型", "传播算子"] + [PRETTY.get(v, v) for v in variants]
+    rows = []
+    for model in deep.raw["operators"]:
+        base = {v: deep.operator(model, "sym", v) for v in variants}
+        for mode in ("sym", "row", "sum", "noloop"):
+            cells = [f"<td><b>{html.escape(model)}</b></td>" if mode == "sym" else "<td></td>", f"<td>{mode}</td>"]
+            for variant in variants:
+                value = deep.operator(model, mode, variant)
+                delta = None if value is None or base[variant] is None else value - base[variant]
+                cells.append(f'<td class="hm" style="{damage_style(delta, 0.08)}">{fmt(value)}</td>')
+            rows.append("".join(cells))
+    note = (
+        '<p class="note">同一套训练好的权重，只换传播算子（sym = 训练时的对称归一化）。'
+        "着色 = 与 sym 的差；若 sym 与 row 几乎相同、sum 明显更差，说明“对称归一化吸收扰动”"
+        "这个机制成立。</p>"
+    )
+    return table(header, rows) + note
+
+
+def operator_cross_panel(primary: "Deep", other: "Deep | None") -> str:
+    """Does the operator finding survive the second graph? (deletion only)"""
+    if other is None:
+        return ""
+    header = ["图", "模型", "sym（训练时）", "row", "sum", "noloop", "sym − noloop"]
+    rows = []
+    for deep in (primary, other):
+        for model in ("gcn", "sage", "vgae"):
+            if model not in deep.raw["operators"]:
+                continue
+            values = {mode: deep.operator(model, mode, "del@50%") for mode in ("sym", "row", "sum", "noloop")}
+            if any(v is None for v in values.values()):
+                continue
+            rows.append(
+                "".join(
+                    [
+                        f"<td>{html.escape(deep.dataset)}</td>",
+                        f"<td><b>{model}</b></td>",
+                        f"<td>{fmt(values['sym'])}</td>",
+                        f"<td>{fmt(values['row'])}</td>",
+                        f"<td>{fmt(values['sum'])}</td>",
+                        f"<td>{fmt(values['noloop'])}</td>",
+                        f'<td class="hm" style="{damage_style(values["sym"] - values["noloop"], 0.08)}">'
+                        f"{fmt(values['sym'] - values['noloop'], 3, signed=True)}</td>",
+                    ]
+                )
+            )
+    note = (
+        '<p class="note">同一套权重、删边 50% 下的算子替换。<b>sym − noloop &gt; 0</b> 才说明自环在保护模型。'
+        "Cora 上有 0.05–0.07 的保护，USAir 上没有——自环是稀疏图上删边鲁棒的载体，不是普遍规律。</p>"
+    )
+    return table(header, rows) + note
+
+
+def edge_kind_panel(deep: Deep) -> str:
+    header = ["模型", "clean", "删三角边", "删桥边", "三角边数", "桥边数", "三角−桥"]
+    rows = []
+    for model in deep.raw["edge_kinds"]:
+        clean = deep.base(model)
+        tri = deep.kind(model, "del_tri@50%")
+        bridge = deep.kind(model, "del_bridge@50%")
+        delta = None if tri is None or bridge is None else tri - bridge
+        cells = [
+            f"<td><b>{html.escape(model)}</b></td>",
+            f"<td>{fmt(clean)}</td>",
+            f'<td class="hm" style="{damage_style(None if tri is None or clean is None else tri - clean, 0.20)}">{fmt(tri)}</td>',
+            f'<td class="hm" style="{damage_style(None if bridge is None or clean is None else bridge - clean, 0.20)}">{fmt(bridge)}</td>',
+            f"<td>{fmt(deep.kind(model, 'del_tri@50%', 'edges_before'), 0)}</td>",
+            f"<td>{fmt(deep.kind(model, 'del_bridge@50%', 'edges_before'), 0)}</td>",
+            f'<td class="hm" style="{damage_style(delta, 0.10)}">{fmt(delta, 3, signed=True)}</td>',
+        ]
+        rows.append("".join(cells))
+    note = (
+        '<p class="note">同样删 50%，但只删“闭合三角形”的边（CN &gt; 0，即共同邻居证据）'
+        "或只删“桥”边（CN = 0，只影响可达性）。三角−桥 &lt; 0 表示三角边更关键。</p>"
+    )
+    return table(header, rows) + note
+
+
+def repair_panel(deep: Deep) -> str:
+    refs = deep.raw.get("refs", {}).get("del@50%", {})
+    header = ["模型", "受损探针", "修复方式", "base", "修复后", "增益"]
+    rows = []
+    for model in deep.raw["repairs"]:
+        for key in sorted(deep.raw["repairs"][model]):
+            variant, repair = key.split("|")
+            if repair.startswith("hybrid") and not repair.endswith("0.5"):
+                continue
+            value = deep.repair(model, key)
+            base = deep.base(model, variant)
+            gain = None if value is None or base is None else value - base
+            style = "background:rgba(15,118,110,.14);" if (gain or 0) > 0.005 else (
+                "background:rgba(190,18,60,.10);" if (gain or 0) < -0.005 else ""
+            )
+            rows.append(
+                "".join(
+                    [
+                        f"<td><b>{html.escape(model)}</b></td>",
+                        f"<td>{PRETTY.get(variant, variant)}</td>",
+                        f"<td>{html.escape(repair)}</td>",
+                        f"<td>{fmt(base)}</td>",
+                        f"<td>{fmt(value)}</td>",
+                        f'<td style="{style}">{fmt(gain, 3, signed=True)}</td>',
+                    ]
+                )
+            )
+    note = (
+        '<p class="note">全部在推理时完成、不重训、补边时排除全部测试点对。'
+        f"参考上限：受损图上 CN 单独 AUC {fmt(mean(refs.get('cn')))}、AA {fmt(mean(refs.get('aa')))}——"
+        "修复不能超过它所用的先验。</p>"
+    )
+    return table(header, rows) + note
+
+
+def defence_panel(deep: Deep) -> str:
+    models = deep.defence_models()
+    if not models:
+        return ""
+    variants = ["clean", "del@50%", "del_hub@50%", "ins_hub@50%"]
+    header = ["模型", "探针", "k = 1", "k = 2（重训）", "增益"]
+    rows = []
+    for model in models:
+        for variant in variants:
+            k2 = deep.defence(model, variant)
+            if k2 is None:
+                continue
+            base = deep.base(model, variant)
+            gain = k2 - base
+            rows.append(
+                "".join(
+                    [
+                        f"<td><b>{html.escape(model)}</b></td>",
+                        f"<td>{PRETTY.get(variant, variant)}</td>",
+                        f"<td>{fmt(base)}</td>",
+                        f"<td>{fmt(k2)}</td>",
+                        f'<td style="{"background:rgba(15,118,110,.14);" if gain > 0.005 else ""}">{fmt(gain, 3, signed=True)}</td>',
+                    ]
+                )
+            )
+    note = '<p class="note">子图分类器默认 k = 1；k = 2 让每个点对多看一跳证据。这是“给模型更多证据”的模型侧修复。</p>'
+    return table(header, rows) + note
+
+
+class Redesign:
+    """Component-level redesign artifacts (``scripts/run_redesign.py``)."""
+
+    def __init__(self, payload: dict, dataset: str):
+        self.raw = payload
+        self.dataset = dataset
+
+    def score(self, config: str, probe: str) -> float | None:
+        return mean(self.raw["scores"].get(config, {}).get(probe))
+
+    def damage(self, config: str, probe: str) -> float | None:
+        return mean(self.raw["damage"].get(config, {}).get(probe))
+
+    def configs(self) -> list[str]:
+        return list(self.raw["scores"])
+
+    def probes(self) -> list[str]:
+        if not self.raw["scores"]:
+            return []
+        first = next(iter(self.raw["scores"].values()))
+        return [p for p in first if p != "clean"]
+
+
+def redesign_panel(redesigns: dict[str, "Redesign"]) -> str:
+    blocks = []
+    for name, redesign in redesigns.items():
+        probes = redesign.probes()
+        header = ["配置", "clean"] + [PRETTY.get(p, p) for p in probes]
+        rows = []
+        for config in redesign.configs():
+            cells = [f"<td><b>{html.escape(config)}</b></td>"]
+            for probe in ["clean"] + probes:
+                cells.append(
+                    f'<td class="hm" style="{auc_style(redesign.score(config, probe))}">{fmt(redesign.score(config, probe))}</td>'
+                )
+            rows.append("".join(cells))
+        damage_header = ["配置"] + [PRETTY.get(p, p) for p in probes]
+        damage_rows = []
+        for config in redesign.configs():
+            cells = [f"<td><b>{html.escape(config)}</b></td>"]
+            for probe in probes:
+                cells.append(
+                    f'<td class="hm" style="{damage_style(redesign.damage(config, probe), 0.24)}">'
+                    f"{fmt(redesign.damage(config, probe))}</td>"
+                )
+            damage_rows.append("".join(cells))
+        blocks.append(
+            f"<h3>{html.escape(name)}：重训后的 AUC</h3>"
+            + table(header, rows)
+            + f"<h3>{html.escape(name)}：伤害 = clean − 探针（越小越稳）</h3>"
+            + table(damage_header, damage_rows)
+        )
+    note = (
+        '<p class="note">每一行都<b>从头重训</b>，只改一个部件（层数 / 归一化 / 自环 / 输入特征 / 训练扰动），'
+        "然后再跑同一套探针。<code>base</code> 是与前文一致的 2 层 GCN。"
+        "这是把“哪个部件负责脆弱性”从相关性升级为因果检验。</p>"
+    )
+    return "".join(blocks) + note
+
+
+def insight_cards(
+    cora: Probe,
+    dense: Probe | None,
+    third: Probe | None = None,
+    deep: "Deep | None" = None,
+    redesign: "Redesign | None" = None,
+) -> str:
     cards: list[tuple[str, str, str]] = []
 
     def d(probe: Probe, model: str, variant: str) -> str:
@@ -367,25 +673,43 @@ def insight_cards(cora: Probe, dense: Probe | None) -> str:
             f"→ {fmt(cora.heuristic('del_hub@50%', 'cn'))}",
         )
     )
+
+    layer_evidence = ""
+    if deep is not None:
+        l1 = deep.layer("gcn", "feature_shuffle", "L1", "probe_auc")
+        if l1 is not None:
+            layer_evidence = f"；层级别：GCN 的 L1 线性探针 {fmt(l1)}（结构探针下 L1≈0.84 不动）"
     cards.append(
         (
             "GCN 族的命门是特征，不是聚合",
             "全图内积解码器把结构当平滑算子、把属性当信号：置零特征后全部跌到 0.43–0.50，"
-            "而删边只掉 0.04–0.10。唯一例外是 GAT——逐目标 softmax 归一化让它对删边敏感 2 倍，"
-            "也让同配插边变成增益。",
+            "而删边只掉 0.04–0.10。层级别测量显示，特征伤害在<b>第 1 层之前</b>就已发生，"
+            "结构伤害则在第 2 跳才出现。",
             f"GCN：clean {fmt(cora.auc('gcn', 'clean'))} / 特征置零 {fmt(cora.ablation('gcn', 'features_zeroed'))} / "
-            f"del {d(cora, 'gcn', 'del@50%')} / del_hub {d(cora, 'gcn', 'del_hub@50%')}；"
-            f"GAT del {d(cora, 'gat', 'del@50%')}，ins_homo {d(cora, 'gat', 'ins_homo@50%')}",
+            f"del {d(cora, 'gcn', 'del@50%')} / del_hub {d(cora, 'gcn', 'del_hub@50%')}{layer_evidence}",
         )
     )
+
+    repair_evidence = ""
+    if deep is not None:
+        gain = deep.repair("sgdiff", "del@50%|complete_cn")
+        base = deep.base("sgdiff", "del@50%")
+        smooth = deep.repair("gcn", "feature_shuffle|smooth2")
+        smooth_base = deep.base("gcn", "feature_shuffle")
+        if gain is not None and base is not None:
+            repair_evidence = (
+                f"；修复：CN 补边把 SGDiff 从 {fmt(base)} 拉到 {fmt(gain)}，"
+                f"而把 GCN 的损坏特征按结构重建：{fmt(smooth_base)} → {fmt(smooth)}"
+            )
     cards.append(
         (
-            "子图族死于「输入饥饿」",
+            "子图族死于「输入饥饿」——修边能救，修特征不能",
             "测试边在提取前就被移除，k=1 时唯一判据是共享邻居路径。删边把这条路径砍掉七成，"
-            "子图从 10.7 节点缩到 5.4–7.0；插边不删证据，几乎无损。",
+            "子图从 10.7 节点缩到 5.4–7.0。按 CN 先验把边补回去，收益集中在子图族；"
+            "把损坏的特征按结构重建，收益集中在 GCN 族——同一修复，效果相反。",
             f"共享邻居率 clean {fmt(cora.subgraph('clean', 'cn_frac'))} → del {fmt(cora.subgraph('del@50%', 'cn_frac'))} "
             f"→ del_hub {fmt(cora.subgraph('del_hub@50%', 'cn_frac'))}；"
-            f"SEAL del {d(cora, 'seal', 'del@50%')} / ins {d(cora, 'seal', 'ins@50%')}",
+            f"SEAL del {d(cora, 'seal', 'del@50%')} / ins {d(cora, 'seal', 'ins@50%')}{repair_evidence}",
         )
     )
     cards.append(
@@ -398,6 +722,36 @@ def insight_cards(cora: Probe, dense: Probe | None) -> str:
             f"del {d(cora, 'sgdiff', 'del@50%')}（seed 波动 ±{fmt(cora.std('sgdiff', 'del@50%'))}）",
         )
     )
+
+    if deep is not None:
+        sym = deep.operator("gcn", "sym", "del@50%")
+        row = deep.operator("gcn", "row", "del@50%")
+        summ = deep.operator("gcn", "sum", "del@50%")
+        noloop = deep.operator("gcn", "noloop", "del@50%")
+        if None not in (sym, row, summ, noloop):
+            cards.append(
+                (
+                    "鲁棒性来自自环，不是对称归一化（原假设被证伪）",
+                    "同一套权重只换传播算子：对称归一化、行均值、完全不归一化三者在删边下几乎一样，"
+                    "而<b>去掉自环</b>才真正掉点。自环是「邻居被打掉时仍保留自身信号」的恒等通路。",
+                    f"GCN del：sym {fmt(sym)} / row {fmt(row)} / sum {fmt(summ)} / noloop {fmt(noloop)}"
+                    f"（−{fmt(sym - noloop)}）；SAGE 无自环，sym 与 noloop 完全相同——构造性对照",
+                )
+            )
+        k2_clean = deep.defence("seal", "clean")
+        k2_del = deep.defence("seal", "del@50%")
+        if k2_clean is not None and k2_del is not None:
+            cards.append(
+                (
+                    "多给证据 ≠ 修好：k=2 抬高上限，不改变脆弱性",
+                    "把 SEAL 的包围子图从 1 跳扩到 2 跳重训，clean AUC 涨了约 0.07，"
+                    "但相对 clean 的删边缺口没有缩小——脆弱性取决于「如何使用证据」，而非「看到多少」。",
+                    f"SEAL：clean {fmt(deep.base('seal'))} → {fmt(k2_clean)}（+{fmt(k2_clean - deep.base('seal'))}），"
+                    f"del {fmt(deep.base('seal', 'del@50%'))} → {fmt(k2_del)}；"
+                    f"缺口 {fmt(deep.base('seal') - deep.base('seal', 'del@50%'))} → {fmt(k2_clean - k2_del)}",
+                )
+            )
+
     if dense is not None:
         cards.append(
             (
@@ -411,6 +765,27 @@ def insight_cards(cora: Probe, dense: Probe | None) -> str:
                 f"{fmt(dense.heuristic('ins_hub@50%', 'jaccard'))}，PENCIL ins_hub {d(dense, 'pencil', 'ins_hub@50%')}",
             )
         )
+
+    if redesign is not None:
+        base_del = redesign.damage("base", "del@50%")
+        noloop_del = redesign.damage("noloop", "del@50%")
+        row_del = redesign.damage("row", "del@50%")
+        smooth_feat = redesign.damage("+smooth", "feature_shuffle")
+        base_feat = redesign.damage("base", "feature_shuffle")
+        if None not in (base_del, noloop_del, row_del, smooth_feat, base_feat):
+            cards.append(
+                (
+                    "重训验证：自环负责删边鲁棒性，改数据只修得动特征通道",
+                    "把 2 层 GCN 从头重训，每次只改一个部件：去掉自环，删边伤害直接翻倍；"
+                    "只把对称归一化换成行均值，几乎不动；把结构描述符拼进输入（+cnfeat），删边缺口也不缩小。"
+                    "但把输入特征按结构平滑（+smooth）能把特征通道的伤害显著压低——"
+                    "也就是说，“哪个部件负责哪种伤害”是可分离的，而且两条通道要两种修法。",
+                    f"{redesign.dataset}：del 伤害 base {fmt(base_del)} / noloop {fmt(noloop_del)} / row {fmt(row_del)}；"
+                    f"feature_shuffle 伤害 base {fmt(base_feat)} → +smooth {fmt(smooth_feat)}",
+                )
+            )
+
+    homo_bound = fmt(cora.damage("gat", "ins_homo@50%"), 3, signed=True)
     cards.append(
         (
             "「看起来合理」的边几乎隐形",
@@ -418,19 +793,26 @@ def insight_cards(cora: Probe, dense: Probe | None) -> str:
             "只有异配边（最不合理的边）才带来 0.02–0.05 的伤害。没有模型直接读同配性——它只是平滑假设。",
             f"同配性 clean {fmt(cora.graph_stat('clean', 'homophily'))} / ins_homo "
             f"{fmt(cora.graph_stat('ins_homo@50%', 'homophily'))} / ins_hetero "
-            f"{fmt(cora.graph_stat('ins_hetero@50%', 'homophily'))}；"
-            f"ins_hetero 最坏 {d(cora, 'vgae', 'ins_hetero@50%')}（VGAE）",
+            f"{fmt(cora.graph_stat('ins_hetero@50%', 'homophily'))}；GAT ins_homo {homo_bound}",
         )
     )
+
     body = "".join(
-        f'<div class="insight"><h4>{html.escape(title)}</h4><p>{html.escape(text)}</p>'
+        f'<div class="insight"><h4>{html.escape(title)}</h4><p>{text}</p>'
         f"<code>{html.escape(evidence)}</code></div>"
         for title, text, evidence in cards
     )
     return f'<div class="cards">{body}</div>'
 
 
-def build(cora: Probe, dense: Probe | None) -> str:
+def build(
+    cora: Probe,
+    dense: Probe | None,
+    third: Probe | None = None,
+    deep: "Deep | None" = None,
+    deep_dense: "Deep | None" = None,
+    redesigns: dict[str, "Redesign"] | None = None,
+) -> str:
     protocol = cora.raw.get("protocol", {})
     probe_cols = [p for p in PROBES if p in cora.variants]
     chips = [
@@ -441,8 +823,14 @@ def build(cora: Probe, dense: Probe | None) -> str:
         f"评测对 <b>{protocol.get('num_pos')} + {protocol.get('num_neg')}</b>",
         f"<b>{html.escape(str(protocol.get('device')))}</b> · evasion",
     ]
+    if third is not None:
+        chips.append(f"稳定性对照 <b>{html.escape(third.dataset)}</b>（更稀疏，有属性）")
     if dense is not None:
-        chips.append(f"对照 <b>{html.escape(dense.dataset)}</b>（无属性/无标签）")
+        chips.append(f"对照 <b>{html.escape(dense.dataset)}</b>（密集，无属性/无标签）")
+    if deep is not None:
+        chips.append(f"深探针 <b>层 / 算子 / 边类型 / 修复</b>")
+    if redesigns:
+        chips.append("重训验证 <b>组件级重新设计</b>")
 
     parts = [
         "<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">",
@@ -518,11 +906,75 @@ def build(cora: Probe, dense: Probe | None) -> str:
             "</div>",
         ]
 
+    if third is not None:
+        probes = {"cora": cora}
+        if third is not None and third.dataset != "cora":
+            probes[third.dataset] = third
+        if dense is not None:
+            probes[dense.dataset] = dense
+        parts += [
+            '<h2><span class="num">06</span>跨图稳定性：同一套探针，三个不同性质的图</h2>',
+            '<p class="lede">Cora（平均度 3.3，有属性有标签）、Citeseer（2.7，有属性有标签）、'
+            "USAir（10.9，无属性无标签）。如果某个结论只是 Cora 的偶然，这里会自相矛盾。</p>",
+            '<div class="card">',
+            stability_panel(probes),
+            "</div>",
+        ]
+
+    if deep is not None:
+        parts += [
+            '<h2><span class="num">07</span>层级别：伤害发生在第几层</h2>',
+            '<p class="lede">冻结权重后逐层抓表征：<b>drift</b> 说“这层表示移动了多少”，'
+            "<b>线性探针</b>说“这层还能不能线性读出连接信号”。"
+            "如果某探针在第 1 层就已崩塌，说明编码器根本没拿到信息；只有第 2 层崩，说明伤害从第二跳进入。</p>",
+            f'<div class="card">{layer_panel(deep)}</div>',
+            '<p class="note">该节与 08-11 节在 Cora 与 Citeseer 上各跑了一遍'
+            "（均为 7 个模型 × 2 个 seed，<code>results/deep_cora.md</code> / "
+            "<code>results/deep_citeseer.md</code>）：层的进入位置、算子替换、自环、边类型、"
+            "修复方向在两图上符号一致，量级差异见 <code>docs/attribution.md</code> §7.5 的复现表。</p>",
+            '<h2><span class="num">08</span>结构算子：是归一化在吸收扰动，还是权重</h2>',
+            '<p class="lede">同一套权重，只替换传播算子。sym 是训练时的对称归一化；row 是行均值；'
+            "sum 完全不归一化；noloop 去掉自环。</p>",
+            f'<div class="card">{operator_panel(deep)}</div>',
+            (f'<h3>跨图复核：自环的保护只出现在稀疏图上</h3><div class="card">{operator_cross_panel(deep, deep_dense)}</div>'
+             if deep_dense is not None else ''),
+            '<h2><span class="num">09</span>哪一类边在承载证据：三角 vs 桥</h2>',
+            '<p class="lede">同样删 50%，只删闭合三角形的边（共同邻居证据）或只删桥边（仅影响可达性）。'
+            "两者对“局部 2 跳证据”的破坏完全不同。</p>",
+            f'<div class="card">{edge_kind_panel(deep)}</div>',
+            '<h2><span class="num">10</span>修复实验：把归因结论当假设去验证</h2>',
+            '<p class="lede">如果“子图族死于证据缺失”，那么按 CN 先验把删掉的边补回来应该能救；'
+            "如果“GCN 族死于属性通道”，那么补边不该有效。"
+            "另外再检查：把损坏的特征用结构重建（smooth）能否恢复，以及与 CN 分数混合（hybrid）的上限。</p>",
+            f'<div class="card">{repair_panel(deep)}</div>',
+        ]
+        if deep.defence_models():
+            parts += [
+                '<h2><span class="num">11</span>模型侧修复：给子图族更多证据（k = 2 重训）</h2>',
+                '<p class="lede">把 SEAL / PENCIL 的包围子图从 1 跳扩到 2 跳后重训——'
+                "如果删边伤害来自“证据被抽走”，多一跳应该带来实质性恢复。</p>",
+                f'<div class="card">{defence_panel(deep)}</div>',
+            ]
+
+    if redesigns:
+        parts += [
+            '<h2><span class="num">12</span>组件级重新设计：改一个部件、从头重训、再跑同一套探针</h2>',
+            '<p class="lede">冻结权重的归因只能说“训练好的网络在读什么”，不能说“哪个部件造成了脆弱”。'
+            "这一节把每个部件单独改掉、重训、再用同样的探针复测：层数（1/2/3 跳）、归一化（sym / row）、"
+            "自环（有 / 无）、输入（原始 / 结构平滑 / 拼 2 跳结构描述符）、训练（是否做 30% 边丢弃）。"
+            "其中“自环”和“归一化”两项直接检验上一节的机制假设。</p>",
+            f'<div class="card">{redesign_panel(redesigns)}</div>',
+        ]
+
+    conclusion_num = "13" if (deep is not None and redesigns) else ("12" if deep is not None else ("07" if third is not None else "06"))
     parts += [
-        '<h2><span class="num">06</span>归因结论</h2>',
-        insight_cards(cora, dense),
+        f'<h2><span class="num">{conclusion_num}</span>归因结论</h2>',
+        insight_cards(cora, dense, third, deep, next(iter(redesigns.values())) if redesigns else None),
         "<footer>由 <code>scripts/make_probe_report.py</code> 依据 "
-        "<code>results/probe_*.json</code> 生成（<code>scripts/run_probe.py</code> 产出）。"
+        "<code>results/probe_*.json</code>、<code>results/deep_*.json</code> 与 "
+        "<code>results/redesign_*.json</code> 生成"
+        "（<code>scripts/run_probe.py</code> / <code>scripts/run_deep_probe.py</code> / "
+        "<code>scripts/run_redesign.py</code> 产出）。"
         "文字解读见 <code>docs/attribution.md</code>；探针语义见 <code>sgdiff/data/perturb.py</code>。"
         "协议：evasion（干净权重，仅扰动推理图，测试正例已移除），同一批测试对评分。</footer>",
         "</div></body></html>",
@@ -535,6 +987,8 @@ def main() -> int:
     parser.add_argument("--results", default="results")
     parser.add_argument("--primary", default="cora")
     parser.add_argument("--contrast", default="usair")
+    parser.add_argument("--third", default="citeseer", help="third dataset for the stability section")
+    parser.add_argument("--deep", default="cora", help="dataset whose deep_<name>.json feeds sections 07-11")
     parser.add_argument("--out", default="results/probe_report.html")
     args = parser.parse_args()
 
@@ -550,9 +1004,28 @@ def main() -> int:
         if contrast_path.exists()
         else None
     )
+    third_path = results / f"probe_{args.third}.json"
+    third = (
+        Probe(json.loads(third_path.read_text(encoding="utf-8")), args.third)
+        if third_path.exists()
+        else None
+    )
+    deep_path = results / f"deep_{args.deep}.json"
+    deep = Deep(json.loads(deep_path.read_text(encoding="utf-8")), args.deep) if deep_path.exists() else None
+    deep_other_path = results / f"deep_{args.contrast}.json"
+    deep_other = (
+        Deep(json.loads(deep_other_path.read_text(encoding="utf-8")), args.contrast)
+        if deep_other_path.exists()
+        else None
+    )
+    redesigns: dict[str, Redesign] = {}
+    for dataset in (args.primary, args.third):
+        path = results / f"redesign_{dataset}.json"
+        if path.exists():
+            redesigns[dataset] = Redesign(json.loads(path.read_text(encoding="utf-8")), dataset)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build(cora, dense), encoding="utf-8")
+    out.write_text(build(cora, dense, third, deep, deep_other, redesigns or None), encoding="utf-8")
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} kB)")
     return 0
 

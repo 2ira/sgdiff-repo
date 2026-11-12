@@ -167,6 +167,8 @@ differ only in the knobs below.
 | `run_benchmark.py` | SGDiff vs. all baselines on identical data (split + sub-graph fingerprints) | `--dataset cora --profile cpu --seeds 0` |
 | `run_ablation.py` | does the likelihood actually depend on the link condition? | `--dataset cora --profile cpu --seed 0` |
 | `run_probe.py` | **why** each model is robust or fragile: targeted deletion / insertion / feature-shuffle probes, property heuristics, component ablations | `--dataset cora --profile cpu --seeds 0 1 2` |
+| `run_deep_probe.py` | **where** the damage happens: layer-wise linear probes, propagation-operator substitution, triadic-vs-bridge deletion, and repair experiments | `--dataset cora --profile cpu --seeds 0 1` |
+| `run_redesign.py` | **is the component causal**: retrain a GCN with one part changed (depth / normalisation / self-loop / input augmentation / robust training) and re-probe it | `--dataset cora --seeds 0 1 2 3 4 5 6 7` |
 | `make_probe_report.py` | renders the probe artifacts into one self-contained HTML report (no CDN) | (after `run_probe.py`) |
 | `collect_results.py` | markdown table of `results/*.json`; `--merge <profile>` rebuilds the mean/std summary | `--merge full` |
 | `run_all_experiments.sh` | RQ1+RQ2+RQ3 end to end | `bash scripts/run_all_experiments.sh cpu "0 1 2"` |
@@ -224,6 +226,11 @@ python scripts/run_ablation.py --dataset cora --profile full --seed 0 --no-retra
 
 # 10. mechanism attribution: targeted probes + component ablations
 python scripts/run_probe.py --dataset cora --profile cpu --seeds 0 1 2 --device cpu
+python scripts/run_probe.py --dataset citeseer --profile cpu --seeds 0 1 2 --device cpu
+python scripts/run_deep_probe.py --dataset cora --profile cpu --seeds 0 1 --device cpu
+python scripts/run_deep_probe.py --dataset citeseer --profile cpu --seeds 0 1 --device cpu
+python scripts/run_redesign.py --dataset cora --seeds 0 1 2 3 4 5 6 7   # component-level retraining
+python scripts/run_redesign.py --dataset citeseer --seeds 0 1 2 3 4 5 6 7
 python scripts/make_probe_report.py   # -> results/probe_report.html (self-contained)
 ```
 
