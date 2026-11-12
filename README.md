@@ -169,6 +169,10 @@ differ only in the knobs below.
 | `run_probe.py` | **why** each model is robust or fragile: targeted deletion / insertion / feature-shuffle probes, property heuristics, component ablations | `--dataset cora --profile cpu --seeds 0 1 2` |
 | `run_deep_probe.py` | **where** the damage happens: layer-wise linear probes, propagation-operator substitution, triadic-vs-bridge deletion, and repair experiments | `--dataset cora --profile cpu --seeds 0 1` |
 | `run_redesign.py` | **is the component causal**: retrain a GCN with one part changed (depth / normalisation / self-loop / input augmentation / robust training) and re-probe it | `--dataset cora --seeds 0 1 2 3 4 5 6 7` |
+| `run_score_dump.py` | dumps **per-pair scores** plus per-pair structure for every (model, probe); raw material for the three analyses below | `--dataset cora --seeds 0 1` |
+| `run_operating_point.py` | **where** the damage lives: AP / hit@100 / TPR@1%FPR, class-wise score drops, rank shift, and clean-defined strata (CN, degree, evidence lost) | `--dataset cora citeseer usair` |
+| `run_adaptive_attack.py` | is the measured damage a **lower bound**: greedy score-feedback edge deletion at a matched budget vs random and hub deletion | `--dataset cora --models gcn sage --budgets 0.05 0.10` |
+| `run_evidence_calibration.py` | can the **scoring rule** be fixed without retraining: subtract a degree-preserving null-model prior, λ sweep | `--dataset cora citeseer` |
 | `make_probe_report.py` | renders the probe artifacts into one self-contained HTML report (no CDN) | (after `run_probe.py`) |
 | `collect_results.py` | markdown table of `results/*.json`; `--merge <profile>` rebuilds the mean/std summary | `--merge full` |
 | `run_all_experiments.sh` | RQ1+RQ2+RQ3 end to end | `bash scripts/run_all_experiments.sh cpu "0 1 2"` |
@@ -231,6 +235,10 @@ python scripts/run_deep_probe.py --dataset cora --profile cpu --seeds 0 1 --devi
 python scripts/run_deep_probe.py --dataset citeseer --profile cpu --seeds 0 1 --device cpu
 python scripts/run_redesign.py --dataset cora --seeds 0 1 2 3 4 5 6 7   # component-level retraining
 python scripts/run_redesign.py --dataset citeseer --seeds 0 1 2 3 4 5 6 7
+python scripts/run_score_dump.py --dataset cora --seeds 0 1      # per-pair scores (~15 min/2 seeds)
+python scripts/run_operating_point.py --dataset cora citeseer usair
+python scripts/run_adaptive_attack.py --dataset cora --models gcn sage --budgets 0.05 0.10
+python scripts/run_evidence_calibration.py --dataset cora citeseer
 python scripts/make_probe_report.py   # -> results/probe_report.html (self-contained)
 ```
 

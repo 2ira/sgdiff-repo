@@ -44,6 +44,21 @@ structural descriptors) and robust training (30 % edge dropout), each retrained
 from scratch and re-probed with the same suite. Interpretation:
 `docs/attribution.md` §7.6.
 
+`operating_<dataset>.md` answers *where* the damage lives
+(`scripts/run_operating_point.py`, fed by the per-pair dumps of
+`scripts/run_score_dump.py` in `results/scores/`): AP / hit@100 / TPR@1%FPR next
+to AUC, class-wise score drops, Kendall shift, and clean-defined strata
+(CN bucket, degree tertile, and the pairs whose evidence was deleted).
+
+`adaptive_<dataset>.md` replaces the fixed probes with a greedy score-feedback
+edge deletion at a matched budget (`scripts/run_adaptive_attack.py`), which is the
+lower-bound check on every "the model is fragile to X" claim.
+
+`calibration_<dataset>.md` tests whether the scoring rule can be fixed without
+retraining, by subtracting a degree-preserving null-model prior
+(`scripts/run_evidence_calibration.py`). Interpretation: `docs/attribution.md`
+§7.7-7.9.
+
 `probe_report.html` is the same content rendered for reading — one self-contained
 page (styled tables + inline SVG, no CDN, works offline), built by
 `scripts/make_probe_report.py` from the `probe_*.json`, `deep_*.json` and

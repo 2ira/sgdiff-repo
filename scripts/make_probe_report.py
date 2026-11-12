@@ -649,6 +649,182 @@ def redesign_panel(redesigns: dict[str, "Redesign"]) -> str:
     return "".join(blocks) + note
 
 
+class Operating:
+    """Per-pair operating-point analysis (``scripts/run_operating_point.py``)."""
+
+    def __init__(self, payload: dict, dataset: str):
+        self.raw = payload
+        self.dataset = dataset
+
+    def metric(self, model: str, variant: str, key: str) -> float | None:
+        return self.raw["metrics"].get(model, {}).get(variant, {}).get(key)
+
+    def damage(self, model: str, variant: str, key: str) -> float | None:
+        base = self.metric(model, "clean", key)
+        cur = self.metric(model, variant, key)
+        return None if base is None or cur is None else base - cur
+
+    def decomp(self, model: str, variant: str, key: str) -> float | None:
+        return self.raw["decomposition"].get(model, {}).get(variant, {}).get(key)
+
+    def stratum(self, model: str, variant: str, name: str, key: str) -> float | None:
+        return self.raw["strata"].get(model, {}).get(variant, {}).get(name, {}).get(key)
+
+    def models(self) -> list[str]:
+        return list(self.raw["metrics"])
+
+    def probes(self) -> list[str]:
+        if not self.raw["metrics"]:
+            return []
+        first = next(iter(self.raw["metrics"].values()))
+        return [v for v in first if v != "clean"]
+
+
+class Adaptive:
+    """Score-feedback deletion (``scripts/run_adaptive_attack.py``)."""
+
+    def __init__(self, payload: dict, dataset: str):
+        self.raw = payload
+        self.dataset = dataset
+
+    def cell(self, model: str, budget: str, strategy: str, key: str) -> float | None:
+        return self.raw["models"].get(model, {}).get("by_budget", {}).get(budget, {}).get(strategy, {}).get(key)
+
+    def models(self) -> list[str]:
+        return list(self.raw["models"])
+
+    def budgets(self) -> list[str]:
+        if not self.raw["models"]:
+            return []
+        return sorted(next(iter(self.raw["models"].values()))["by_budget"])
+
+
+class Calibration:
+    """Null-model calibration sweep (``scripts/run_evidence_calibration.py``)."""
+
+    def __init__(self, payload: dict, dataset: str):
+        self.raw = payload
+        self.dataset = dataset
+
+    def r2(self, model: str) -> float | None:
+        return self.raw["results"].get(model, {}).get("fit", {}).get("r2")
+
+    def auc(self, model: str, family: str, variant: str, lam: str) -> float | None:
+        return self.raw["results"].get(model, {}).get(family, {}).get(variant, {}).get(lam)
+
+    def models(self) -> list[str]:
+        return list(self.raw["results"])
+
+
+def operating_panel(operating: "Operating") -> str:
+    variants = [v for v in ("del@50%", "del_hub@50%", "ins_hub@50%", "feature_shuffle") if v in operating.probes()]
+    rows = []
+    for model in operating.models():
+        for variant in variants:
+            dauc = operating.damage(model, variant, "auc")
+            dh = operating.damage(model, variant, "hit@100")
+            dtpr = operating.damage(model, variant, "tpr@fpr1%")
+            gap = None if None in (dauc, dh) else dh - dauc
+            rows.append(
+                "".join(
+                    [
+                        f"<td><b>{html.escape(model)}</b></td><td>{PRETTY.get(variant, variant)}</td>",
+                        f'<td class="hm" style="{damage_style(dauc, 0.24)}">{fmt(dauc, 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(dh, 0.24)}">{fmt(dh, 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(dtpr, 0.24)}">{fmt(dtpr, 3, signed=True)}</td>',
+                        f'<td><b>{fmt(gap, 3, signed=True)}</b></td>',
+                    ]
+                )
+            )
+    head = table(["模型", "探针", "ΔAUC", "Δhit@100", "ΔTPR@1%FPR", "头部 − 平均"], rows)
+
+    split_rows = []
+    for model in operating.models():
+        for variant in ("del@50%", "del_hub@50%"):
+            kept = operating.stratum(model, variant, "kept_evidence (CN≥1 → ≥1)", "d_pos")
+            lost = operating.stratum(model, variant, "lost_evidence (CN≥1 → 0)", "d_pos")
+            if kept is None or lost is None:
+                continue
+            gap = lost - kept
+            split_rows.append(
+                "".join(
+                    [
+                        f"<td><b>{html.escape(model)}</b></td><td>{PRETTY.get(variant, variant)}</td>",
+                        f'<td class="hm" style="{damage_style(kept, 0.08)}">{fmt(kept, 2, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(lost, 0.08)}">{fmt(lost, 2, signed=True)}</td>',
+                        f"<td><b>{fmt(gap, 2, signed=True)}</b></td>",
+                    ]
+                )
+            )
+    split = table(["模型", "探针", "CN 保住的对（Δscore）", "CN→0 的对（Δscore）", "差"], split_rows)
+    return (
+        head
+        + "<p class=\"note\">同一攻击、四种度量。Δ 为正 = 掉点；「头部 − 平均」&gt; 0 表示头部的伤害比平均更大"
+        "（平均掩盖问题），&lt; 0 表示尾部更糟（平均夸大问题）。</p>"
+        + "<h3>伤害集中在哪些测试对上</h3>"
+        + split
+        + '<p class="note">按<b>干净图</b>的共同邻居数分层；Δscore 为干净 σ 单位。'
+        "两条证据通道的模型（子图族、GAT、SAGE、RGCN）几乎全部损失发生在「证据被删掉」的那一半，"
+        "而 GCN / VGAE 对该划分基本无反应——它们的掉点机制不同。</p>"
+    )
+
+
+def adaptive_panel(adaptive: "Adaptive") -> str:
+    rows = []
+    for model in adaptive.models():
+        for budget in adaptive.budgets():
+            rnd = adaptive.cell(model, budget, "random", "damage")
+            hub = adaptive.cell(model, budget, "hub", "damage")
+            ada = adaptive.cell(model, budget, "adaptive", "damage")
+            extra = None if None in (rnd, ada) else ada - rnd
+            rows.append(
+                "".join(
+                    [
+                        f"<td><b>{html.escape(model)}</b></td><td>{float(budget):.0%}</td>",
+                        f'<td class="hm" style="{damage_style(rnd, 0.24)}">{fmt(rnd, 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(hub, 0.24)}">{fmt(hub, 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(ada, 0.24)}">{fmt(ada, 3, signed=True)}</td>',
+                        f"<td><b>{fmt(extra, 3, signed=True)}</b></td>",
+                    ]
+                )
+            )
+    body = table(["模型", "预算", "random ΔAUC", "hub ΔAUC", "adaptive ΔAUC", "比随机多"], rows)
+    note = (
+        '<p class="note">同样删掉同样多的边，只是<b>选哪些边</b>不同；adaptive 每步在当前图上重建候选池'
+        "（承载某个测试正例共同邻居的边），并选让 AUC 掉得最多的那条。"
+        "这张表是前文所有“某模型对删边不敏感”结论的下界检验。</p>"
+    )
+    return body + note
+
+
+def calibration_panel(calibration: "Calibration") -> str:
+    rows = []
+    for model in calibration.models():
+        r2 = calibration.r2(model)
+        base = calibration.auc(model, "residual", "clean", "0.0")
+        full = calibration.auc(model, "residual", "clean", "1.0")
+        pbase = calibration.auc(model, "residual", "del@50%", "0.0")
+        pfull = calibration.auc(model, "residual", "del@50%", "1.0")
+        rows.append(
+            "".join(
+                [
+                    f"<td><b>{html.escape(model)}</b></td>",
+                    f'<td class="hm" style="{focal(r2 or 0.0, 0.15, 0.65)}">{fmt(r2)}</td>',
+                    f"<td>{fmt(base)} → {fmt(full)}</td>",
+                    f"<td>{fmt(pbase)} → {fmt(pfull)}</td>",
+                ]
+            )
+        )
+    body = table(["模型", "R²（结构先验可解释的份额）", "clean AUC（λ=0 → 1）", "del AUC（λ=0 → 1）"], rows)
+    note = (
+        '<p class="note">用干净图拟合 <code>score ~ [CN, log(1+Ê[CN]), d_u, d_v, d_u·d_v]</code>，'
+        "再在被评分图上减去 <code>λ·ŝ</code>。这是把 §7.6 的“改判据”提案做成可测实验："
+        "结果是<b>沿前沿移动而非抬升</b>——clean 掉得比 probe 更快，相对伤害甚至能变成负数。"
+        "R² 本身是一个独立确认：SGDiff 的分数有 2/3 来自结构先验，GCN 只有 1/4。</p>"
+    )
+    return body + note
+
+
 def insight_cards(
     cora: Probe,
     dense: Probe | None,
@@ -812,6 +988,9 @@ def build(
     deep: "Deep | None" = None,
     deep_dense: "Deep | None" = None,
     redesigns: dict[str, "Redesign"] | None = None,
+    operating: "Operating | None" = None,
+    adaptive: "Adaptive | None" = None,
+    calibration: "Calibration | None" = None,
 ) -> str:
     protocol = cora.raw.get("protocol", {})
     probe_cols = [p for p in PROBES if p in cora.variants]
@@ -831,6 +1010,8 @@ def build(
         chips.append(f"深探针 <b>层 / 算子 / 边类型 / 修复</b>")
     if redesigns:
         chips.append("重训验证 <b>组件级重新设计</b>")
+    if operating or adaptive or calibration:
+        chips.append("度量 <b>工作点 / 自适应下界 / 校准</b>")
 
     parts = [
         "<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">",
@@ -966,7 +1147,36 @@ def build(
             f'<div class="card">{redesign_panel(redesigns)}</div>',
         ]
 
-    conclusion_num = "13" if (deep is not None and redesigns) else ("12" if deep is not None else ("07" if third is not None else "06"))
+    if operating is not None or adaptive is not None or calibration is not None:
+        parts += [
+            '<h2><span class="num">13</span>伤害的度量、下界与修复尝试</h2>',
+            '<p class="lede">前三节都在用 AUC 讲话。这一节换三把尺子：'
+            "<b>部署工作点</b>（AP / hit@100 / TPR@1%FPR）、<b>自适应攻击下界</b>（同样预算，只换选边策略）、"
+            "以及<b>不改权重的评分规则修复</b>（用零模型先验做校准）。三者的共同点是："
+            "它们都可能推翻前面的结论，而 AUC 单独看不出这一点。</p>",
+        ]
+        if operating is not None:
+            parts += [
+                '<h3>同一攻击，四种度量；以及伤害集中在哪些测试对</h3>',
+                f'<div class="card">{operating_panel(operating)}</div>',
+            ]
+        if adaptive is not None:
+            parts += [
+                '<h3>同样预算下，换一种选边策略</h3>',
+                f'<div class="card">{adaptive_panel(adaptive)}</div>',
+            ]
+        if calibration is not None:
+            parts += [
+                '<h3>把分数里的结构先验减掉，能不能修好</h3>',
+                f'<div class="card">{calibration_panel(calibration)}</div>',
+            ]
+
+    num = 12 if deep is not None else ("07" if third is not None else "06")
+    if redesigns:
+        num = int(num) + 1
+    if operating is not None or adaptive is not None or calibration is not None:
+        num = int(num) + 1
+    conclusion_num = str(num)
     parts += [
         f'<h2><span class="num">{conclusion_num}</span>归因结论</h2>',
         insight_cards(cora, dense, third, deep, next(iter(redesigns.values())) if redesigns else None),
@@ -1023,9 +1233,23 @@ def main() -> int:
         path = results / f"redesign_{dataset}.json"
         if path.exists():
             redesigns[dataset] = Redesign(json.loads(path.read_text(encoding="utf-8")), dataset)
+    def _load(name: str, cls):
+        path = results / name
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+    op_raw = _load(f"operating_{args.primary}.json", Operating)
+    operating = Operating(op_raw, args.primary) if op_raw else None
+    ad_raw = _load(f"adaptive_{args.primary}.json", Adaptive)
+    adaptive = Adaptive(ad_raw, args.primary) if ad_raw else None
+    cal_raw = _load(f"calibration_{args.primary}.json", Calibration)
+    calibration = Calibration(cal_raw, args.primary) if cal_raw else None
+
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(build(cora, dense, third, deep, deep_other, redesigns or None), encoding="utf-8")
+    out.write_text(
+        build(cora, dense, third, deep, deep_other, redesigns or None, operating, adaptive, calibration),
+        encoding="utf-8",
+    )
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} kB)")
     return 0
 

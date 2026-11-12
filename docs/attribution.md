@@ -15,6 +15,10 @@ Artifacts (produced by `scripts/run_probe.py`, `cpu` profile, seeds 0-2):
 | `results/probe_usair.{json,md}` | USAir: the same without node attributes and labels (probes that need them are skipped) |
 | `results/deep_<dataset>.{json,md}` | Cora / Citeseer / USAir: layer-level linear probes + representation drift, propagation-operator substitution, triadic-vs-bridging deletion, and the repair experiments (`scripts/run_deep_probe.py`) |
 | `results/redesign_<dataset>.{json,md}` | Cora / Citeseer / USAir: one-component-at-a-time retraining (depth, normalisation, self-loop, input augmentation, robust training) re-probed with the same suite (`scripts/run_redesign.py`) |
+| `results/scores/<dataset>_s<seed>.npz` | per-pair scores for every (model, probe) plus per-pair structure (CN, null expectation, degrees, same-label) — `scripts/run_score_dump.py` |
+| `results/operating_<dataset>.{json,md}` | operating-point metrics (AP, hit@100, TPR@1%FPR), class-wise score drops, rank shift, and clean-defined strata (§7.7) — `scripts/run_operating_point.py` |
+| `results/adaptive_<dataset>.{json,md}` | greedy score-feedback deletion at a matched budget vs random / hub deletion (§7.8) — `scripts/run_adaptive_attack.py` |
+| `results/calibration_<dataset>.{json,md}` | null-model calibration sweep, fitted on the clean graph (§7.9) — `scripts/run_evidence_calibration.py` |
 | `results/probe_report.html` | all of the above as one self-contained page; rebuild with `python scripts/make_probe_report.py` |
 
 ## 1. Protocol
@@ -470,10 +474,11 @@ graph statistic captures.
 
 Everything in this section comes from `scripts/run_deep_probe.py`
 (`results/deep_cora.{json,md}` seeds 0-1, `results/deep_citeseer.{json,md}` and
-`results/deep_usair.{json,md}` seeds 0-1) plus `scripts/run_redesign.py`
-(§7.6, seeds 0-7 on three graphs). Weights are trained once per model and never updated; each
-measurement in §7.1-7.5 is an intervention on the frozen network, and §7.6 is the
-retraining counterpart that turns the mechanism claims into causal tests.
+`results/deep_usair.{json,md}` seeds 0-1), `scripts/run_redesign.py` (§7.6,
+seeds 0-7 on three graphs), and the per-pair analyses `scripts/run_score_dump.py`
+→ `run_operating_point.py` / `run_evidence_calibration.py` / `run_adaptive_attack.py`
+(§7.7-7.9, seeds 0-1). Weights are trained once per model and never updated in
+§7.1-7.5; §7.6 is the retraining counterpart, §7.8 the attacker-side counterpart.
 
 ### 7.1 Which layer does the damage enter?
 
@@ -773,6 +778,170 @@ the *absence* of evidence (score a pair relative to a null model of its expected
 local evidence), which is a change in the scoring rule and is left as an untested
 proposal, not a result.
 
+### 7.7 The damage is localised — and AUC hides where
+
+Everything so far uses one number per cell. Two measurements on the *per-pair*
+scores (`scripts/run_score_dump.py` → `results/operating_<dataset>.{json,md}`,
+seeds 0-1) show that "the model lost 0.05 AUC" is a statement about the *pair
+mix*, not about the model degrading uniformly.
+
+**(a) It is a partition of the pair set, not a global shift.** Take the clean
+graph's common-neighbour count as a fixed stratum (grouping by the perturbed
+graph's CN would condition on the outcome), and ask how much score each stratum
+loses under `del@50%`. Values are mean score drops in clean-σ:
+
+| model | pairs whose CN survived | pairs whose CN → 0 | gap |
+|---|---:|---:|---:|
+| `sgdiff` | −0.20 | **+2.11** | 2.31 |
+| `pencil` | +0.05 | **+1.53** | 1.48 |
+| `seal` | +0.05 | **+1.10** | 1.05 |
+| `rgcn` | −0.54 | +0.60 | 1.14 |
+| `gat` | −0.32 | +0.51 | 0.83 |
+| `sage` | −0.12 | +0.42 | 0.54 |
+| `gcn` | −0.18 | **−0.00** | 0.18 |
+| `vgae` | −0.14 | +0.03 | 0.17 |
+
+Citeseer gives the same ordering (`sgdiff` −0.03 / +2.16, `seal` −0.12 / +0.35,
+`gat` −0.25 / +0.62, `gcn` −0.12 / −0.03). Three readings:
+
+1. For every model that reads local evidence, the loss is **entirely** on the
+   pairs whose evidence vanished; on the pairs whose CN survived the score does
+   not drop at all (it often rises, because fewer competing paths exist).
+2. `gcn` and `vgae` are **flat across the split** (−0.00 / −0.03). Their deletion
+   damage therefore does *not* come from evidence starvation — a mechanism-level
+   fact that explains §7.6: no amount of structural input (`+cnfeat`, k = 2, edge
+   completion) can help a model that never reacted to the evidence in the first
+   place.
+3. The sub-graph family's damage is an order of magnitude larger than its AUC
+   suggests at the pair level (`sgdiff` 2.11 σ on the affected half, 0.218 AUC
+   overall): the average dilutes a total loss on ~30 % of the positives.
+
+**(b) Where the loss sits: positive deflation, negative inflation, or pure
+reordering.** Mean class-wise score drop under `del@50%` (Cora), with the
+head-of-ranking metrics alongside:
+
+| model | ΔAUC | ΔAP | Δhit@100 | ΔTPR@1%FPR | Δpos | Δneg | d′ (clean → probe) | τ | inversion |
+|---|---:|---:|---:|---:|---:|---:|---|---:|---:|
+| `sgdiff` | +0.218 | +0.201 | **+0.080** | +0.218 | +0.69 | +0.00 | 1.19 → 0.46 | 0.32 | 0.39 |
+| `seal` | +0.140 | +0.156 | +0.155 | +0.156 | +0.28 | −0.28 | 1.16 → 0.52 | 0.52 | 0.24 |
+| `pencil` | +0.111 | +0.107 | **+0.045** | +0.165 | +0.54 | +0.04 | 1.20 → 0.71 | 0.54 | 0.21 |
+| `gcn` | +0.042 | +0.054 | +0.065 | +0.095 | **−0.11** | −0.02 | 1.14 → 0.97 | 0.72 | 0.09 |
+| `vgae` | +0.037 | +0.047 | +0.080 | +0.096 | −0.09 | +0.01 | 1.01 → 0.85 | 0.69 | 0.11 |
+
+The four columns in the middle are the same attack measured four ways, and they
+disagree in both magnitude and mechanism:
+
+* `sgdiff` loses 0.218 AUC but only 0.080 hit@100: its head survives 2.7× better
+  than its tail. The mechanism is visible in Δpos: positives fall 0.69 σ, the
+  likelihood difference compresses toward the prior (d′ 1.19 → 0.46) — it is
+  positive deflation, exactly what §7.4 predicted.
+* `seal` is the opposite shape: Δpos = +0.28 **and** Δneg = −0.28, i.e. positives
+  drop *and* negatives gain. Its damage is not "less evidence for positives" but
+  "evidence that stopped discriminating" — which is why edge completion only
+  half-helps it.
+* `pencil` damages the average 2.5× more than the head (0.111 vs 0.045).
+* `gcn` has no class-wise loss at all (both classes gain score) and the worst
+  column is TPR@1%FPR (0.095): its damage is **pure reordering** (τ = 0.72,
+  9 % of the correctly ordered pos/neg pairs inverted). It is a different failure
+  mode from the sub-graph family, not a smaller version of it.
+
+One cell flips sign outright: `sgdiff` under `ins_hub` *gains* 0.023 AUC while
+losing **0.262 TPR@1%FPR** and 0.080 hit@100. A hub inserted next to everything
+inflates the tail and destroys the head, so the ranking statistic that the
+robustness literature reports says "harmless" while the deployed top-k says "the
+worst attack in the table". Any conclusion of the form "insertion is not a threat"
+has to name its metric.
+
+### 7.8 The probes were a lower bound: an adaptive attacker at 1/5 of the budget
+
+Every probe in §3-7.7 is non-adaptive: it deletes a random or degree-selected half
+of the graph and never looks at the model. `scripts/run_adaptive_attack.py` runs
+the missing experiment — greedy, score-feedback deletion at a **matched budget**:
+at each step it rebuilds a candidate pool (the edges that carry the shared
+neighbour of a scored positive) on the *current* graph, scores each candidate, and
+deletes the one that costs the most AUC. 200 + 200 working pairs, seeds 0-1.
+
+ΔAUC at equal budget (positive = damage), with the fixed 50 % probe for reference:
+
+| dataset | model | random 5 % | hub 5 % | adaptive 5 % | adaptive 10 % | fixed probe `del@50%` | adaptive 10 % ÷ probe |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Cora | `gcn` | +0.003 | +0.005 | +0.112 | **+0.220** | +0.042 | **5.3×** |
+| Cora | `sage` | +0.007 | −0.002 | +0.152 | **+0.268** | +0.035 | **7.7×** |
+| Citeseer | `gcn` | −0.000 | +0.004 | +0.085 | +0.161 | +0.027 | 5.9× |
+| Citeseer | `sage` | +0.001 | +0.007 | +0.127 | +0.217 | +0.013 | **17.0×** |
+| USAir | `gcn` | +0.001 | +0.008 | +0.077 | +0.145 | +0.062 | 2.3× |
+| USAir | `sage` | +0.001 | +0.004 | +0.080 | +0.124 | +0.036 | 3.5× |
+
+Four consequences, and the first one revises an earlier conclusion:
+
+1. **A tenth of the budget beats half the graph.** Adaptive deletion at 10 % costs
+   every model more than the fixed 50 % probe does, by 2.3-17×. The ordering
+   "GCN is barely affected by deletion" is a statement about *random* deletion,
+   not about GCN: with 5 % of the edges chosen by feedback, GCN loses 0.112-0.077,
+   i.e. more than the 50 % random probe ever managed.
+2. **Per-edge efficiency differs by 1.5-2 orders of magnitude.** Random deletion
+   buys 0.003-0.013 AUC for 5 % of the edges; targeted deletion buys 0.077-0.152.
+   Any statement of the form "the attack needs 50 % of the edges" is really a
+   statement about the attacker's selection rule.
+3. **The lethal edge type is graph-dependent, and it is not the one the CN story
+   predicts.** On the sparse graphs the greedy keeps picking edges with CN ≈ 0
+   (0.43-0.65) that are mostly bridges (61-73 %), i.e. it removes the *only* path
+   between a pair's neighbourhoods. On dense USAir it picks high-CN edges
+   (4.6-6.2 triangles per edge, 10-13 % bridges) — the same graph-dependence of
+   the carrier that §7.2 and §7.6 found by substitution.
+4. **The lower bound is still a lower bound.** Candidates are sampled (24 per
+   step) and the pool is restricted to edges incident to the scored positives; a
+   gradient or betweenness-guided attacker with the full edge set would do at
+   least this well. So the numbers in §3-7.7 should be read as *how the models
+   respond to damage*, not as *how fragile they are*.
+
+### 7.9 Can the scoring rule be fixed? A null-model calibration attempt (negative)
+
+§7.6 closed with an untested proposal: score a pair against the *absence* of
+evidence instead of only against other pairs. First question: how much of a
+model's score is structural prior at all? Ridge of the clean scores on
+`[CN, log(1+Ê[CN]), d_u, d_v, d_u d_v]`, where `Ê[CN] = d_u d_v / 2m` is the
+degree-preserving (configuration-model) expectation — `results/calibration_<dataset>.{json,md}`:
+
+| model | Cora R² | Citeseer R² |
+|---|---:|---:|
+| `sgdiff` | **0.658** | **0.544** |
+| `pencil` | 0.515 | 0.263 |
+| `seal` | 0.490 | 0.216 |
+| `gcn` | 0.272 | 0.195 |
+| `vgae` | 0.243 | 0.148 |
+| `sage` | 0.228 | 0.186 |
+| `rgcn` | 0.227 | 0.075 |
+| `gat` | 0.208 | 0.161 |
+
+This is a third, independent measurement of the same channel story: two thirds of
+SGDiff's score is recoverable from common-neighbour and degree structure, a
+quarter of GCN's is — without touching the model, and without any probe.
+
+Second question: does subtracting that prior repair the damaged graph? The
+correction `s − λ·ŝ` is fitted on the clean graph and applied with the features of
+whichever graph is scored (λ = 1 in the table):
+
+| model | clean AUC (λ=0 → 1) | `del` AUC | `ins_hub` AUC |
+|---|---|---|---:|---:|
+| `gcn` | 0.832 → 0.679 | 0.790 → 0.771 | 0.806 → **0.391** |
+| `sgdiff` | 0.739 → 0.598 | 0.521 → 0.415 | 0.762 → 0.640 |
+| `seal` | 0.780 → 0.643 | 0.639 → 0.566 | 0.762 → 0.644 |
+
+The correction moves along a frontier, it never lifts it. Because the clean
+reference is wrecked faster than the damaged one, the *relative* damage can even
+flip sign (`gcn` `del`: +0.061 → −0.092) while the absolute accuracy on the
+damaged graph falls (0.790 → 0.771) — a textbook trap of measuring damage as a
+difference against a moving baseline. The cheaper parametric form
+`s − λ·z(Ê[CN])` is a no-op (`gcn` `del` 0.790 → 0.788 at λ = 1), because the
+expectation is nearly constant across pairs on a sparse graph.
+
+So the simple form of the §7.6 proposal is **falsified**: subtracting the prior is
+not the same as knowing that evidence is missing. What survives is the
+*localised* version — apply a correction only to pairs whose evidence collapsed
+(the stratum of §7.7a), i.e. a conditional re-ranker rather than a global score
+transform. That is untested here and is the concrete next experiment.
+
 ## 8. What this changes about the robustness story
 
 1. **"Robustness to attacks" was mostly "robustness to deletion" — on Cora.**
@@ -786,9 +955,11 @@ proposal, not a result.
    component that decides whether a model survives is which *channel* it reads
    (attributes vs local evidence), not its size.
 3. **The robustness carrier inside a GCN is the self-loop, not the
-   normalisation** (§7.2). Symmetric, row-mean and unnormalised propagation are
-   within 0.02 under deletion; removing the self-loop costs 0.07. Claims that
-   attribute robustness to `1/√(d_i d_j)` would have been a false positive.
+   normalisation** (§7.2, §7.6). Under *random* deletion, symmetric, row-mean and
+   unnormalised propagation are within 0.02; removing the self-loop costs 0.07,
+   and retraining without it doubles the damage. Claims that attribute robustness
+   to `1/√(d_i d_j)` would have been a false positive. This is a statement about
+   random deletion: §7.8 shows that targeted deletion does reach GCN.
 4. **Repairs are channel-specific, and that is the causal evidence.** Restoring
    deleted edges rescues SGDiff (+0.113) and does nothing for GCN (±0.01);
    rebuilding corrupted attributes from structure rescues GCN/SAGE/VGAE
@@ -811,6 +982,29 @@ proposal, not a result.
    pays 0.006-0.024 of clean AUC for it. Depth only trades one channel for the
    other. Fragility here is about how evidence is turned into a score, not about
    capacity or input supply.
+8. **AUC is not a sufficient statistic, and for one cell it has the wrong sign**
+   (§7.7). `sgdiff` loses 0.218 AUC but only 0.080 hit@100 under `del` (the head
+   survives 2.7× better than the tail); `pencil` damages the average 2.5× more
+   than the head; `gcn` loses almost nothing on the margin and fails by
+   reordering (τ = 0.72). And `sgdiff` under `ins_hub` *gains* 0.023 AUC while
+   losing 0.262 TPR@1%FPR — so "insertion is harmless" is a metric artefact, not
+   a property of the model.
+9. **The damage is a partition of the pair set, not a uniform degradation**
+   (§7.7a). For every evidence-reading model the loss is concentrated on the pairs
+   whose evidence was deleted (2.11 σ for `sgdiff`, 1.10 for `seal`) and is
+   approximately zero — often positive — on the pairs whose CN survived. `gcn`
+   and `vgae` are flat across that split, which is *why* structural repairs cannot
+   help them (§7.6).
+10. **Every "the model is fragile / insensitive to X" claim above is a statement
+    about a random attacker** (§7.8). With score feedback at 10 % of the budget,
+    GCN loses 0.145-0.220 and SAGE 0.124-0.268 — 2.3-17× the fixed 50 % probe.
+    The correct reading of §3-7.7 is "how the model responds to a given damage",
+    not "how fragile the model is".
+11. **The one repair the section proposed does not work in its simple form**
+    (§7.9). Subtracting a degree-preserving null-model prior moves the
+    clean/probe trade-off along a frontier instead of lifting it, and the
+    parametric variant is a no-op. The localised (evidence-gated) version is the
+    remaining candidate, and it is untested.
 
 ## 9. Caveats
 
@@ -853,6 +1047,18 @@ proposal, not a result.
     grid covers three graphs × eight seeds (per-seed spread ≤ 0.03 on the damage
     columns): the self-loop effect (0.05-0.09) and the `+cnfeat+smooth` effect
     (0.037-0.044) sit above it, the `+smooth`-only effect (0.020) does not.
+11. **§7.7-7.9 use two seeds and a 200+200 / 500+500 pair budget.** These are
+    per-pair analyses, not mean-AUC claims, so the seed cost was spent on breadth
+    (three graphs, nine models) rather than on replicates. The strata counts are
+    in the tables; on Cora the CN ≥ 1 stratum has ~157 positives but only 3-4
+    negatives, so the per-stratum *AUC* is reported only where both classes reach
+    20 and the score-drop columns carry the argument instead.
+12. **The adaptive attacker of §7.8 is greedy and sampled**, not optimal: 24
+    candidates per step, drawn from edges incident to the scored positives, one
+    edge per step. It is a lower bound on what an attacker could do, and it is
+    compared against random and hub deletion at the same budget on the same pairs.
+    It only covers GCN/SAGE (node-pair, cheap to re-score); sub-graph models would
+    have multiplied the cost by the extractor rebuild.
 
 ## 10. Reproduce / extend
 
@@ -871,6 +1077,14 @@ python scripts/run_probe.py --dataset cora --seeds 0 1 2 --device cpu --diagnost
 python scripts/run_deep_probe.py --dataset cora --profile cpu --seeds 0 1 --device cpu
 python scripts/run_deep_probe.py --dataset citeseer --profile cpu --seeds 0 1 --device cpu
 python scripts/run_deep_probe.py --dataset usair --profile cpu --seeds 0 1 --device cpu
+
+# per-pair score dumps (~7 min/seed: SGDiff's fit dominates) then the analyses
+python scripts/run_score_dump.py --dataset cora --seeds 0 1
+python scripts/run_score_dump.py --dataset citeseer --seeds 0 1
+python scripts/run_score_dump.py --dataset usair --seeds 0 1
+python scripts/run_operating_point.py --dataset cora citeseer usair
+python scripts/run_evidence_calibration.py --dataset cora citeseer usair
+python scripts/run_adaptive_attack.py --dataset cora --models gcn sage --budgets 0.05 0.10
 
 # component-level redesign: retrain one-part-changed GCNs and re-probe (~40 s / 8 seeds)
 python scripts/run_redesign.py --dataset cora --seeds 0 1 2 3 4 5 6 7
