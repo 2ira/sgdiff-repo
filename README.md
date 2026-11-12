@@ -89,6 +89,7 @@ sgdiff-repro/
 │   ├── reproduction.md         # measured numbers, gaps, known deviations
 │   ├── benchmark.md, ablation.md
 │   ├── robustness.md           # RQ3: RF / DICE / EA for every model
+│   ├── attribution.md          # which property each model reads, and what breaks it
 │   └── related_work.md, references.bib
 ├── checkpoints/                # trained weights (git-ignored)
 ├── runs/                       # per-run output: metrics.jsonl, best.pt (git-ignored)
@@ -165,6 +166,8 @@ differ only in the knobs below.
 | `run_robustness.py` | RQ3 for **every** model: RF / DICE / EA at 3 budgets, clean column included | `--dataset cora --profile cpu --seeds 0 1 2` |
 | `run_benchmark.py` | SGDiff vs. all baselines on identical data (split + sub-graph fingerprints) | `--dataset cora --profile cpu --seeds 0` |
 | `run_ablation.py` | does the likelihood actually depend on the link condition? | `--dataset cora --profile cpu --seed 0` |
+| `run_probe.py` | **why** each model is robust or fragile: targeted deletion / insertion / feature-shuffle probes, property heuristics, component ablations | `--dataset cora --profile cpu --seeds 0 1 2` |
+| `make_probe_report.py` | renders the probe artifacts into one self-contained HTML report (no CDN) | (after `run_probe.py`) |
 | `collect_results.py` | markdown table of `results/*.json`; `--merge <profile>` rebuilds the mean/std summary | `--merge full` |
 | `run_all_experiments.sh` | RQ1+RQ2+RQ3 end to end | `bash scripts/run_all_experiments.sh cpu "0 1 2"` |
 
@@ -218,6 +221,10 @@ python scripts/run_benchmark.py --dataset cora --profile cpu --seeds 0
 # 9. GCCM shortcut check: does the likelihood really depend on the link condition?
 python scripts/run_ablation.py --dataset cora --profile cpu --seed 0
 python scripts/run_ablation.py --dataset cora --profile full --seed 0 --no-retrain --tag full
+
+# 10. mechanism attribution: targeted probes + component ablations
+python scripts/run_probe.py --dataset cora --profile cpu --seeds 0 1 2 --device cpu
+python scripts/make_probe_report.py   # -> results/probe_report.html (self-contained)
 ```
 
 The benchmark writes `results/benchmark_<dataset>.{json,md}` and records

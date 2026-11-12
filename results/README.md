@@ -24,3 +24,13 @@ single-stream scoring, randomized-condition retrain), together with the learned
 fusion weights and the per-stream variance decomposition. The `_full` variant
 is the same audit on the full training split (`--profile full --no-retrain
 --tag full`). Interpretation: `docs/ablation.md`.
+
+`probe_<dataset>.md` is the mechanism attribution produced by
+`scripts/run_probe.py`: targeted deletion / insertion / feature-shuffle probes,
+the property heuristics scored on the same perturbed graphs, the component
+ablations, and what the sub-graph extractor could see. Interpretation:
+`docs/attribution.md`.
+
+`probe_report.html` is the same content rendered for reading — one self-contained
+page (styled tables + inline SVG, no CDN, works offline), built by
+`scripts/make_probe_report.py` from the `probe_*.json` files.

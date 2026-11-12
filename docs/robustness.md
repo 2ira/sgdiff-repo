@@ -98,7 +98,10 @@ demote the weakest positives rather than promoting negatives.
 DICE-50 %, versus 3.5-5.4 for the full-graph baselines (GCN 5.0 / GAT 5.4 /
 SAGE 3.5 / VGAE 3.8) and 5.9-6.0 for the sub-graph classifiers (SEAL 5.9 /
 PENCIL 6.0). Its clean AUC is also the lowest (0.737), so the model starts
-behind *and* decays fastest.
+behind *and* decays fastest. [`attribution.md`](attribution.md) decomposes this
+number: the RF / DICE damage is almost entirely its **deletion** half (Cora
+`del@50%` −0.24 vs `ins@50%` +0.02), and it is an input-supply effect that scales
+with graph sparsity.
 
 **Why the sub-graph model is hit harder.** SGDiff reads one 1-hop enclosing
 sub-graph per candidate pair and scores a class-conditional likelihood on it; a
