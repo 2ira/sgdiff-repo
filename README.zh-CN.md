@@ -242,3 +242,6 @@ per-dataset 旋钮。完整矩阵与两个变体见 `docs/reproduction.md` 第 4
 ## 引用
 
 请引用原论文（见 `CITATION.cff`）。本仓库代码以 MIT 协议发布。
+## GCN 消融整合入口
+
+新增 [GCN 三组输入消融与跨数据集迁移](experiments/gcn_ablation/README.md)，复用本仓库 GCN 编码器及内积解码器。两套实验的划分、传播图和指标存在差异；比较历史结果前请阅读 [重合与协议审查](docs/gcn_ablation_integration.md)。

@@ -435,3 +435,6 @@ If you use this code, please cite the original paper (see `CITATION.cff`):
 
 MIT (`LICENSE`). This is an independent re-implementation; the datasets keep
 their original licences (see `data/README.md`).
+## GCN ablation integration
+
+The [GCN input ablations and cross-dataset transfer experiments](experiments/gcn_ablation/README.md) reuse this repository's GCN encoder and pair decoder while preserving their original experimental protocol. See the [overlap and protocol review](docs/gcn_ablation_integration.md) before comparing their archived results with the existing benchmark.

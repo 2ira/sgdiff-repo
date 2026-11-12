@@ -1,0 +1,36 @@
+{
+  "seeds": [
+    8
+  ],
+  "datasets": [
+    "Cora",
+    "Citeseer",
+    "Pubmed",
+    "Router",
+    "USAir",
+    "NS"
+  ],
+  "protocols": [
+    "within",
+    "transfer"
+  ],
+  "modes": [
+    "structure",
+    "feature",
+    "combined"
+  ],
+  "epochs": 200,
+  "patience": 30,
+  "eval_every": 5,
+  "hidden": 64,
+  "embedding": 32,
+  "dropout": 0.3,
+  "lr": 0.01,
+  "weight_decay": 0.0,
+  "threads": 1,
+  "output": "shard_seed8",
+  "torch": "2.3.0a0+6ddf5cf85e.nv24.04",
+  "numpy": "1.24.4",
+  "device": "cpu",
+  "code_sha256": "39d54b45444a8dc5ada1aad8ada4e615d1846816a7241990e6ffd9a3096c590e"
+}
