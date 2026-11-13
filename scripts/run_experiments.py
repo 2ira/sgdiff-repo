@@ -34,13 +34,21 @@ from sgdiff.engine.factory import build_extractor  # noqa: E402
 from sgdiff.engine.trainer import load_checkpoint  # noqa: E402
 from sgdiff.utils.io import save_json  # noqa: E402
 from sgdiff.utils.seed import resolve_device, set_seed  # noqa: E402
+from sgdiff.version import METHOD_VERSION  # noqa: E402
 
-RESULTS = Path("results")
+RESULTS = Path("results") / METHOD_VERSION
 
-# `paper` = Table 4 / Sec. 4.1 exactly; `cpu` keeps the protocol and
-# architecture but shrinks compute so a laptop can finish a run.
+# Table 4 specifies architecture and diffusion steps, not optimizer epochs.
 PROFILES = {
-    "paper": {},
+    "paper": {
+        "data.max_train_pairs": None,
+        "data.max_eval_pairs": None,
+        "subgraph.max_nodes_total": None,
+        "structure.num_mc_samples": None,
+        "feature.num_mc_samples": None,
+        "train.finetune_mc_samples": None,
+        "train.freeze_diffusion": True,
+    },
     # `full` = Table-4 data/hyper-parameters, longer schedule than `cpu`;
     # still CPU-feasible (8 MC steps, 60-node cap, evaluation every 4 epochs).
     "full": {
@@ -48,6 +56,8 @@ PROFILES = {
         "data.max_eval_pairs": 500,
         "train.epochs": 20,
         "train.pretrain_epochs": 4,
+        "train.finetune_epochs": 10,
+        "train.finetune_mc_samples": 8,
         "train.eval_every": 4,
         "structure.num_mc_samples": 8,
         "feature.num_mc_samples": 8,
@@ -58,6 +68,8 @@ PROFILES = {
         "data.max_eval_pairs": 500,
         "train.epochs": 8,
         "train.pretrain_epochs": 3,
+        "train.finetune_epochs": 4,
+        "train.finetune_mc_samples": 4,
         "structure.num_mc_samples": 4,
         "feature.num_mc_samples": 4,
         "subgraph.max_nodes_total": 40,
@@ -80,7 +92,8 @@ def _aggregate(runs: list[dict]) -> dict:
 
 def _train(dataset: str, seed: int, profile: str, extra: list[str] | None = None):
     tag = f"{dataset}_seed{seed}_{profile}"
-    overrides = [f"data.seed={seed}", f"train.seed={seed}", f"train.run_name={tag}"]
+    overrides = [f"data.seed={seed}", f"train.seed={seed}", f"train.run_name={tag}",
+                 f"train.run_dir=runs/{METHOD_VERSION}"]
     overrides += [f"{k}={v}" for k, v in PROFILES[profile].items()]
     overrides += list(extra or [])
     _, result, cfg = api.train(config_path=f"configs/sgdiff_{dataset}.yaml", overrides=overrides)
@@ -96,12 +109,13 @@ def run_indomain(datasets, seeds, profile, extra: list[str] | None = None) -> di
             result, _cfg, tag = _train(dataset, seed, profile, extra)
             metrics = dict(result["test"])
             metrics.update({"dataset": dataset, "seed": seed, "profile": profile,
+                            "method_version": METHOD_VERSION, "protocol": result["protocol"],
                             "seconds": round(time.time() - started, 1)})
             save_json(metrics, RESULTS / f"{tag}.json")
             runs.append(metrics)
             print(f"[{dataset} seed={seed}] auc={metrics['auc']:.4f} ap={metrics['ap']:.4f} "
                   f"hit@100={metrics['hit@100']:.4f} ({metrics['seconds']}s)", flush=True)
-        summary[dataset] = _aggregate(runs)
+        summary[dataset] = {"method_version": METHOD_VERSION, **_aggregate(runs)}
     return summary
 
 
@@ -350,7 +364,11 @@ def main() -> int:
                         help="extra config overrides for the in-domain grid")
     args = parser.parse_args()
 
-    RESULTS.mkdir(exist_ok=True)
+    if not args.seeds:
+        parser.error("at least one seed is required")
+    if args.sets and (args.transfer or args.transfer_matrix or args.lowdata or args.attack):
+        parser.error("--set currently applies only to the in-domain grid; use the training CLI for other overrides")
+    RESULTS.mkdir(parents=True, exist_ok=True)
     set_seed(args.seeds[0])
 
     if args.transfer_matrix:

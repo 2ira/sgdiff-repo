@@ -13,7 +13,16 @@ diffusion model over the sub-graph adjacency**, a **Gaussian diffusion model ove
 node features**, and the **Bayesian fusion** of both class-conditional
 likelihoods (Eqs. 12-13).
 
-Everything runs on CPU with plain PyTorch — no PyTorch Geometric, no DGL.
+**Method status (2026-11-13):** the earlier implementation was not faithful enough
+for paper-level conclusions. `sgdiff-paper-v2` corrects the feature GCN,
+categorical diffusion, shared-noise scoring and two-stage training. Historical
+reports remain visible but are explicitly marked as old-implementation results.
+Paper metrics must be rerun; matching them has not yet been verified.
+
+The implementation uses plain PyTorch — no PyTorch Geometric, no DGL.
+CPU is sufficient for equation/regression tests; uncapped Table 4 training should
+be run on a GPU. Corrected grid outputs go to `results/sgdiff-paper-v2/` and
+checkpoints to `runs/sgdiff-paper-v2/`.
 
 ```
 pip install -e ".[dev]"
@@ -61,7 +70,7 @@ sgdiff-repro/
 │   │   ├── transformer_denoiser.py  # paper's denoiser (App. A.3)
 │   │   ├── fusion.py           # Bayesian fusion, Eq. 12-13
 │   │   ├── layers.py, schedules.py
-│   │   └── baselines/          # GCN / GAT / SAGE / VGAE / SEAL / PENCIL
+│   │   └── baselines/          # GCN / GAT / SAGE / VGAE / SEAL / PENCIL / RGCN
 │   ├── engine/
 │   │   ├── factory.py          # build model/extractor, prepare datasets
 │   │   ├── batch.py            # collate sub-graph pairs
@@ -89,6 +98,7 @@ sgdiff-repro/
 │   ├── reproduction.md         # measured numbers, gaps, known deviations
 │   ├── benchmark.md, ablation.md
 │   ├── robustness.md           # RQ3: RF / DICE / EA for every model
+│   ├── attribution.md          # which property each model reads, and what breaks it
 │   └── related_work.md, references.bib
 ├── checkpoints/                # trained weights (git-ignored)
 ├── runs/                       # per-run output: metrics.jsonl, best.pt (git-ignored)
@@ -165,6 +175,17 @@ differ only in the knobs below.
 | `run_robustness.py` | RQ3 for **every** model: RF / DICE / EA at 3 budgets, clean column included | `--dataset cora --profile cpu --seeds 0 1 2` |
 | `run_benchmark.py` | SGDiff vs. all baselines on identical data (split + sub-graph fingerprints) | `--dataset cora --profile cpu --seeds 0` |
 | `run_ablation.py` | does the likelihood actually depend on the link condition? | `--dataset cora --profile cpu --seed 0` |
+| `run_probe.py` | **why** each model is robust or fragile: targeted deletion / insertion / feature-shuffle probes, property heuristics, component ablations | `--dataset cora --profile cpu --seeds 0 1 2` |
+| `run_deep_probe.py` | **where** the damage happens: layer-wise linear probes, propagation-operator substitution, triadic-vs-bridge deletion, and repair experiments | `--dataset cora --profile cpu --seeds 0 1` |
+| `run_redesign.py` | **is the component causal**: retrain a GCN with one part changed (depth / normalisation / self-loop / input augmentation / robust training) and re-probe it | `--dataset cora --seeds 0 1 2 3 4 5 6 7` |
+| `run_score_dump.py` | dumps **per-pair scores** plus per-pair structure for every (model, probe); raw material for the three analyses below | `--dataset cora --seeds 0 1` |
+| `run_operating_point.py` | **where** the damage lives: AP / hit@100 / TPR@1%FPR, class-wise score drops, rank shift, and clean-defined strata (CN, degree, evidence lost) | `--dataset cora citeseer usair` |
+| `run_adaptive_attack.py` | is the measured damage a **lower bound**: greedy score-feedback edge deletion at a matched budget vs random and hub deletion | `--dataset cora --models gcn sage --budgets 0.05 0.10` |
+| `run_evidence_calibration.py` | can the **scoring rule** be fixed without retraining: subtract a degree-preserving null-model prior, λ sweep | `--dataset cora citeseer` |
+| `run_bootstrap_ci.py` | paired bootstrap over scored pairs: 95 % intervals and a one-sided p for every probe damage | `--dataset cora citeseer usair` |
+| `run_gated_repair.py` | evidence-routed repair: k=1 / k=2 sub-graph models routed per pair, with a `CN ≤ τ` threshold sweep, paired-bootstrap intervals on every arm difference, and a count of how many low-evidence pairs a CN-completion fallback can actually reach | `--dataset cora --models seal pencil --seeds 0 1` |
+| `run_splice_gate.py` | counterfactual splice gate: re-score each pair with one synthetic shared neighbour spliced in and gate on the score rise (with a zero-feature control and a quantile frontier) | `--dataset cora --models seal pencil --seeds 0 1` |
+| `make_probe_report.py` | one self-contained HTML report for the whole repository (no CDN): section 00 is the reproduction layer, sections 01-15 the probe/attribution chain; every optional section appears when its `results/*.json` exists | (after `run_probe.py` and whichever analyses you ran) |
 | `collect_results.py` | markdown table of `results/*.json`; `--merge <profile>` rebuilds the mean/std summary | `--merge full` |
 | `run_all_experiments.sh` | RQ1+RQ2+RQ3 end to end | `bash scripts/run_all_experiments.sh cpu "0 1 2"` |
 
@@ -218,6 +239,22 @@ python scripts/run_benchmark.py --dataset cora --profile cpu --seeds 0
 # 9. GCCM shortcut check: does the likelihood really depend on the link condition?
 python scripts/run_ablation.py --dataset cora --profile cpu --seed 0
 python scripts/run_ablation.py --dataset cora --profile full --seed 0 --no-retrain --tag full
+
+# 10. mechanism attribution: targeted probes + component ablations
+python scripts/run_probe.py --dataset cora --profile cpu --seeds 0 1 2 --device cpu
+python scripts/run_probe.py --dataset citeseer --profile cpu --seeds 0 1 2 --device cpu
+python scripts/run_deep_probe.py --dataset cora --profile cpu --seeds 0 1 --device cpu
+python scripts/run_deep_probe.py --dataset citeseer --profile cpu --seeds 0 1 --device cpu
+python scripts/run_redesign.py --dataset cora --seeds 0 1 2 3 4 5 6 7   # component-level retraining
+python scripts/run_redesign.py --dataset citeseer --seeds 0 1 2 3 4 5 6 7
+python scripts/run_score_dump.py --dataset cora citeseer usair --seeds 0 1 2 3   # ~10 min/seed (SGDiff)
+python scripts/run_operating_point.py --dataset cora citeseer usair
+python scripts/run_adaptive_attack.py --dataset cora --models gcn sage --budgets 0.05 0.10
+python scripts/run_evidence_calibration.py --dataset cora citeseer
+python scripts/run_bootstrap_ci.py --dataset cora citeseer usair
+python scripts/run_gated_repair.py --dataset cora --models seal pencil --seeds 0 1 2 3
+python scripts/run_splice_gate.py --dataset cora --models seal pencil --seeds 0 1 2 3
+python scripts/make_probe_report.py   # -> results/probe_report.html (self-contained)
 ```
 
 The benchmark writes `results/benchmark_<dataset>.{json,md}` and records
@@ -238,6 +275,9 @@ python -m sgdiff train --config configs/sgdiff_cora.yaml \
 ```
 
 ## Measured results
+
+One-page synthesis of every claim and every measured number:
+[`docs/findings.md`](docs/findings.md).
 
 In-domain link prediction on this machine, `full` profile, mean ± std over
 seeds. Source `results/summary_indomain_full.json` (rebuild with
@@ -299,7 +339,7 @@ budget; every arm inside a comparison shares it, so the trends are comparable.
 
 RQ1, in one paragraph: transfer never matches the in-domain model — it costs
 1-13 points (NS as a target 0.924 vs 0.964; Citeseer 0.673 vs 0.738; Pubmed
-0.682-0.738 vs 0.817) — and one cell collapses to chance (Pubmed → NS
+0.682-0.738 vs 0.817) — and one cell collapses to chance (NS → Pubmed
 `0.494 ± 0.038`). Better in-domain sources transfer *worse* (source averages:
 Citeseer 0.838 > Cora 0.824 > USAir 0.759 > Pubmed 0.742 > NS 0.713, close to the
 reverse of the in-domain ranking), i.e. small accurate sources overfit their own
@@ -312,6 +352,10 @@ still hides a per-dataset knob. Full matrix and both variants:
 every known deviation from the paper.
 
 ### What has been run here
+
+Every experiment in one table — what was run, where the analysis lives, and the
+one-line observation — is in [`docs/experiments.md`](docs/experiments.md). The
+status list below is the short version.
 
 | experiment | status | artifact |
 |------------|--------|----------|

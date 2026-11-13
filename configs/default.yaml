@@ -17,6 +17,7 @@ subgraph:
   max_nodes_per_hop: null # Table 4: ns, null = -1 (no per-hop sampling)
   max_label: 16
   feature_mode: auto      # auto | attribute | structural
+  feature_normalization: none
   remove_target_edge: true
 
 structure:                # discrete diffusion over the sub-graph adjacency
@@ -29,13 +30,15 @@ structure:                # discrete diffusion over the sub-graph adjacency
   global_mlp: 128         # hm_y
   heads: 8                # attention heads
   num_layers: 2           # l_t (transformer layers)
-  aux_ce_weight: 1.0      # hybrid "sum of node and edge cross-entropy"
+  aux_ce_weight: 1.0
+  loss_mode: ce           # Appendix A.3: clean node + edge CE
+  noise_schedule: cosine # DiGress choice, not specified explicitly by SGDiff
   num_steps: 20           # ds_t (per dataset: 20/20/10/5/10/20)
   beta_start: 0.0001
   beta_end: 0.2
   time_dim: 64
   dropout: 0.1
-  normalize_score: true
+  normalize_score: false  # Eq. 4 joint KL, not a size-normalized variant
   num_mc_samples: null    # null = average over all ds_t steps
   weight: 1.0
 
@@ -46,9 +49,10 @@ feature:                  # Gaussian diffusion over node features
   num_steps: 100          # ds_g (per dataset: 100/100/50)
   beta_start: 0.0001
   beta_end: 0.02
-  time_dim: 32
-  dropout: 0.1
+  time_dim: 0              # Eq. 11: class concatenation, no timestep embedding
+  dropout: 0.0
   arch: gcn
+  normalize_score: false  # Eq. 10 squared norm; training still uses element MSE
   num_mc_samples: null
   weight: 1.0
 
@@ -57,8 +61,8 @@ model:
   init_eta: 1.0
 
 train:
-  epochs: 50
-  pretrain_epochs: 10
+  epochs: 50              # diffusion budget; paper does not give epoch counts
+  pretrain_epochs: 10     # minimum before diffusion early stopping
   batch_size: 32
   eval_batch_size: 64
   lr: 0.001
@@ -73,5 +77,9 @@ train:
   run_name: null
   eval_every: 1
   save_checkpoint: true
-  freeze_diffusion: false
-  finetune_mc_samples: 2
+  freeze_diffusion: true
+  finetune_mc_samples: null # match inference, all Table 4 timesteps
+  finetune_epochs: 20
+  fusion_patience: 10
+  eval_seed: 1729
+  resume: null

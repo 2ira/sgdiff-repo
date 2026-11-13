@@ -51,7 +51,7 @@ class SGDiff(nn.Module):
 
     # ------------------------------------------------------------------ losses
     def diffusion_losses(self, batch) -> dict[str, torch.Tensor]:
-        """Class-conditional ELBO of the structure model and DDPM loss of the feature model."""
+        """Clean categorical CE (Appendix A.3) and conditional epsilon MSE."""
         structure = self.structure.loss(batch.adj, batch.labels, batch.mask, batch.y)
         if self.feature is None:
             feature = torch.zeros((), device=batch.adj.device)
@@ -63,24 +63,23 @@ class SGDiff(nn.Module):
     @torch.no_grad()
     def class_scores(self, batch, num_samples: Optional[int] = None) -> tuple:
         """Return ``(feature_scores, structure_scores)`` each of shape ``(B, C)``."""
-        feat, struct = [], []
-        b = batch.batch_size
-        for cls in range(self.fusion.num_classes):
-            y = torch.full((b,), cls, device=batch.y.device, dtype=torch.long)
-            if self.feature is None:
-                feat.append(torch.zeros(b, device=batch.y.device))
-            else:
-                feat.append(
-                    self.feature.log_likelihood(
-                        batch.x, batch.adj, batch.labels, batch.mask, y, num_samples=num_samples
-                    )
-                )
-            struct.append(
-                self.structure.log_likelihood(
-                    batch.adj, batch.labels, batch.mask, y, num_samples=num_samples
-                )
+        return self._branch_scores(batch, num_samples=num_samples)
+
+    def _branch_scores(self, batch, num_samples=None, random_timesteps=False):
+        struct = self.structure.class_scores(
+            batch.adj, batch.labels, batch.mask,
+            num_classes=self.fusion.num_classes, num_samples=num_samples,
+            random_timesteps=random_timesteps,
+        )
+        if self.feature is None:
+            feat = torch.zeros_like(struct)
+        else:
+            feat = self.feature.class_scores(
+                batch.x, batch.adj, batch.labels, batch.mask,
+                num_classes=self.fusion.num_classes, num_samples=num_samples,
+                random_timesteps=random_timesteps,
             )
-        return torch.stack(feat, dim=1), torch.stack(struct, dim=1)
+        return feat, struct
 
     def forward(self, batch, num_samples: Optional[int] = None) -> dict[str, torch.Tensor]:
         """Fuse both likelihoods into class logits."""
@@ -101,31 +100,13 @@ class SGDiff(nn.Module):
         return logits[:, 1] - logits[:, 0]
 
     # ------------------------------------------------------------- training
-    def train_logits(self, batch, num_samples: int = 1) -> tuple[torch.Tensor, dict]:
-        """Differentiable fused logits (one sampled timestep per class).
+    def train_logits(self, batch, num_samples: Optional[int] = None) -> tuple[torch.Tensor, dict]:
+        """Eq. (13) fusion objective with the same scoring path as inference.
 
-        Used by the fusion/fine-tuning stage: the two conditional scores are
-        computed with gradient, so ``eta_1``/``eta_2``/``delta`` -- and
-        optionally both diffusion networks -- are optimised through the
-        cross-entropy of Eq. (12).
+        Frozen denoisers stay in evaluation mode during fusion calibration.
+        Updating denoisers through this objective is an explicit variant, not
+        the paper-default two-stage training protocol.
         """
-        feat, struct = [], []
-        b = batch.batch_size
-        num_samples = max(int(num_samples), 1)
-        for cls in range(self.fusion.num_classes):
-            y = torch.full((b,), cls, device=batch.y.device, dtype=torch.long)
-            feat_c, struct_c = [], []
-            for _ in range(num_samples):
-                if self.feature is None:
-                    feat_c.append(torch.zeros(b, device=batch.y.device))
-                else:
-                    feat_c.append(
-                        -self.feature.compute_mse(batch.x, batch.adj, batch.labels, batch.mask, y)
-                    )
-                struct_c.append(-self.structure.compute_kl(batch.adj, batch.labels, batch.mask, y))
-            feat.append(torch.stack(feat_c).mean(0))
-            struct.append(torch.stack(struct_c).mean(0))
-        feature_scores = torch.stack(feat, dim=1)
-        structure_scores = torch.stack(struct, dim=1)
+        feature_scores, structure_scores = self._branch_scores(batch, num_samples=num_samples)
         logits = self.fusion(feature_scores, structure_scores)
         return logits, {"feature_scores": feature_scores, "structure_scores": structure_scores}

@@ -28,6 +28,7 @@ class SubgraphConfig:
     max_nodes_total: Optional[int] = None  # compute safety cap (paper: unbounded)
     max_label: int = 16
     feature_mode: str = "auto"  # auto | attribute | structural
+    feature_normalization: str = "none"  # none | standardize | row (explicit variants)
     remove_target_edge: bool = True
 
 
@@ -42,7 +43,9 @@ class StructureConfig:
     global_mlp: int = 128
     heads: int = 8
     num_layers: int = 2
-    aux_ce_weight: float = 1.0  # "sum of node and feature cross-entropy"
+    aux_ce_weight: float = 1.0
+    noise_schedule: str = "cosine"  # DiGress-style; exact paper schedule is unspecified
+    loss_mode: str = "ce"  # paper A.3: clean node and edge cross-entropy
     hidden_dim: int = 64  # only used by arch="edge_gnn"
     edge_dim: int = 16
     num_steps: int = 20
@@ -50,7 +53,7 @@ class StructureConfig:
     beta_end: float = 0.2
     time_dim: int = 32
     dropout: float = 0.1
-    normalize_score: bool = True
+    normalize_score: bool = False  # Eq. 4: joint node/edge KL sum
     num_mc_samples: Optional[int] = None
     weight: float = 1.0
 
@@ -63,9 +66,10 @@ class FeatureConfig:
     num_steps: int = 50
     beta_start: float = 1e-4
     beta_end: float = 0.02
-    time_dim: int = 32
-    dropout: float = 0.1
+    time_dim: int = 0  # Eq. 11 does not concatenate a timestep embedding
+    dropout: float = 0.0
     arch: str = "gcn"
+    normalize_score: bool = False  # Eq. 10: squared norm
     num_mc_samples: Optional[int] = None
     weight: float = 1.0
 
@@ -94,8 +98,12 @@ class TrainConfig:
     run_name: Optional[str] = None
     eval_every: int = 1
     save_checkpoint: bool = True
-    freeze_diffusion: bool = False  # true = stage 2 trains only eta1/eta2/delta
-    finetune_mc_samples: int = 2
+    freeze_diffusion: bool = True  # Eq. 13 optimizes fusion after diffusion pretraining
+    finetune_mc_samples: Optional[int] = None  # None = Table 4 full T timesteps
+    finetune_epochs: int = 20
+    fusion_patience: int = 10
+    eval_seed: int = 1729
+    resume: Optional[str] = None
 
 
 @dataclass

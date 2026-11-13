@@ -115,6 +115,79 @@ def train_node_pair_baseline(
     return test
 
 
+def train_rgcn(
+    model,
+    graph: GraphData,
+    split: LinkSplit,
+    device: str = "auto",
+    epochs: int = 300,
+    lr: float = 0.01,
+    weight_decay: float = 0.0,
+    patience: int = 30,
+    seed: int = 0,
+) -> dict:
+    """Train a Bayesian robust GCN (Zhu et al., KDD 2019).
+
+    Loss = BCE on the dot-product logits + ``var_weight * mean(sigma)``.  The
+    penalty is the only difference from ``train_node_pair_baseline``; the
+    reparameterised sample happens inside ``model.forward`` (train mode only), so
+    the evaluation path stays deterministic.
+    """
+    device = resolve_device(device)
+    torch.manual_seed(seed)
+    model.to(device)
+
+    train_graph = graph.drop_edges(split.val_pos.tolist() + split.test_pos.tolist())
+    eval_graph = graph.drop_edges(split.test_pos.tolist())
+    x_train = torch.as_tensor(node_feature_matrix(train_graph), device=device)
+    x_eval = torch.as_tensor(node_feature_matrix(eval_graph), device=device)
+    ei_train = _edge_index(train_graph, device)
+    ei_eval = _edge_index(eval_graph, device)
+
+    train_pairs = np.vstack([split.train_pos, split.train_neg])
+    train_labels = np.concatenate(
+        [np.ones(len(split.train_pos)), np.zeros(len(split.train_neg))]
+    ).astype(np.float32)
+    train_pairs_t = torch.as_tensor(train_pairs, device=device)
+    train_labels_t = torch.as_tensor(train_labels, device=device)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    var_weight = float(getattr(model, "var_weight", 0.0))
+    best_state, best_auc, bad = None, -np.inf, 0
+
+    for epoch in range(epochs):
+        model.train()
+        optimizer.zero_grad()
+        z, sigma = model(x_train, ei_train, train_graph.num_nodes)
+        logits = model.score_pairs(z, train_pairs_t)
+        loss = F.binary_cross_entropy_with_logits(logits, train_labels_t)
+        if var_weight > 0:
+            loss = loss + var_weight * sigma.mean()
+        loss.backward()
+        optimizer.step()
+
+        if (epoch + 1) % 10 == 0 and len(split.val_pos):
+            metrics = evaluate_node_pair_baseline(
+                model, x_eval, ei_eval, eval_graph.num_nodes, split.val_pos, split.val_neg, device
+            )
+            if metrics["auc"] > best_auc:
+                best_auc, bad = metrics["auc"], 0
+                best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
+            else:
+                bad += 1
+            if bad >= patience // 10:
+                break
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
+    test = evaluate_node_pair_baseline(
+        model, x_eval, ei_eval, eval_graph.num_nodes, split.test_pos, split.test_neg, device
+    )
+    test["best_val_auc"] = float(best_auc)
+    test["epochs_run"] = epoch + 1
+    return test
+
+
 @torch.no_grad()
 def evaluate_node_pair_baseline(model, x, edge_index, num_nodes, pos_pairs, neg_pairs, device) -> dict:
     model.eval()

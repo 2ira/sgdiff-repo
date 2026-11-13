@@ -20,7 +20,9 @@ from .graph import GraphData
 
 
 def drnl_label(du: int, dv: int, max_label: int) -> int:
-    """Double-radius node label for distances ``du``/``dv`` to ``u``/``v``."""
+    """DRNL label; a node unreachable from either endpoint has label zero."""
+    if not np.isfinite(du) or not np.isfinite(dv):
+        return 0
     d = du + dv
     half = d // 2
     label = 1 + min(du, dv) + half * (half + (d % 2) - 1)
@@ -63,6 +65,20 @@ def _bfs(
         if not frontier:
             break
     return dist
+
+
+def _endpoint_distances(adj: np.ndarray, root: int, blocked: int) -> np.ndarray:
+    """Shortest-path distances in the final subgraph with ``blocked`` removed."""
+    distance = np.full(adj.shape[0], np.inf)
+    distance[root] = 0
+    queue = [root]
+    for node in queue:
+        for neighbor in np.flatnonzero(adj[node]):
+            neighbor = int(neighbor)
+            if neighbor != blocked and not np.isfinite(distance[neighbor]):
+                distance[neighbor] = distance[node] + 1
+                queue.append(neighbor)
+    return distance
 
 
 @dataclass
@@ -135,7 +151,7 @@ def extract_enclosing_subgraph(
         # both endpoints, then the closest nodes, then a random tie-break.
         cap = max(int(max_nodes_total), 2)
         priority = sorted(
-            node_set,
+            node_set - {int(src), int(dst)},
             key=lambda n: (min(du.get(n, hops + 1), dv.get(n, hops + 1)), rng.random()),
         )
         keep = {int(src), int(dst)} | set(priority[: cap - 2])
@@ -150,19 +166,18 @@ def extract_enclosing_subgraph(
             if j is not None:
                 adj[i, j] = 1.0
 
-    fallback = hops + 1
-    labels = np.asarray(
-        [
-            drnl_label(du.get(int(n), fallback), dv.get(int(n), fallback), max_label)
-            for n in nodes
-        ],
-        dtype=np.int64,
-    )
-
-    if remove_target and pos[int(src)] is not None:
-        i, j = pos[int(src)], pos[int(dst)]
+    i, j = pos[int(src)], pos[int(dst)]
+    if remove_target:
         adj[i, j] = 0.0
         adj[j, i] = 0.0
+
+    du_final = _endpoint_distances(adj, i, j)
+    dv_final = _endpoint_distances(adj, j, i)
+    labels = np.asarray(
+        [drnl_label(a, b, max_label) for a, b in zip(du_final, dv_final)],
+        dtype=np.int64,
+    )
+    labels[i] = labels[j] = 1
 
     x = None if features is None else features[nodes]
     return Subgraph(src=int(src), dst=int(dst), nodes=nodes, adj=adj, labels=labels, x=x)
@@ -183,6 +198,7 @@ class SubgraphExtractor:
         remove_target: bool = True,
         cache_size: int = 200_000,
         target_feature_dim: Optional[int] = None,
+        feature_normalization: str = "none",
     ) -> None:
         self.graph = graph
         self.hops = int(hops)
@@ -195,10 +211,13 @@ class SubgraphExtractor:
         self._cache: dict[tuple[int, int], Subgraph] = {}
 
         self.feature_mode = self._resolve_mode(feature_mode)
+        if feature_normalization not in {"none", "standardize", "row"}:
+            raise ValueError(f"unknown feature_normalization '{feature_normalization}'")
+        self.feature_normalization = feature_normalization
         self.target_feature_dim = target_feature_dim
         self._neighbors = graph.neighbors()
         if self.feature_mode == "attribute":
-            self._features = self._standardize(graph.x)
+            self._features = self._normalize_features(graph.x)
             self.feature_dim = int(self._features.shape[1])
         else:
             self._features = None
@@ -240,6 +259,17 @@ class SubgraphExtractor:
         rng = np.random.default_rng(self.seed)
         proj = rng.normal(0.0, 1.0 / np.sqrt(max(out_dim, 1)), size=(in_dim, out_dim)).astype(np.float32)
         return features @ proj
+
+    def _normalize_features(self, x: np.ndarray) -> np.ndarray:
+        """Explicit attribute transform; row mode uses L1 norms and preserves zero rows."""
+        x = np.asarray(x, dtype=np.float32)
+        if self.feature_normalization == "standardize":
+            return self._standardize(x)
+        if self.feature_normalization == "row":
+            norm = np.abs(x).sum(axis=1, keepdims=True)
+            norm[norm == 0] = 1.0
+            return x / norm
+        return x
 
     @staticmethod
     def _standardize(x: np.ndarray) -> np.ndarray:

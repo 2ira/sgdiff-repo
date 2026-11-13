@@ -15,9 +15,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-RESULTS = Path("results")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from sgdiff.version import METHOD_VERSION  # noqa: E402
+
+RESULTS = Path("results") / METHOD_VERSION
 
 # Runs that are not in-domain table rows.
 SKIP_PREFIXES = ("summary_", "lowdata_", "attack_", "transfer_", "ablation_", "baselines_")
@@ -47,10 +52,15 @@ def merge_indomain(profile: str) -> dict:
         payload = json.loads(path.read_text())
         if "auc" not in payload:
             continue
+        if payload.get("method_version") != METHOD_VERSION:
+            raise ValueError(f"cannot merge legacy/mixed method results: {path}")
         dataset = path.stem.rsplit("_seed", 1)[0]
         grouped.setdefault(dataset, []).append(payload)
 
-    summary = {dataset: _aggregate(runs) for dataset, runs in sorted(grouped.items())}
+    if not grouped:
+        raise ValueError(f"no corrected-method {profile} runs under {RESULTS}")
+    summary = {dataset: {"method_version": METHOD_VERSION, **_aggregate(runs)}
+               for dataset, runs in sorted(grouped.items())}
     out = RESULTS / f"summary_indomain_{profile}.json"
     out.write_text(json.dumps(summary, indent=2) + "\n")
     rows = [f"| {d} | {m['num_seeds']} | {m['auc']['mean']:.4f} ± {m['auc']['std']:.4f} "

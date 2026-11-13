@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 import numpy as np
+import torch
 
 from ..config import ExperimentConfig
 from ..data.datasets import load_graph
@@ -28,6 +29,8 @@ def build_model(cfg: ExperimentConfig, feature_dim: int, num_labels: Optional[in
         global_mlp=cfg.structure.global_mlp,
         heads=cfg.structure.heads,
         aux_ce_weight=cfg.structure.aux_ce_weight,
+        noise_schedule=cfg.structure.noise_schedule,
+        loss_mode=cfg.structure.loss_mode,
         hidden_dim=cfg.structure.hidden_dim,
         num_layers=cfg.structure.num_layers,
         edge_dim=cfg.structure.edge_dim,
@@ -48,6 +51,7 @@ def build_model(cfg: ExperimentConfig, feature_dim: int, num_labels: Optional[in
         time_dim=cfg.feature.time_dim,
         dropout=cfg.feature.dropout,
         arch=cfg.feature.arch,
+        normalize_score=cfg.feature.normalize_score,
         num_mc_samples=cfg.feature.num_mc_samples,
     )
     fusion_kwargs = dict(learnable=cfg.model.fusion_learnable, init_eta=cfg.model.init_eta)
@@ -79,6 +83,7 @@ def build_extractor(
         max_nodes_total=cfg.subgraph.max_nodes_total,
         max_label=cfg.subgraph.max_label,
         feature_mode=cfg.subgraph.feature_mode,
+        feature_normalization=cfg.subgraph.feature_normalization,
         remove_target=cfg.subgraph.remove_target_edge,
         seed=cfg.data.seed if seed is None else seed,
         target_feature_dim=target_feature_dim,
@@ -94,15 +99,31 @@ def prepare_datasets(
 ) -> dict:
     """Build train/val/test datasets.
 
-    Training sub-graphs are extracted from ``train_graph`` (training links only)
-    while validation/test sub-graphs use ``eval_graph`` (train + validation
-    links), so test links never leak into the encoders' neighbourhoods.
+    Training and validation use training links only. Testing explicitly uses
+    the transductive train + validation graph, never test links. Custom graphs
+    retain their perturbations but have the corresponding held-out links removed.
     """
-    train_graph = train_graph or graph.drop_edges(split.val_pos.tolist() + split.test_pos.tolist())
-    eval_graph = eval_graph or graph.drop_edges(split.test_pos.tolist())
+    held_out = split.val_pos.tolist() + split.test_pos.tolist()
+    train_graph = (graph if train_graph is None else train_graph).drop_edges(held_out)
+    eval_graph = (graph if eval_graph is None else eval_graph).drop_edges(split.test_pos.tolist())
 
     train_extractor = build_extractor(train_graph, cfg)
+    val_extractor = build_extractor(train_graph, cfg, seed=cfg.data.seed + 1)
     eval_extractor = build_extractor(eval_graph, cfg, seed=cfg.data.seed + 1)
+    split.meta["preprocessing"] = {
+        "train_context": "train", "val_context": "train",
+        "test_context": "train+val (transductive)",
+        "drnl": "final_subgraph_opposite_endpoint_removed; endpoints=1; unreachable=0",
+        "feature_mode": train_extractor.feature_mode,
+        "feature_normalization": train_extractor.feature_normalization,
+        "feature_dim": train_extractor.feature_dim,
+        "max_label": train_extractor.max_label,
+        "hops": train_extractor.hops,
+        "max_nodes_per_hop": train_extractor.max_nodes_per_hop,
+        "max_nodes_total": train_extractor.max_nodes_total,
+        "remove_target": train_extractor.remove_target,
+        "hit_metric": "precision@k over the pooled candidates (legacy hit@k key)",
+    }
 
     train_pairs, train_labels = training_pairs(split, cfg)
 
@@ -111,8 +132,54 @@ def prepare_datasets(
         pairs, labels = split.pairs(name)
         if cfg.data.max_eval_pairs is not None:
             pairs, labels = _cap_eval(pairs, labels, int(cfg.data.max_eval_pairs))
-        datasets[name] = PairSubgraphDataset(pairs, labels, eval_extractor)
+        extractor = val_extractor if name == "val" else eval_extractor
+        datasets[name] = PairSubgraphDataset(pairs, labels, extractor)
+    train_graph.meta["preprocessing"] = dict(split.meta["preprocessing"])
+    eval_graph.meta["preprocessing"] = dict(split.meta["preprocessing"])
     return datasets
+
+
+def initialize_training_marginals(model, train_dataset: PairSubgraphDataset) -> dict:
+    """Initialize categorical marginals from only the actual training subgraphs.
+
+    DRNL zero is a valid category. Edge counts include absent edges, exclude
+    diagonal entries, and count each unpadded undirected pair exactly once.
+    Models without ``structure.set_marginals`` are left unchanged.
+    """
+    structure = getattr(model, "structure", None)
+    setter = getattr(structure, "set_marginals", None)
+    if not callable(setter):
+        return {}
+    num_labels = int(structure.num_labels)
+    node_counts = np.zeros(num_labels, dtype=np.int64)
+    edge_counts = np.zeros(2, dtype=np.int64)
+    for src, dst in train_dataset.pairs:
+        sub = train_dataset.extractor.build(int(src), int(dst))
+        labels = sub.labels
+        if np.any((labels < 0) | (labels >= num_labels)):
+            raise ValueError("training DRNL label is outside the model's categorical vocabulary")
+        node_counts += np.bincount(labels, minlength=num_labels)
+        edges = sub.adj[np.triu_indices(sub.num_nodes, k=1)]
+        if not np.all(np.isin(edges, [0, 1])):
+            raise ValueError("training adjacency must be binary")
+        edge_counts += np.bincount(edges.astype(np.int64), minlength=2)
+    if node_counts.sum() == 0 or edge_counts.sum() == 0:
+        raise ValueError("cannot initialize marginals from an empty training dataset")
+    node_marginal = node_counts / node_counts.sum()
+    edge_marginal = edge_counts / edge_counts.sum()
+    setter(torch.as_tensor(node_marginal, dtype=torch.float32),
+           torch.as_tensor(edge_marginal, dtype=torch.float32))
+    metadata = {
+        "source": "training_pairs_subgraphs", "num_pairs": len(train_dataset),
+        "node_counts": node_counts.tolist(), "edge_counts": edge_counts.tolist(),
+        "node_marginal": node_marginal.tolist(), "edge_marginal": edge_marginal.tolist(),
+        "edge_counting": "valid strict upper triangle; absent=0; present=1",
+    }
+    train_dataset.extractor.graph.meta.setdefault("preprocessing", {})["marginals"] = metadata
+    return metadata
+
+
+initialize_structure_marginals = initialize_training_marginals
 
 
 def training_pairs(split: LinkSplit, cfg: ExperimentConfig) -> tuple[np.ndarray, np.ndarray]:

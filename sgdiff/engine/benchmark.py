@@ -32,20 +32,27 @@ import torch
 from ..config import ExperimentConfig
 from ..data.graph import GraphData
 from ..data.splits import LinkSplit
-from ..models.baselines import NodePairLinkPredictor, PENCILBaseline, SEALBaseline, VGAE
+from ..models.baselines import (
+    NodePairLinkPredictor,
+    PENCILBaseline,
+    RGCN,
+    SEALBaseline,
+    VGAE,
+)
 from ..models.sgdiff import SGDiff
 from ..utils.io import save_json
 from ..utils.seed import resolve_device, set_seed
 from .baseline_trainer import (
     node_feature_matrix,
     train_node_pair_baseline,
+    train_rgcn,
     train_subgraph_classifier,
 )
 from .factory import build_model, load_split, prepare_datasets, training_pairs
 from .trainer import Trainer
 
 METRICS = ("auc", "ap", "hit@100")
-KINDS = ("node_pair", "subgraph", "sgdiff")
+KINDS = ("node_pair", "subgraph", "sgdiff", "robust_node_pair")
 
 # Budgets shared by scripts/run_benchmark.py and scripts/run_ablation.py; they
 # mirror the profiles of scripts/run_experiments.py so that every table in
@@ -157,6 +164,18 @@ def build_registry(cfg: ExperimentConfig, feature_dim: Optional[int] = None) -> 
                 fd, num_labels=num_labels, hidden_dim=64, num_layers=2, heads=4, dropout=0.1
             ),
             note="plain Transformer on the shared enclosing sub-graphs (arXiv:2602.01553)",
+        ),
+        "rgcn": ModelSpec(
+            "rgcn",
+            "robust_node_pair",
+            lambda fd, c: RGCN(fd, hidden_dim=64, out_dim=64, num_layers=2, var_weight=0.1),
+            note="Bayesian robust GCN with a variance penalty (Zhu et al., KDD 2019)",
+        ),
+        "rgcn_novar": ModelSpec(
+            "rgcn_novar",
+            "robust_node_pair",
+            lambda fd, c: RGCN(fd, hidden_dim=64, out_dim=64, num_layers=2, var_weight=0.0),
+            note="RGCN ablation: reparameterised sampling without the variance penalty",
         ),
         "sgdiff": ModelSpec(
             "sgdiff",
@@ -273,6 +292,18 @@ def fit_model(
             device=device,
             epochs=node_pair_epochs,
             is_vgae=(spec.name == "vgae"),
+            seed=seed,
+        )
+    elif spec.kind == "robust_node_pair":
+        features = node_feature_matrix(graph)
+        model = spec.builder(features.shape[1], cfg)
+        num_params = sum(p.numel() for p in model.parameters())
+        result = train_rgcn(
+            model,
+            graph,
+            capped_train_split(split, cfg),
+            device=device,
+            epochs=node_pair_epochs,
             seed=seed,
         )
     elif spec.kind == "subgraph":
