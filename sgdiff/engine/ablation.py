@@ -46,7 +46,7 @@ from ..utils.io import save_json
 from ..utils.metrics import summarize_scores
 from ..utils.seed import resolve_device, set_seed
 from .batch import PairSubgraphDataset, SubgraphBatch, collate_subgraphs
-from .evaluator import score_pairs
+from .evaluator import _evaluation_context, score_pairs
 from .factory import build_model, load_split, prepare_datasets
 from .trainer import Trainer
 
@@ -181,7 +181,6 @@ def stream_contributions(
     """
     device = device or next(model.parameters()).device
     scorer = AblatedScorer(model, Ablation("contributions")).to(device)
-    scorer.eval()
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
@@ -189,10 +188,11 @@ def stream_contributions(
         collate_fn=partial(collate_subgraphs, feature_dim=dataset.feature_dim),
     )
     feat_diff, struct_diff = [], []
-    for batch in loader:
-        feat, struct = scorer.class_scores(batch.to(device))
-        feat_diff.append((feat[:, 1] - feat[:, 0]).float().cpu())
-        struct_diff.append((struct[:, 1] - struct[:, 0]).float().cpu())
+    with _evaluation_context(scorer, seed=0):
+        for batch in loader:
+            feat, struct = scorer.class_scores(batch.to(device), num_samples=num_samples)
+            feat_diff.append((feat[:, 1] - feat[:, 0]).float().cpu())
+            struct_diff.append((struct[:, 1] - struct[:, 0]).float().cpu())
     d_feat = torch.cat(feat_diff).numpy().astype(np.float64)
     d_struct = torch.cat(struct_diff).numpy().astype(np.float64)
 
@@ -246,55 +246,62 @@ class AblatedScorer(nn.Module):
         self.model = model
         self.ablation = ablation
         self.num_classes = model.fusion.num_classes
-        for parameter in model.parameters():
-            parameter.requires_grad_(False)
 
     # ------------------------------------------------------------- per stream
-    def _structure_score(self, batch, labels, y):
+    def _structure_score(self, batch, labels, conditions, num_samples: Optional[int] = None):
         if self.ablation.stream == "feature":
-            return torch.zeros(batch.batch_size, device=batch.y.device)
+            return torch.zeros(conditions.shape, device=batch.y.device)
         structure = self.model.structure
-        if self.ablation.timestep_frac is None:
-            return structure.log_likelihood(batch.adj, labels, batch.mask, y)
-        step = max(1, round(self.ablation.timestep_frac * structure.num_steps))
-        t = torch.full((batch.batch_size,), step, dtype=torch.long, device=batch.adj.device)
-        return -structure.compute_kl(batch.adj, labels, batch.mask, y, t)
+        t = None
+        if self.ablation.timestep_frac is not None:
+            step = max(1, round(self.ablation.timestep_frac * structure.num_steps))
+            t = torch.full((batch.batch_size,), step, dtype=torch.long, device=batch.adj.device)
+        return structure.class_scores(
+            batch.adj, labels, batch.mask, num_samples=num_samples, t=t, conditions=conditions
+        )
 
-    def _feature_score(self, batch, labels, y):
+    def _feature_score(self, batch, labels, conditions, num_samples: Optional[int] = None):
         if self.model.feature is None or self.ablation.stream == "structure":
-            return torch.zeros(batch.batch_size, device=batch.y.device)
+            return torch.zeros(conditions.shape, device=batch.y.device)
         feature = self.model.feature
         if self.ablation.timestep_frac is None:
-            return feature.log_likelihood(batch.x, batch.adj, labels, batch.mask, y)
+            return feature.class_scores(
+                batch.x, batch.adj, labels, batch.mask,
+                num_samples=num_samples, conditions=conditions,
+            )
         step = max(1, round(self.ablation.timestep_frac * feature.num_steps))
         t = torch.full((batch.batch_size,), step, dtype=torch.long, device=batch.adj.device)
-        return -feature.compute_mse(batch.x, batch.adj, labels, batch.mask, y, t)
+        noise = torch.randn_like(batch.x)
+        return torch.stack([
+            -feature.score_mse(batch.x, batch.adj, labels, batch.mask, conditions[:, cls], t, noise)
+            for cls in range(self.num_classes)
+        ], dim=1)
 
     # ---------------------------------------------------------------- scoring
     @torch.no_grad()
-    def class_scores(self, batch) -> tuple[torch.Tensor, torch.Tensor]:
+    def class_scores(self, batch, num_samples: Optional[int] = None) -> tuple[torch.Tensor, torch.Tensor]:
         labels = self.ablation.labels_for(batch)
-        feat, struct = [], []
-        for cls in range(self.num_classes):
-            y = self.ablation.y_for(batch, cls, self.num_classes)
-            feat.append(self._feature_score(batch, labels, y))
-            struct.append(self._structure_score(batch, labels, y))
-        return torch.stack(feat, dim=1), torch.stack(struct, dim=1)
+        conditions = torch.stack([
+            self.ablation.y_for(batch, cls, self.num_classes) for cls in range(self.num_classes)
+        ], dim=1)
+        struct = self._structure_score(batch, labels, conditions, num_samples)
+        feat = self._feature_score(batch, labels, conditions, num_samples)
+        return feat, struct
 
     @torch.no_grad()
     def forward(self, batch, num_samples: Optional[int] = None) -> dict:
-        feat, struct = self.class_scores(batch)
+        feat, struct = self.class_scores(batch, num_samples=num_samples)
         logits = self.model.fusion(feat, struct)
         return {"logits": logits, "feature_scores": feat, "structure_scores": struct}
 
     @torch.no_grad()
     def predict_logit(self, batch, num_samples: Optional[int] = None) -> torch.Tensor:
-        logits = self.forward(batch)["logits"]
+        logits = self.forward(batch, num_samples=num_samples)["logits"]
         return logits[:, 1] - logits[:, 0]
 
     @torch.no_grad()
     def predict_proba(self, batch, num_samples: Optional[int] = None) -> torch.Tensor:
-        return torch.softmax(self.forward(batch)["logits"], dim=-1)[:, 1]
+        return torch.softmax(self.forward(batch, num_samples=num_samples)["logits"], dim=-1)[:, 1]
 
 
 @torch.no_grad()
@@ -308,7 +315,6 @@ def evaluate_ablation(
 ) -> dict:
     """AUC / AP / Hit@100 of ``model`` on ``dataset`` under ``ablation``."""
     scorer = AblatedScorer(model, ablation).to(next(model.parameters()).device)
-    scorer.eval()
     scores = score_pairs(
         scorer,
         dataset.extractor,
@@ -325,7 +331,7 @@ def evaluate_ablation(
 
 def format_markdown(result: dict) -> str:
     """Render the ablation table."""
-    header = ["variant", "training", "scoring", "AUC", "AP", "Hit@100", "score std"]
+    header = ["variant", "training", "scoring", "AUC", "AP", "precision@100 (legacy Hit@100)", "score std"]
     lines = ["| " + " | ".join(header) + " |", "|" + "|".join(["---"] * len(header)) + "|"]
     for row in result["rows"]:
         metrics = row["metrics"]
@@ -473,7 +479,11 @@ def run_ablation(
             "num_test_pairs": int(len(test)),
             "epochs": int(cfg.train.epochs),
             "pretrain_epochs": int(cfg.train.pretrain_epochs),
-            "num_mc_samples": int(cfg.train.finetune_mc_samples),
+            "num_mc_samples": cfg.train.finetune_mc_samples,
+            "structure_mc_samples": cfg.structure.num_mc_samples,
+            "feature_mc_samples": cfg.feature.num_mc_samples,
+            "hit_metric": "pooled precision@100 (legacy hit@100 key); not OGB Hits@100",
+            "preprocessing": copy.deepcopy(datasets["train"].extractor.graph.meta.get("preprocessing", {})),
             "device": str(device),
         },
         "reference_training": {

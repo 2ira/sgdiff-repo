@@ -1,5 +1,11 @@
 # Key findings
 
+> **Historical implementation results — not valid evidence about the original SGDiff method.**
+> The 2026-11-13 paper audit found incorrect categorical diffusion/posteriors,
+> a non-Eq. (11) feature denoiser, independent noise between classes, and a
+> non-paper-default training schedule. The verdicts below describe the old implementation
+> only; they must be re-evaluated with `sgdiff-paper-v2` before judging the paper.
+
 One-page synthesis of what this reproduction measured, claim by claim. Every
 number below comes from an artifact in `results/` and is reproducible with the
 command given in §6; the detailed arguments live in
@@ -18,7 +24,7 @@ Budgets, because several of them differ:
 
 | claim | paper | this reproduction | evidence |
 |-------|-------|-------------------|----------|
-| **C1** structure alone transfers without re-training | Table 1 | **partially holds**: source averages 0.713-0.838, i.e. 1-13 points below in-domain, and one cell (Pubmed -> NS) is at chance (0.494) | `reproduction.md` §RQ1, `results/transfer_matrix_cpu.json` |
+| **C1** structure alone transfers without re-training | Table 1 | **partially holds**: target averages land 1-13 points below in-domain (source averages 0.713-0.838), and one cell (NS -> Pubmed) is at chance (0.494) | `reproduction.md` §RQ1, `results/transfer_matrix_cpu.json` |
 | **C2** generative scoring wins with 1% of the labels | Fig. 2 | **holds, but is schedule-sensitive**: 0.725 ± 0.058 vs 0.751 ± 0.017 at 40 epochs; at 8 epochs the 1% run collapses to 0.49 | `reproduction.md` §RQ2 |
 | **C3** likelihood scoring is robust to structural attack | Sec. 4.4 | **reversed**: the least robust model of the nine tested, including a robust-by-design RGCN | §3 below, `results/robustness_cora*.md` |
 | **C4** sub-graph modelling fixes automorphic nodes / memory | Sec. 2-3 | **not supported as stated** at `k = 1`: the DRNL labels carry no measurable information and the model costs 40x SEAL's parameters | §4 below, `ablation.md` |
@@ -82,8 +88,9 @@ anchor (`docs/robustness.md` §5, paired runs, 3 seeds):
 
 Three findings, all measured:
 
-1. **Purification lowers accuracy everywhere** - all 18 defended cells are below
-   their undefended counterpart, including on the clean graph. The reason is
+1. **Purification lowers accuracy almost everywhere** - 17 of the 18 defended
+   cells are below their undefended counterpart, including on the clean graph
+   (the exception is `rgcn` + GPR clean, +0.001, inside the seed spread). The reason is
    measurable rather than mysterious: to raise edge precision from 0.72 to 0.94 the
    GPR purifier has to delete half of the true edges, and RF/DICE remove as many
    edges as they insert, so deletion-dominated purification cannot restore the

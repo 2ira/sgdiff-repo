@@ -186,9 +186,10 @@ Cora, `cpu` profile, seeds 0-2, AUC (`results/robustness_cora_purify2.md`):
 | rgcn | 0.755 | 0.721 | 0.727 | 0.702 | 0.675 | 0.752 | 0.669 | 0.651 | 0.756 | 0.638 | 0.595 |
 | sgdiff | 0.750 | 0.681 | 0.694 | 0.618 | 0.624 | 0.732 | 0.590 | 0.612 | 0.743 | 0.576 | 0.546 |
 
-Every one of the 18 defended cells is below its undefended counterpart (-0.005 to
--0.072 AUC). The purifiers cost accuracy even on the **clean** graph
-(-0.003 to -0.018), i.e. they are not free insurance.
+17 of the 18 defended cells are below their undefended counterpart (-0.005 to
+-0.072 AUC); the exception is `rgcn` under GPR on the clean graph (0.755 → 0.756,
++0.001, inside the seed spread). The purifiers cost accuracy even on the **clean**
+graph (-0.003 to -0.018), i.e. they are not free insurance.
 
 Two mechanisms, both measured rather than assumed:
 

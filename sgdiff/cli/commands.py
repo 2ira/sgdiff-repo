@@ -86,9 +86,6 @@ def cmd_train(args) -> dict:
 def cmd_evaluate(args) -> dict:
     prepared_device = resolve_device(args.device or "auto")
     model, cfg = load_checkpoint(args.checkpoint, device=prepared_device)
-    if args.device is None:
-        prepared_device = resolve_device(cfg.train.device)
-        model = model.to(prepared_device)
     if args.dataset:
         cfg.data.name = args.dataset
     graph, split = _load(cfg)
@@ -99,19 +96,25 @@ def cmd_evaluate(args) -> dict:
         half = args.max_pairs // 2
         pos, neg = pos[:half], neg[:half]
 
+    eval_graph = graph.drop_edges(split.test_pos.tolist())
+    if split_name in {"train", "val"}:
+        eval_graph = eval_graph.drop_edges(split.val_pos.tolist())
     attack = None
     if args.attack != "none":
         # the attacked graph is the inference graph: the test links are still
         # withheld from the encoders' neighbourhoods, exactly as in run_attack
         attack = apply_attack(
-            graph,
+            eval_graph,
             args.attack,
             ratio=args.ratio,
             mode=args.attack_mode,
             seed=cfg.data.seed,
             device=str(prepared_device),
         )
-    eval_graph = (graph if attack is None else attack).drop_edges(split.test_pos.tolist())
+    if attack is not None:
+        eval_graph = attack.drop_edges(split.test_pos.tolist())
+        if split_name in {"train", "val"}:
+            eval_graph = eval_graph.drop_edges(split.val_pos.tolist())
 
     extractor = build_extractor(eval_graph, cfg)
     metrics = evaluate_link_prediction(
@@ -135,20 +138,10 @@ def cmd_transfer(args) -> dict:
     prepared_device = resolve_device(args.device or "auto")
     model, source_cfg = load_checkpoint(args.checkpoint, device=prepared_device)
     if getattr(model, "feature", None) is not None:
-        # Sec. 4.2: node features are incompatible across datasets, so the paper
-        # evaluates SGDIFF structure-only.  A checkpoint trained *with* the
-        # feature stream is scored with that stream switched off (a random
-        # projection of the target attributes would be pure noise).
-        LOGGER.warning(
-            "checkpoint has a feature stream: disabling it for transfer "
-            "(the paper evaluates SGDIFF without node features)"
+        raise ValueError(
+            "paper RQ1 requires a source trained with feature.enabled=false; "
+            "silently removing the feature branch changes the calibrated scoring method"
         )
-        model.feature = None
-        model.feature_enabled = False
-        model.fusion.use_feature = False
-        if hasattr(model.fusion, "eta1"):
-            with torch.no_grad():
-                model.fusion.eta1.zero_()
     results = {}
     targets = args.targets or [n for n in available_datasets() if n != source_cfg.data.name]
     for target in targets:

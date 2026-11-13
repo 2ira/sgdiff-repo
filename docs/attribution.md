@@ -6,7 +6,8 @@ a mechanism. This document answers *why*: it replaces the mixed attacks with
 targeted probes (`sgdiff/data/perturb.py`), measures which property each probe
 destroys, and ablates the components of every model.
 
-Artifacts (produced by `scripts/run_probe.py`, `cpu` profile, seeds 0-2):
+Artifacts (produced by `scripts/run_probe.py`, `cpu` profile; seeds 0-4 for Cora,
+seeds 0-2 for Citeseer / USAir):
 
 | file | content |
 |------|---------|
@@ -19,7 +20,10 @@ Artifacts (produced by `scripts/run_probe.py`, `cpu` profile, seeds 0-2):
 | `results/operating_<dataset>.{json,md}` | operating-point metrics (AP, hit@100, TPR@1%FPR), class-wise score drops, rank shift, and clean-defined strata (§7.7) — `scripts/run_operating_point.py` |
 | `results/adaptive_<dataset>.{json,md}` | greedy score-feedback deletion at a matched budget vs random / hub deletion (§7.8) — `scripts/run_adaptive_attack.py` |
 | `results/calibration_<dataset>.{json,md}` | null-model calibration sweep, fitted on the clean graph (§7.9) — `scripts/run_evidence_calibration.py` |
-| `results/probe_report.html` | all of the above as one self-contained page; rebuild with `python scripts/make_probe_report.py` |
+| `results/significance_<dataset>.{json,md}` | paired bootstrap over pairs for every (model, probe) damage, 95 % intervals and one-sided p (§7.10) — `scripts/run_bootstrap_ci.py` |
+| `results/gated_<dataset>.{json,md}` | evidence-routed k1/k2 sub-graph repair (§7.11) — `scripts/run_gated_repair.py` |
+| `results/splice_<dataset>.{json,md}` | counterfactual splice gate: per-pair score rise from one synthetic shared neighbour, quantile frontier, zero-feature control (§7.12) — `scripts/run_splice_gate.py` |
+| `results/probe_report.html` | all of the above as one self-contained page; section 00 additionally renders the reproduction layer (`reproduction.md` / `benchmark.md` / `ablation.md` / `robustness.md` numbers). Rebuild with `python scripts/make_probe_report.py` |
 
 ## 1. Protocol
 
@@ -87,31 +91,31 @@ why both datasets are reported.
 
 ## 3. Model × probe
 
-AUC, mean over seeds 0-2, every probe at the 50 % budget (`results/probe_cora.md`
+AUC, mean over seeds 0-4, every probe at the 50 % budget (`results/probe_cora.md`
 §3); per-seed std and the damage column (clean − probe, positive = worse) are in
 §4 of that file.
 
 | model | clean | del | del_hub | ins | ins_hub | ins_homo | ins_hetero | feat_shuffle |
 |-------|------:|----:|--------:|----:|--------:|---------:|-----------:|-------------:|
-| GCN | 0.828 | 0.781 | 0.772 | 0.798 | 0.807 | 0.823 | 0.792 | **0.636** |
-| GAT | 0.808 | 0.711 | 0.707 | 0.775 | 0.772 | **0.826** | 0.767 | **0.637** |
-| PENCIL | 0.799 | 0.663 | 0.635 | 0.779 | 0.792 | 0.773 | 0.779 | 0.774 |
-| VGAE | 0.782 | 0.743 | 0.718 | 0.742 | 0.736 | 0.778 | 0.732 | **0.587** |
-| SEAL | 0.781 | 0.639 | 0.619 | 0.756 | 0.763 | 0.757 | 0.753 | 0.736 |
-| SAGE | 0.751 | 0.715 | 0.694 | 0.738 | 0.724 | 0.759 | 0.724 | **0.588** |
-| SGDiff | 0.745 | **0.508** | **0.568** | 0.722 | 0.778 | 0.709 | 0.726 | 0.745 |
+| GCN | 0.825 | 0.777 | 0.766 | 0.798 | 0.802 | 0.817 | 0.792 | **0.637** |
+| GAT | 0.800 | 0.704 | 0.699 | 0.769 | 0.767 | **0.823** | 0.759 | **0.622** |
+| PENCIL | 0.796 | 0.678 | 0.654 | 0.771 | 0.783 | 0.774 | 0.772 | 0.748 |
+| VGAE | 0.776 | 0.722 | 0.718 | 0.742 | 0.740 | 0.782 | 0.734 | **0.597** |
+| SEAL | 0.782 | 0.644 | 0.628 | 0.764 | 0.762 | 0.763 | 0.763 | 0.733 |
+| SAGE | 0.760 | 0.713 | 0.702 | 0.732 | 0.729 | 0.751 | 0.726 | **0.581** |
+| SGDiff | 0.729 | **0.493** | **0.565** | 0.701 | 0.779 | 0.692 | 0.704 | 0.729 |
 
 Component ablations and signal alignment (`results/probe_cora.md` §5, §7):
 
 | model | features zeroed | DRNL permuted | structure only | feature only | rho(deg) | rho(cn) | rho(featcos) |
 |-------|----------------:|--------------:|---------------:|-------------:|---------:|--------:|-------------:|
-| GCN | **0.433** | – | – | – | 0.231 | 0.535 | **0.420** |
-| GAT | **0.474** | – | – | – | 0.280 | 0.550 | 0.361 |
-| SAGE | **0.500** | – | – | – | 0.274 | **0.491** | 0.345 |
-| VGAE | **0.484** | – | – | – | 0.219 | 0.507 | 0.353 |
-| SEAL | 0.740 | 0.756 | – | – | 0.437 | 0.661 | 0.246 |
-| PENCIL | 0.787 | 0.759 | – | – | 0.440 | 0.705 | 0.269 |
-| SGDiff | 0.745 | 0.742 | 0.744 | **0.515** | 0.533 | **0.724** | **0.219** |
+| GCN | **0.366** | – | – | – | 0.238 | 0.536 | **0.409** |
+| GAT | **0.464** | – | – | – | 0.271 | 0.532 | 0.375 |
+| SAGE | **0.500** | – | – | – | 0.280 | **0.496** | 0.346 |
+| VGAE | **0.496** | – | – | – | 0.212 | 0.493 | 0.368 |
+| SEAL | 0.737 | 0.759 | – | – | 0.393 | 0.655 | 0.279 |
+| PENCIL | 0.768 | 0.726 | – | – | 0.441 | 0.684 | 0.310 |
+| SGDiff | 0.729 | 0.732 | 0.728 | **0.497** | 0.538 | **0.723** | **0.228** |
 
 ## 4. Attribution, model by model
 
@@ -417,7 +421,7 @@ Cora and Citeseer are both attributed, labelled BoW citation graphs; USAir is a
 featureless, label-free airport network with three times their mean degree. If a
 conclusion is an artefact of one graph, these columns disagree.
 
-ΔAUC (clean − probe), means over seeds 0-2:
+ΔAUC (clean − probe), means over seeds (Cora 0-4, Citeseer / USAir 0-2):
 
 | model | probe | Cora (deg 3.31) | Citeseer (deg 2.33) | USAir (deg 10.89) |
 |-------|-------|----------------:|--------------------:|------------------:|
@@ -489,15 +493,15 @@ is still linearly readable there).
 
 | model | probe | L1 drift | L2 drift | L1 AUC | L2 AUC |
 |-------|-------|---------:|---------:|-------:|-------:|
-| GCN | `del` | 0.092 | 0.092 | 0.839 | **0.809** |
-| GCN | `del_hub` | 0.068 | 0.074 | 0.827 | 0.802 |
-| GCN | `ins_hub` | 0.036 | 0.049 | 0.841 | 0.830 |
-| GCN | `feature_shuffle` | **1.001** | 0.962 | **0.614** | 0.668 |
-| SAGE | `del` | 0.065 | 0.132 | 0.744 | 0.750 |
-| SAGE | `feature_shuffle` | **0.994** | 0.963 | **0.557** | 0.587 |
-| GAT | `del` | 0.000* | 0.331 | 0.754* | **0.688** |
-| GAT | `del_hub` | 0.000* | 0.256 | 0.754* | 0.702 |
-| GAT | `feature_shuffle` | **0.994** | 0.882 | **0.525** | 0.617 |
+| GCN | `del` | 0.093 | 0.092 | 0.831 | **0.804** |
+| GCN | `del_hub` | 0.070 | 0.076 | 0.821 | 0.796 |
+| GCN | `ins_hub` | 0.037 | 0.049 | 0.839 | 0.831 |
+| GCN | `feature_shuffle` | **0.998** | 0.962 | **0.604** | 0.667 |
+| SAGE | `del` | 0.065 | 0.132 | 0.751 | 0.742 |
+| SAGE | `feature_shuffle` | **0.994** | 0.951 | **0.551** | 0.587 |
+| GAT | `del` | 0.000* | 0.322 | 0.762* | **0.693** |
+| GAT | `del_hub` | 0.000* | 0.253 | 0.762* | 0.712 |
+| GAT | `feature_shuffle` | **0.996** | 0.896 | **0.520** | 0.640 |
 
 \* GAT's layer-1 hook sits on the linear projection *before* the attention
 normalisation, so its L1 representation cannot move when only the adjacency
@@ -526,14 +530,14 @@ Same trained weights, only the propagation operator is swapped during inference:
 
 | model | operator | clean | `del` | `feature_shuffle` | `ins_hub` |
 |-------|----------|------:|------:|------------------:|----------:|
-| GCN | sym (as trained) | 0.832 | 0.790 | 0.628 | 0.806 |
-| GCN | row-mean | 0.821 | 0.777 | 0.637 | 0.783 |
-| GCN | unnormalised sum | 0.806 | **0.773** | **0.703** | 0.754 |
-| GCN | no self-loops | 0.811 | **0.718** | 0.647 | 0.788 |
-| SAGE | sym / noloop | 0.768 | 0.729 | 0.570 | 0.740 |
-| SAGE | sum | 0.781 | 0.732 | 0.671 | 0.718 |
-| VGAE | sym | 0.783 | 0.746 | 0.569 | 0.731 |
-| VGAE | no self-loops | 0.768 | **0.694** | 0.573 | 0.709 |
+| GCN | sym (as trained) | 0.827 | 0.781 | 0.629 | 0.804 |
+| GCN | row-mean | 0.820 | 0.771 | 0.641 | 0.781 |
+| GCN | unnormalised sum | 0.807 | **0.765** | **0.712** | 0.755 |
+| GCN | no self-loops | 0.808 | **0.708** | 0.644 | 0.783 |
+| SAGE | sym / noloop | 0.757 | 0.714 | 0.575 | 0.728 |
+| SAGE | sum | 0.768 | 0.718 | 0.684 | 0.715 |
+| VGAE | sym | 0.784 | 0.739 | 0.589 | 0.740 |
+| VGAE | no self-loops | 0.771 | **0.693** | 0.589 | 0.721 |
 
 The mechanism I assumed in §4.1 — "symmetric normalisation `1/√(d_i d_j)`
 absorbs the perturbation" — is **wrong**. Under `del`, symmetric (0.790),
@@ -570,13 +574,13 @@ same budget:
 
 | model | clean | delete triadic | delete bridging |
 |-------|------:|---------------:|----------------:|
-| SGDiff | 0.739 | 0.650 | 0.630 |
-| SEAL | 0.780 | 0.720 | 0.707 |
-| PENCIL | 0.779 | 0.727 | 0.721 |
-| GCN | 0.832 | 0.823 | 0.796 |
-| GAT | 0.802 | 0.772 | 0.739 |
-| SAGE | 0.768 | 0.753 | 0.730 |
-| VGAE | 0.783 | 0.780 | 0.747 |
+| SGDiff | 0.732 | 0.651 | 0.631 |
+| SEAL | 0.781 | 0.727 | 0.706 |
+| PENCIL | 0.795 | 0.740 | 0.736 |
+| GCN | 0.827 | 0.818 | 0.794 |
+| GAT | 0.807 | 0.781 | 0.736 |
+| SAGE | 0.757 | 0.746 | 0.723 |
+| VGAE | 0.784 | 0.774 | 0.743 |
 
 Triadic edges are not privileged: for every model, deleting 50 % of the bridging
 edges is as bad or slightly worse than deleting 50 % of the triadic ones. Damage
@@ -634,14 +638,14 @@ paper's `k = 1`), Cora, seeds 0-1:
 
 | model | probe | k = 1 | k = 2 | Δ |
 |-------|-------|------:|------:|--:|
-| SEAL | clean | 0.780 | **0.850** | +0.070 |
-| SEAL | `del` | 0.639 | 0.661 | +0.022 |
-| SEAL | `del_hub` | 0.628 | 0.636 | +0.008 |
-| SEAL | `ins_hub` | 0.763 | 0.791 | +0.028 |
-| PENCIL | clean | 0.779 | **0.845** | +0.066 |
-| PENCIL | `del` | 0.668 | 0.672 | +0.004 |
-| PENCIL | `del_hub` | 0.636 | 0.638 | +0.002 |
-| PENCIL | `ins_hub` | 0.792 | 0.806 | +0.014 |
+| SEAL | clean | 0.781 | **0.856** | +0.075 |
+| SEAL | `del` | 0.644 | 0.648 | +0.004 |
+| SEAL | `del_hub` | 0.632 | 0.640 | +0.008 |
+| SEAL | `ins_hub` | 0.760 | 0.803 | +0.043 |
+| PENCIL | clean | 0.795 | **0.860** | +0.065 |
+| PENCIL | `del` | 0.671 | 0.688 | +0.017 |
+| PENCIL | `del_hub` | 0.650 | 0.662 | +0.012 |
+| PENCIL | `ins_hub` | 0.788 | 0.813 | +0.025 |
 
 Two hops buy ~7 points of clean accuracy, but the *damage* does not shrink: SEAL's
 deletion gap goes 0.141 → 0.189 and PENCIL's 0.111 → 0.173. Richer input raises
@@ -792,14 +796,14 @@ loses under `del@50%`. Values are mean score drops in clean-σ:
 
 | model | pairs whose CN survived | pairs whose CN → 0 | gap |
 |---|---:|---:|---:|
-| `sgdiff` | −0.20 | **+2.11** | 2.31 |
-| `pencil` | +0.05 | **+1.53** | 1.48 |
-| `seal` | +0.05 | **+1.10** | 1.05 |
-| `rgcn` | −0.54 | +0.60 | 1.14 |
-| `gat` | −0.32 | +0.51 | 0.83 |
-| `sage` | −0.12 | +0.42 | 0.54 |
-| `gcn` | −0.18 | **−0.00** | 0.18 |
-| `vgae` | −0.14 | +0.03 | 0.17 |
+| `sgdiff` | -0.15 | **+2.18** | 2.33 |
+| `pencil` | +0.03 | **+1.56** | 1.53 |
+| `seal` | +0.05 | **+1.15** | 1.09 |
+| `rgcn` | -0.50 | +0.63 | 1.14 |
+| `gat` | -0.35 | +0.59 | 0.94 |
+| `sage` | -0.07 | +0.43 | 0.50 |
+| `gcn` | -0.12 | **-0.04** | 0.09 |
+| `vgae` | -0.11 | -0.02 | 0.10 |
 
 Citeseer gives the same ordering (`sgdiff` −0.03 / +2.16, `seal` −0.12 / +0.35,
 `gat` −0.25 / +0.62, `gcn` −0.12 / −0.03). Three readings:
@@ -880,10 +884,10 @@ probe never exceeds 0.04 at 50 %.
 
 The sub-graph family can be attacked the same way, but every candidate costs a
 sub-graph extraction, so the budget is spent instead on breadth
-(`seal`, Cora, seed 0, 100 + 100 working pairs, 5 % budget, 8 candidates/step):
-random **+0.008**, hub **+0.003**, adaptive **+0.290** — 36× the random
-per-edge efficiency, and 2.1× the damage of the fixed 50 % probe (0.140) at a
-tenth of the budget.
+(`seal` and `pencil`, Cora, seed 0, 100 + 100 working pairs, 5 % budget,
+8 candidates/step): `seal` random **+0.008** / hub +0.003 / adaptive **+0.290**
+(36× random per edge, 2.1× its own 50 % probe of 0.140); `pencil` random **+0.012**
+/ hub +0.004 / adaptive **+0.194** (16× random, 1.75× its 50 % probe of 0.111).
 
 Four consequences, and the first one revises an earlier conclusion:
 
@@ -924,14 +928,14 @@ degree-preserving (configuration-model) expectation — `results/calibration_<da
 
 | model | Cora R² | Citeseer R² |
 |---|---:|---:|
-| `sgdiff` | **0.658** | **0.544** |
+| `sgdiff` | **0.656** | **0.544** |
 | `pencil` | 0.515 | 0.263 |
-| `seal` | 0.490 | 0.216 |
-| `gcn` | 0.272 | 0.195 |
-| `vgae` | 0.243 | 0.148 |
-| `sage` | 0.228 | 0.186 |
-| `rgcn` | 0.227 | 0.075 |
-| `gat` | 0.208 | 0.161 |
+| `seal` | 0.452 | 0.216 |
+| `gcn` | 0.301 | 0.195 |
+| `vgae` | 0.254 | 0.148 |
+| `sage` | 0.223 | 0.186 |
+| `rgcn` | 0.193 | 0.075 |
+| `gat` | 0.238 | 0.161 |
 
 This is a third, independent measurement of the same channel story: two thirds of
 SGDiff's score is recoverable from common-neighbour and degree structure, a
@@ -943,9 +947,9 @@ whichever graph is scored (λ = 1 in the table):
 
 | model | clean AUC (λ=0 → 1) | `del` AUC | `ins_hub` AUC |
 |---|---|---|---:|---:|
-| `gcn` | 0.832 → 0.679 | 0.790 → 0.771 | 0.806 → **0.391** |
-| `sgdiff` | 0.739 → 0.598 | 0.521 → 0.415 | 0.762 → 0.640 |
-| `seal` | 0.780 → 0.643 | 0.639 → 0.566 | 0.762 → 0.644 |
+| `gcn` | 0.827 → 0.667 | 0.781 → 0.748 | 0.804 → **0.430** |
+| `sgdiff` | 0.732 → 0.607 | 0.522 → 0.422 | 0.776 → 0.674 |
+| `seal` | 0.781 → 0.651 | 0.644 → 0.582 | 0.760 → 0.641 |
 
 The correction moves along a frontier, it never lifts it. Because the clean
 reference is wrecked faster than the damaged one, the *relative* damage can even
@@ -979,6 +983,155 @@ be calibrated away, it is the only thing standing in for the missing evidence.
 Any real fix has to come from the *deployment side* (an evidence-complete
 extraction, or an attacker-aware retraining objective), not from a post-hoc
 re-ranking of the same scores.
+
+### 7.10 How large are these effects, really? Paired bootstrap
+
+Every table above compares means over 3-8 seeds to a "seed spread". The right
+uncertainty for a fixed (model, probe) is the *pair sample*: the damage is
+estimated from ~1000 scored pairs, and clean and probe scores are computed on the
+same pairs, so the resampling must be paired.
+`scripts/run_bootstrap_ci.py` → `results/significance_<dataset>.{json,md}`, 2000
+paired resamples per (model, probe, seed), pooled over 4 seeds per graph. Pooling
+seeds is deliberate: it widens the interval when seeds disagree, so the "excludes
+0" claims are established *despite* seed variation rather than because a lucky
+seed was dropped.
+
+| dataset | claim | ΔAUC [95 % CI] | p(no damage) |
+|---|---|---|---:|
+| Cora | `sgdiff` del | +0.211 [+0.107, +0.301] | 0.0000 |
+| Cora | `gcn` feat_shuffle | +0.198 [+0.143, +0.256] | 0.0000 |
+| Cora | `seal` del | +0.137 [+0.104, +0.168] | 0.0000 |
+| Cora | `pencil` del | +0.125 [+0.074, +0.209] | 0.0000 |
+| Cora | `gcn` del | +0.046 [+0.027, +0.070] | 0.0000 |
+| Cora | `seal` feat_shuffle | +0.055 [−0.001, +0.111] | 0.0265 |
+| Cora | `sgdiff` ins_hub (AUC) | −0.043 [−0.088, +0.015] | 0.8644 |
+| Citeseer | `sage` del | +0.014 [−0.013, +0.040] | 0.1624 |
+| USAir | `pencil` del | +0.030 [−0.009, +0.075] | 0.1206 |
+
+Two things follow, and they cut in opposite directions:
+
+1. **The headline effects are far outside the interval.** The 0.12-0.21 AUC
+   claims sit 2-4 interval-widths above 0; no amount of extra seeds would change
+   them. This also retro-justifies the 2-seed deep probes for the large effects.
+2. **Most of the small cells are not distinguishable from 0**, and the report
+   should stop treating them as facts: `seal`/`pencil`'s feature damage on Cora
+   (0.055/0.040), `sgdiff`'s `ins_hub` AUC "gain" (−0.043, CI covers 0), `sage`
+   and `rgcn`'s deletion damage on Citeseer. The `+smooth` effect of §7.6
+   (0.020) is of the same size and was already flagged as not seed-robust.
+
+The `sgdiff` `ins_hub` row is the sharpest case: its AUC difference is
+statistically indistinguishable from zero while its `TPR@1%FPR` damage is 0.262.
+Quoting the AUC there is not a conservative choice — it is the wrong statistic,
+and the bootstrap says so.
+
+### 7.11 A repair that follows the diagnosis: evidence routing (also negative)
+
+The diagnosis of §7.7 suggests a conditional repair rather than a bigger model:
+train the sub-graph model at both scales and route per pair — keep the k = 2 score
+only where the scored graph offers no evidence, use k = 1 elsewhere.
+`scripts/run_gated_repair.py` → `results/gated_cora.{json,md}`, seeds 0-1:
+
+| model | arm | clean AUC | `del` damage | `del_hub` damage |
+|---|---|---:|---:|---:|
+| `seal` | k = 1 | 0.781 | +0.137 | +0.149 |
+| `seal` | k = 2 (global) | **0.856** | +0.208 | +0.216 |
+| `seal` | routed (`CN ≤ 0`) | 0.844 | +0.204 | +0.213 |
+| `pencil` | k = 1 | 0.795 | +0.125 | +0.145 |
+| `pencil` | k = 2 (global) | **0.860** | +0.173 | +0.198 |
+| `pencil` | routed (`CN ≤ 0`) | 0.852 | +0.169 | +0.195 |
+
+The router buys the k = 2 ceiling (+0.06 clean) and inherits the k = 2 gap: on
+`del` it is 0.067 worse than plain k = 1, and the paired bootstrap over the scored
+pairs puts that difference at **−0.067 [−0.097, −0.037]**. The interval excludes
+0, so this is a regression, not pair noise — and the same holds for every probe
+(`del_hub` −0.064 [−0.096, −0.032], `ins_hub` −0.051 [−0.074, −0.028]; `pencil`
+−0.044 / −0.049 / −0.047, all intervals excluding 0). The 0.05-scale claims of
+§7.9-7.11 hold at pair resolution, over 4 seeds.
+
+The mechanism is visible in the gate counts: `CN = 0` fires for **77.0 % of pairs
+on the clean graph and 93-94 % after deletion** — the signal is degenerate exactly
+when it is needed, so "routed" collapses onto "k = 2 everywhere". Moving the
+threshold does not rescue it, because the frontier is monotone in the wrong
+direction — every setting is closer to "always k = 2" than to plain k = 1:
+
+| model | probe | `CN ≤ 0` | `CN ≤ 1` | `CN ≤ 2` | always k = 2 | k = 1 |
+|---|---|---:|---:|---:|---:|---:|
+| `seal` | `del` | +0.204 | +0.206 | +0.207 | +0.208 | **+0.137** |
+| `seal` | `del_hub` | +0.213 | +0.214 | +0.216 | +0.216 | **+0.149** |
+| `seal` | `ins_hub` | +0.073 | +0.062 | +0.056 | +0.054 | **+0.022** |
+| `pencil` | `del` | +0.169 | +0.170 | +0.172 | +0.173 | **+0.125** |
+| `pencil` | `del_hub` | +0.195 | +0.196 | +0.198 | +0.198 | **+0.145** |
+| `pencil` | `ins_hub` | +0.054 | +0.051 | +0.049 | +0.047 | **+0.008** |
+
+Widening the gate makes the damage converge to the k = 2 number from below; there
+is no threshold where routing both keeps its clean gain and keeps the k = 1
+damage. The reason is the gate share, which rises with the attack instead of
+concentrating on a damaged minority: `CN ≤ 0` covers 77.0 % of pairs clean, 92.8 %
+after `del`, 94.2 % after `del_hub`; `CN ≤ 1` covers 92.5 % / 99.3 % / 99.3 %.
+
+The other fallback on the table — rebuild the deleted edges with the CN prior
+(§7.5) and score with the k = 1 model — is **structurally void on exactly the
+pairs it targets**. The CN prior is only defined over candidate pairs that
+*already* share a neighbour, so completing the graph with the `removed` highest-CN
+missing edges restores evidence for 3.7 % of the `CN = 0` pairs after `del` and
+4.2 % after `del_hub`; the remaining 96 % stay at `CN = 0` by construction. A
+repair that has to create a shared neighbour out of nothing cannot be built from a
+prior that ranks shared neighbours:
+
+| probe | `CN = 0` share | recovered by completion | edges added |
+|---|---:|---:|---:|
+| `del` | 92.8 % | **3.7 %** | 2235 |
+| `del_hub` | 94.2 % | **4.2 %** | 2240 |
+
+This is the same failure as §7.9, and it is now a pattern rather than an accident:
+**every gate built on "there is no shared neighbour" fails, because on a sparse
+citation graph that is the normal state of the data (54 % of positives), and
+deletion only makes it more normal.** A usable gate has to be informative *under
+attack*, which means comparing the pair against a counterfactual rather than
+against a threshold.
+
+### 7.12 The counterfactual splice gate: the last candidate, tested (negative)
+
+§7.11 left one proposal untested: for each pair, splice a synthetic 2-hop path
+`u-w-v` with a random `w` and gate on whether the score rises — "if it rises, the
+model was starved". `scripts/run_splice_gate.py` → `results/splice_cora.{json,md}`
+does exactly that: the k = 1 model scores every pair twice, once on its enclosing
+sub-graph and once with a node of DRNL label 2 appended and connected to `u` and
+`v`, and `Δ = spliced − plain` is the gate signal. Seeds 0-1, 1000 scored pairs,
+`seal` and `pencil`:
+
+| model | probe | `CN = 0` | sign(Δ) | top 50 % | top 30 % | top 10 % | always k = 2 | k = 1 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `seal` | `del` | +0.204 | +0.208 | +0.175 | +0.167 | +0.152 | +0.208 | **+0.137** |
+| `seal` | `del_hub` | +0.213 | +0.216 | +0.173 | +0.163 | +0.159 | +0.216 | **+0.149** |
+| `pencil` | `del` | +0.169 | +0.171 | +0.131 | +0.121 | +0.121 | +0.173 | **+0.125** |
+| `pencil` | `del_hub` | +0.195 | +0.197 | +0.160 | +0.151 | +0.143 | +0.198 | **+0.145** |
+
+Two measurements kill it, and both are the opposite of the hope in §7.11:
+
+1. **The response is universal, so the sign gate saturates.** `Δ > 0` for
+   **96.9-99.6 %** of pairs (99.3-100 % when the spliced node's features are
+   zeroed; `corr(Δ_own, Δ_blank) = 0.92-0.96`). Sub-graph models answer "is there
+   a shared neighbour?" with *yes* no matter whose neighbour it is — the splice
+   measures path existence, not starvation. A diagnostic that fires on 99 % of
+   pairs is the `CN = 0` gate with a different hat, and "routed" is again
+   "always k = 2" (the `sign(Δ)` column reproduces the `CN = 0` column to within
+   0.01).
+2. **The magnitude does not rank the pairs that lose score.** AUC of `Δ` at
+   predicting per-pair score drop under deletion is **0.445-0.531** — chance.
+   So the quantile gates are not selecting starved pairs; they are selecting an
+   arbitrary half/third/tenth. Tightening the quantile therefore just walks back
+   along the k = 1 ↔ k = 2 dial: top 10 % routing gives `del` +0.152 for `seal`,
+   better than always k = 2 (+0.208) but still worse than not routing at all
+   (+0.137), and it still pays clean AUC (0.816 at top 50 % vs 0.781 for k = 1).
+
+The pattern is now closed in both directions: gates on **state** ("is there
+evidence?") fire on most pairs before the attack; gates on **response** ("would
+evidence help?") fire on essentially all of them. Neither is an observable
+per-pair property that separates damaged from undamaged pairs on these graphs.
+What separates them is invisible from a single pair's neighbourhood — which is why
+the repair that did work (§7.5, CN completion for SGDiff) changed the input supply
+globally instead of trying to select pairs.
 
 ## 8. What this changes about the robustness story
 
@@ -1038,7 +1191,7 @@ re-ranking of the same scores.
     GCN loses 0.145-0.220 and SAGE 0.124-0.268 — 2.3-17× the fixed 50 % probe.
     The correct reading of §3-7.7 is "how the model responds to a given damage",
     not "how fragile the model is".
-11. **The one repair the report proposed does not work in any of its four forms**
+11. **The proposed repairs fail for one identifiable reason, not four.**
     (§7.9). Subtracting a degree-preserving null-model prior, its parametric
     variant, a gate that only touches pairs with `CN = 0`, and ranking inside
     expected-evidence strata all move the clean/probe trade-off along a frontier
@@ -1047,6 +1200,30 @@ re-ranking of the same scores.
     evidence vanished" is not an observable per-pair anomaly, and no post-hoc
     re-ranking of the same scores can recover it. The fix has to move to the
     deployment side (evidence-complete extraction) or into the training objective.
+12. **A conditional version of that repair fails the same way** (§7.11). Routing
+    between a k = 1 and a k = 2 sub-graph model on `CN = 0` buys the k = 2 ceiling
+    (+0.06 clean) and inherits the k = 2 gap (+0.204 vs +0.137 on `del`; paired CI
+    of the difference −0.067 [−0.097, −0.037]), because the gate fires on 77.0 % of
+    pairs even *before* the attack and 93-94 % after it. Sweeping the trigger
+    (`CN ≤ 0, 1, 2`) produces no operating point that beats plain k = 1, and the
+    alternative fallback — CN edge completion — recovers evidence for 3.7-4.3 % of
+    the low-evidence pairs it is supposed to rescue.
+13. **The counterfactual gate that §7.11 proposed also fails, and for the mirror
+    reason** (§7.12). Splicing one synthetic shared neighbour raises the k = 1
+    score for 96.9-99.6 % of pairs — with zeroed features, 99.3-100 %, and
+    `corr(Δ_own, Δ_blank) = 0.92-0.96` — so "the score rises" is universal and
+    cannot identify starved pairs. The magnitude ranks per-pair damage at chance
+    (AUC 0.445-0.531), so quantile gates just interpolate between k = 1 and
+    "always k = 2"; the tightest (top 10 %) still loses to not routing at all
+    (+0.152 vs +0.137 on `del`, `seal`). Gates on *state* fire too often; gates on
+    *response* fire on everyone. Selection is the wrong lever.
+14. **Statistically, only the large cells are established** (§7.10). Paired
+    bootstrap over pairs, pooled over 4 seeds, puts the 0.12-0.21 AUC claims 2-4
+    interval-widths above zero and leaves most cells ≤0.05 — including `sgdiff`'s
+    `ins_hub` AUC "gain" (−0.043, CI covers 0, p = 0.86) — indistinguishable from
+    noise, while the same
+    cell's `TPR@1%FPR` damage is 0.262. Small AUC differences in this report
+    should be read as directions, not quantities.
 
 ## 9. Caveats
 
@@ -1099,8 +1276,27 @@ re-ranking of the same scores.
     candidates per step, drawn from edges incident to the scored positives, one
     edge per step. It is a lower bound on what an attacker could do, and it is
     compared against random and hub deletion at the same budget on the same pairs.
-    It only covers GCN/SAGE (node-pair, cheap to re-score); sub-graph models would
-    have multiplied the cost by the extractor rebuild.
+    It covers GCN/SAGE at two budgets on three graphs, plus `seal`/`pencil` at a
+    single 5 % budget and one seed (the sub-graph cost is the extractor rebuild).
+13. **The bootstrap of §7.10 covers pair sampling, not training seeds.** The dumps
+    are 4 seeds per graph and the intervals pool them (which widens the interval
+    when seeds disagree), but a claim about the *population* of trained models
+    still rests on the seed spreads in the other tables; the intervals here are the
+    right ones for "what does this probe do to this model", not for "what would
+    another seed do". The same applies to the gated intervals of §7.11: each seed is resampled
+    over its own pairs and the reported bounds are the seed means, so they tighten
+    the "does the router spend damage" claim, not the "would a retrained router
+    do the same" claim.
+14. **The routing frontier of §7.11 is swept on one graph.** `CN ≤ τ` for
+    `τ = 0, 1, 2` plus "always k = 2" is measured on Cora with `seal` and `pencil`
+    (two seeds); the completion reach is a structural count, so it transfers to any
+    graph where the CN prior is the ranking rule, but the AUC frontier does not.
+15. **The splice of §7.12 is one random neighbour, one draw per pair.** Each pair
+    gets a single `w` (features from the graph, plus a zero-feature control), so the
+    numbers are a point estimate of "one more evidence path", not an expectation
+    over splices; the sign saturation and the chance-level AUC are large enough
+    effects that the draw variance cannot explain them, but a distribution over
+    `w` would be the stronger experiment. Cora only, `seal`/`pencil` only.
 
 ## 10. Reproduce / extend
 
@@ -1127,6 +1323,11 @@ python scripts/run_score_dump.py --dataset usair --seeds 0 1
 python scripts/run_operating_point.py --dataset cora citeseer usair
 python scripts/run_evidence_calibration.py --dataset cora citeseer usair
 python scripts/run_adaptive_attack.py --dataset cora --models gcn sage --budgets 0.05 0.10
+python scripts/run_adaptive_attack.py --dataset cora --models seal pencil --budgets 0.05 --pool 8 --pairs 100
+python scripts/run_score_dump.py --dataset cora citeseer usair --seeds 0 1 2 3
+python scripts/run_bootstrap_ci.py --dataset cora citeseer usair      # pools the 4 seeds
+python scripts/run_gated_repair.py --dataset cora --models seal pencil --seeds 0 1 2 3
+python scripts/run_splice_gate.py --dataset cora --models seal pencil --seeds 0 1 2 3
 
 # component-level redesign: retrain one-part-changed GCNs and re-probe (~40 s / 8 seeds)
 python scripts/run_redesign.py --dataset cora --seeds 0 1 2 3 4 5 6 7

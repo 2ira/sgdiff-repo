@@ -60,7 +60,37 @@ null-model residual, parametric null subtraction, an evidence gate
 (`CN = 0`) and stratified percentile ranking — each with the clean-accuracy cost
 it pays. Interpretation: `docs/attribution.md` §7.9 (all four fail, and why).
 
-`probe_report.html` is the same content rendered for reading — one self-contained
+`significance_<dataset>.md` gives every probe damage a **paired bootstrap**
+interval over the 1000 scored pairs plus a one-sided p
+(`scripts/run_bootstrap_ci.py`) — the small AUC differences stop being claims.
+
+`gated_<dataset>.md` is the evidence-routed repair: two sub-graph models (k = 1
+and k = 2) with a per-pair router (`scripts/run_gated_repair.py`). It buys the
+k = 2 ceiling and inherits the k = 2 deletion gap, because the gate fires on 93 %
+of pairs after a 50 % deletion. Three additions make that verdict testable rather
+than anecdotal: a `CN ≤ τ` threshold sweep (`τ = 0, 1, 2`, plus "always k = 2")
+shows no operating point beats plain k = 1; paired-bootstrap intervals on every
+arm difference turn the −0.067 / −0.064 / −0.051 regrets into intervals that
+exclude 0; and a completion-reach count shows that rebuilding the deleted edges
+with the CN prior restores evidence for only 3.7-4.2 % of the `CN = 0` pairs it is
+meant to rescue.
+
+`splice_<dataset>.md` is the counterfactual gate §7.11 asked for
+(`scripts/run_splice_gate.py`): each pair is scored twice by the k = 1 model, once
+plain and once with a synthetic shared neighbour spliced into its sub-graph. The
+rise `Δ` fires on 97-100 % of pairs and does not rank per-pair damage (AUC
+0.45-0.53), so the quantile gates only interpolate between k = 1 and "always
+k = 2" — gates on state fire too often, gates on response fire on everyone.
+
+`probe_report.html` is the whole repository rendered for reading — one self-contained
 page (styled tables + inline SVG, no CDN, works offline), built by
-`scripts/make_probe_report.py` from the `probe_*.json`, `deep_*.json` and
-`redesign_*.json` files.
+`scripts/make_probe_report.py`. Section 00 covers the reproduction layer and is
+computed from `summary_indomain_*`, `benchmark_*`, `ablation_*`, `robustness_*`
+(including `_purify2`), `transfer_matrix_*` and `summary_lowdata_cora`, so those
+numbers cannot drift from their JSON. Sections 01-15 render the probe chain from
+`probe_*.json`, `deep_*.json`, `redesign_*.json`, `operating_*.json`,
+`adaptive_*.json`, `calibration_*.json`, `significance_*.json`, `gated_*.json` and
+`splice_*.json`. Section 14 renders the paired bootstrap intervals, the
+gated-routing experiment and the splice gate; the conclusion cards are numbered
+from whatever artifacts are present, so rebuilding after a new run keeps the
+numbering consistent.

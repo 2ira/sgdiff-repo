@@ -1,9 +1,15 @@
 # Alignment with the paper
 
-Everything on this page is taken from the PDF in the repository root
-(`li25a.pdf`): Table 3 (data), Table 4 (hyper-parameters), Sec. 4.1
-(protocol), Sec. A.2-A.4 (appendix). Each row names the config key that
-reproduces it, so alignment can be checked mechanically.
+The source is the workspace PDF `../li25a.pdf`: Table 3 (data), Table 4
+(hyper-parameters), Sec. 4.1 (protocol), Sec. A.2-A.4 (appendix).
+
+**2026-11-13 correction (`sgdiff-paper-v2`):** earlier alignment claims were too
+strong. Matching Table 4 dimensions did not imply matching the method. The
+categorical node/edge diffusion, posterior parameterization, feature GCN,
+shared-noise scoring and training stages have been audited against the equations.
+The author's linked repository still only contains a README, so this is an
+independent equation-based implementation, not verified source-code parity.
+Old result files have not been regenerated and are not paper-faithful evidence.
 
 ## 1. Data (Table 3)
 
@@ -48,12 +54,35 @@ and 56 asymmetric pairs, which are dropped/ symmetrised here. Pubmed differs by
 graphs have no attributes, so SGDIFF degenerates to the structure branch
 (`η1 ≡ 0`).
 
-Two implementation details of the appendix are reproduced as well:
+Corrected equation-level mapping:
 
-* the denoiser is a **transformer** over node/edge/global tokens
-  (`sgdiff/models/transformer_denoiser.py`), not a message-passing GNN;
-* training uses the VLB **plus the sum of node and edge cross-entropy**
-  (`structure.aux_ce_weight = 1.0`, `StructureDiffusionModel.loss`).
+* Eqs. (2)-(3): categorical noising of DRNL nodes **and** undirected edges,
+  clean-S0 prediction, and posterior computed from the transition matrices.
+* Appendix A.3: transformer node/edge/global denoiser trained with **node + edge
+  cross-entropy** (`structure.loss_mode=ce`). The old claim that A.3 requires
+  VLB + CE was incorrect; KL is used for likelihood scoring in Algorithm 1.
+* Eqs. (10)-(11): Gaussian noising and the GCN
+  `A_hat ReLU(A_hat [X_t, one_hot(y)] W0) W1`. There is no DRNL embedding,
+  LayerNorm, residual stack, extra output MLP or ad-hoc identity skip in this
+  feature denoiser. `feature.time_dim=0` follows the printed equation.
+* Algorithm 1: both class conditions see the **same** noisy graph/attributes at
+  each timestep. Fusion uses exactly the inference scoring path, not an
+  unrelated one-step training surrogate. Defaults sum node/undirected-edge KL
+  and feature squared errors before the timestep average; size-normalized scores
+  are explicit `normalize_score=true` variants. Training epsilon MSE averages
+  valid elements, for interpretable convergence diagnostics.
+  Structural scores implement Algorithm 1's negative-average-posterior-KL
+  proxy, not a fully normalized log density: Eq. (4)'s unconditional size prior
+  and terminal KL are class-common and omitted because they cancel in log odds
+  under the paper's shared fusion weights. No invented class-specific size prior
+  is fitted. `t=1` posterior KL already reduces to reconstruction NLL.
+* Eq. (13): diffusion pretraining and frozen-denoiser fusion calibration are
+  separate phases, with independent validation loss and checkpoints. The paper
+  does not specify the optimizer, convergence schedule, or whether later joint
+  fine-tuning was used; `train.freeze_diffusion=false` is an explicit variant.
+* Validation excludes all validation and test positives; test includes training
+  and validation edges but excludes test positives. Negatives are disjoint
+  across splits. DRNL uses distances with the opposite endpoint removed.
 
 ## 3. Protocol (Sec. 4.1, A.2-A.4)
 
@@ -72,17 +101,23 @@ Two implementation details of the appendix are reproduced as well:
 
 1. **Optimisation hyper-parameters are not in the paper.** Batch size (32),
    Adam learning rates (`1e-3`, fusion `1e-2`), the 50-epoch budget and the
-   two-stage schedule are our choices; every one of them is a config key.
-2. **Monte-Carlo timesteps.** Algorithm 1 averages over all `ds_t` steps
-   (`num_mc_samples: null`). The `full` profile uses 8 samples and the `cpu`
-   profile 4 for speed; this is the only change that affects the score
-   definition.
+   phase budgets (50 diffusion / 20 fusion epochs) are reproducible choices,
+   not reported paper settings. `train.epochs` now counts diffusion epochs;
+   `train.finetune_epochs` separately counts fusion epochs. The optimizers use
+   constant Adam learning rates; inactive optimizers/schedulers do not advance.
+2. **Monte-Carlo timesteps.** Algorithm 1 averages all diffusion timesteps
+   (`num_mc_samples: null`). `paper` uses full steps for both training fusion
+   and inference; `full` uses 8 and `cpu` 4. These smaller profiles are debugging
+   variants, not exact paper metrics. Diffusion beta schedules, exact feature
+   preprocessing and tie handling for Hit@100 are not fully specified: cosine
+   categorical / linear Gaussian / raw attributes are explicitly recorded
+   choices, not claims of author-code parity.
 3. **`subgraph.max_nodes_total`.** The paper keeps whole 1-hop neighbourhoods
    (Cora hub nodes have degree > 150), which is intractable on a laptop CPU.
    `full` caps the sub-graph at 60 nodes and `cpu` at 40 (`null` = unbounded,
    paper behaviour).
-4. **Embedding attack (EA)** requires DeepRobust and is not implemented; RF and
-   DICE share its interface.
+4. **Embedding attack (EA)** uses a local linear surrogate, not the author's
+   DeepRobust implementation. This does not establish Table 2 EA parity.
 5. **Router** is not redistributable; see `data/README.md`.
 6. **NeoGNN** baseline is not re-implemented.
 
@@ -105,5 +140,36 @@ python scripts/run_experiments.py --lowdata cora --seeds 0 1 2
 python scripts/run_experiments.py --attack cora --ratios 0.25 0.5
 ```
 
-Results land in `results/` (`*_seed*.json` per run, `summary_*.json` with
-mean/std across seeds).
+Corrected grid results land in `results/sgdiff-paper-v2/` (`*_seed*.json` per run,
+`summary_*.json` with mean/std across seeds), and checkpoints in
+`runs/sgdiff-paper-v2/`. Never merge them with the earlier results.
+
+Start with one seed on your GPU, then expand to the paper's ten repeats:
+
+```bash
+python scripts/run_experiments.py --datasets cora --seeds 0 --profile paper \
+  --set train.device=cuda train.batch_size=8 train.eval_batch_size=8
+python scripts/run_experiments.py --datasets citeseer pubmed usair ns \
+  --seeds 0 1 2 3 4 5 6 7 8 9 --profile paper \
+  --set train.device=cuda train.batch_size=8 train.eval_batch_size=8
+```
+
+Batch size may be reduced for memory without changing extraction or diffusion
+steps. Do not silently enable a node cap or subsample timesteps and call it
+`paper`. Epoch counts above remain chosen budgets; inspect separate diffusion
+validation loss and fusion validation CE for convergence.
+
+Each run saves `best_pretrain.pt`, `best_finetune.pt`, `best.pt`, `last.pt`,
+`resolved_config.json` and `metrics.jsonl`. Resume at an epoch boundary with
+optimizer and RNG states, keeping all settings except device/run location/workers
+identical (use the same batch-size overrides as the initial run):
+
+```bash
+python scripts/run_experiments.py --datasets cora --seeds 0 --profile paper \
+  --set train.device=cuda train.batch_size=8 train.eval_batch_size=8 \
+  train.resume=runs/sgdiff-paper-v2/cora_seed0_paper/last.pt
+```
+
+Checkpoints load with `weights_only=True`; legacy checkpoints are rejected rather
+than silently interpreted as the corrected architecture. Moving devices may
+change numerical trajectories; exact bitwise equivalence is only tested on CPU.

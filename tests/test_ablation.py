@@ -120,8 +120,8 @@ def test_same_condition_removes_class_signal(prepared):
     model = prepared["model"]
     scorer = AblatedScorer(model, Ablation("same", condition="same")).eval()
     feat, struct = scorer.class_scores(batch)
-    # The scores still differ through the sampled noise, but they must be the
-    # same order of magnitude; the *mean over classes* is what the fusion uses.
+    assert torch.equal(feat[:, 0], feat[:, 1])
+    assert torch.equal(struct[:, 0], struct[:, 1])
     logits = scorer(batch)["logits"]
     assert logits.shape == (4, 2)
     assert torch.isfinite(logits).all()
@@ -199,3 +199,84 @@ def test_run_ablation_end_to_end(tiny_config, tmp_path):
         assert key in row
     assert 0.0 <= row["share_feature"] <= 1.0
     assert "eta_1 (feature)" in result["markdown"]
+
+
+def test_ablated_scorer_preserves_parameter_gradient_flags(prepared):
+    model = prepared["model"]
+    flags = [parameter.requires_grad for parameter in model.parameters()]
+    scorer = AblatedScorer(model, Ablation("gradient_flags"))
+    scorer.predict_logit(prepared["batch"])
+    assert [parameter.requires_grad for parameter in model.parameters()] == flags
+    assert any(flags)
+
+
+@pytest.mark.parametrize("entry", ["forward", "predict_logit", "predict_proba", "class_scores"])
+def test_ablated_scorer_forwards_monte_carlo_samples(prepared, monkeypatch, entry):
+    model = prepared["model"]
+    batch = prepared["batch"]
+    calls = []
+
+    def class_scores(*args, num_samples=None, conditions=None, **kwargs):
+        calls.append(num_samples)
+        assert conditions.shape == (batch.batch_size, 2)
+        return torch.zeros(conditions.shape, device=batch.y.device)
+
+    monkeypatch.setattr(model.structure, "class_scores", class_scores)
+    monkeypatch.setattr(model.feature, "class_scores", class_scores)
+    scorer = AblatedScorer(model, Ablation("samples"))
+    getattr(scorer, entry)(batch, num_samples=7)
+    assert calls == [7, 7]
+
+
+def test_evaluate_ablation_preserves_rng_and_training_mode(prepared):
+    model = prepared["model"].train()
+    flags = [parameter.requires_grad for parameter in model.parameters()]
+    before = torch.get_rng_state()
+    evaluate_ablation(model, prepared["datasets"]["test"], Ablation("state"), batch_size=8)
+    assert torch.equal(before, torch.get_rng_state())
+    assert model.training
+    assert [parameter.requires_grad for parameter in model.parameters()] == flags
+
+
+def test_reference_ablation_matches_model_branch_scores_exactly(prepared):
+    model = prepared["model"].eval()
+    batch = prepared["batch"]
+    torch.manual_seed(91)
+    expected = model.class_scores(batch, num_samples=2)
+    torch.manual_seed(91)
+    actual = AblatedScorer(model, Ablation("reference")).class_scores(batch, num_samples=2)
+    assert all(torch.equal(a, b) for a, b in zip(expected, actual))
+
+
+@pytest.mark.parametrize("condition", ["same", "random"])
+@pytest.mark.parametrize("fraction", [None, 0.5])
+def test_equal_condition_classes_share_noise(prepared, condition, fraction):
+    scorer = AblatedScorer(
+        prepared["model"], Ablation("shared", condition=condition, timestep_frac=fraction, seed=7)
+    ).eval()
+    feature, structure = scorer.class_scores(prepared["batch"], num_samples=2)
+    assert torch.equal(feature[:, 0], feature[:, 1])
+    assert torch.equal(structure[:, 0], structure[:, 1])
+
+
+def test_single_timestep_uses_score_norm_and_shared_feature_noise(prepared, monkeypatch):
+    batch = prepared["batch"]
+    model = prepared["model"]
+    seen = []
+
+    def score_mse(x0, adj, labels, mask, y, t=None, noise=None):
+        seen.append((t.clone(), noise))
+        return torch.full((batch.batch_size,), 11.0, device=batch.y.device)
+
+    def training_mse(*args, **kwargs):
+        raise AssertionError("training MSE reduction must not be used for scoring")
+
+    monkeypatch.setattr(model.feature, "score_mse", score_mse)
+    monkeypatch.setattr(model.feature, "compute_mse", training_mse)
+    scorer = AblatedScorer(model, Ablation("single", timestep_frac=0.5, stream="feature")).eval()
+    feature, structure = scorer.class_scores(batch)
+    assert torch.all(feature == -11.0)
+    assert torch.all(structure == 0)
+    assert len(seen) == 2
+    assert torch.all(seen[0][0] == 2)
+    assert seen[0][1] is seen[1][1]

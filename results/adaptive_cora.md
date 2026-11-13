@@ -12,5 +12,6 @@ Same model, same working pairs, same number of deleted edges; only the *choice* 
 | gcn | 20% | +0.024 | +0.029 | +0.314 | +0.290 | 0.50 | 0.66 |
 | sage | 5% | +0.004 | +0.001 | +0.154 | +0.150 | 0.58 | 0.63 |
 | sage | 10% | +0.004 | +0.006 | +0.282 | +0.278 | 0.46 | 0.68 |
+| pencil | 5% | +0.012 | +0.004 | +0.194 | +0.182 | 0.73 | 0.58 |
 
-`clean` AUC per model: seal 0.774, gcn 0.826, sage 0.738.
+`clean` AUC per model: seal 0.774, gcn 0.826, sage 0.738, pencil 0.797.

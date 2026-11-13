@@ -1,7 +1,7 @@
 # Deep probe: cora
 
 * models: sgdiff, seal, pencil, gcn, gat, sage, vgae
-* seeds: [0, 1]
+* seeds: [0, 1, 2, 3]
 * variants: del, del_hub, ins_hub, feat_shuffle
 
 ## 1. Layer-wise damage (node-pair models)
@@ -14,141 +14,141 @@ layer and applied to the probe layer (chance ≈ 0.5).
 
 | probe | L1 drift | L2 drift | L1 AUC | L2 AUC |
 |---|---|---|---|---|
-| del | 0.092 | 0.092 | 0.839 | 0.809 |
-| del_hub | 0.068 | 0.074 | 0.827 | 0.802 |
-| ins_hub | 0.036 | 0.049 | 0.841 | 0.830 |
-| feat_shuffle | 1.001 | 0.962 | 0.614 | 0.668 |
+| del | 0.093 | 0.092 | 0.831 | 0.804 |
+| del_hub | 0.070 | 0.076 | 0.821 | 0.796 |
+| ins_hub | 0.037 | 0.049 | 0.839 | 0.831 |
+| feat_shuffle | 0.998 | 0.962 | 0.604 | 0.667 |
 
 ### gat
 
 | probe | L1 drift | L2 drift | L1 AUC | L2 AUC |
 |---|---|---|---|---|
-| del | 0.000 | 0.331 | 0.754 | 0.688 |
-| del_hub | 0.000 | 0.256 | 0.754 | 0.702 |
-| ins_hub | 0.000 | 0.171 | 0.754 | 0.758 |
-| feat_shuffle | 0.994 | 0.882 | 0.525 | 0.617 |
+| del | 0.000 | 0.322 | 0.762 | 0.693 |
+| del_hub | 0.000 | 0.253 | 0.762 | 0.712 |
+| ins_hub | 0.000 | 0.171 | 0.762 | 0.765 |
+| feat_shuffle | 0.996 | 0.896 | 0.520 | 0.640 |
 
 ### sage
 
 | probe | L1 drift | L2 drift | L1 AUC | L2 AUC |
 |---|---|---|---|---|
-| del | 0.065 | 0.132 | 0.744 | 0.750 |
-| del_hub | 0.046 | 0.097 | 0.750 | 0.737 |
-| ins_hub | 0.018 | 0.047 | 0.745 | 0.766 |
-| feat_shuffle | 0.994 | 0.963 | 0.557 | 0.587 |
+| del | 0.065 | 0.132 | 0.751 | 0.742 |
+| del_hub | 0.047 | 0.095 | 0.753 | 0.735 |
+| ins_hub | 0.018 | 0.046 | 0.756 | 0.759 |
+| feat_shuffle | 0.994 | 0.951 | 0.551 | 0.587 |
 
 ## 2. Same weights, different propagation operator
 
 | model | operator | clean | del@50% | feature_shuffle | ins_hub@50% |
 |---|---|---|---|---|---|
-| gcn | sym | 0.832 | 0.790 | 0.628 | 0.806 |
-| gcn | row | 0.821 | 0.777 | 0.637 | 0.783 |
-| gcn | sum | 0.806 | 0.773 | 0.703 | 0.754 |
-| gcn | noloop | 0.811 | 0.718 | 0.647 | 0.788 |
-| sage | sym | 0.768 | 0.729 | 0.570 | 0.740 |
-| sage | row | 0.755 | 0.722 | 0.565 | 0.710 |
-| sage | sum | 0.781 | 0.732 | 0.671 | 0.718 |
-| sage | noloop | 0.768 | 0.729 | 0.570 | 0.740 |
-| vgae | sym | 0.783 | 0.746 | 0.569 | 0.731 |
-| vgae | row | 0.778 | 0.736 | 0.574 | 0.724 |
-| vgae | sum | 0.786 | 0.740 | 0.662 | 0.718 |
-| vgae | noloop | 0.768 | 0.694 | 0.573 | 0.709 |
+| gcn | sym | 0.827 | 0.781 | 0.629 | 0.804 |
+| gcn | row | 0.820 | 0.771 | 0.641 | 0.781 |
+| gcn | sum | 0.807 | 0.765 | 0.712 | 0.755 |
+| gcn | noloop | 0.808 | 0.708 | 0.644 | 0.783 |
+| sage | sym | 0.757 | 0.714 | 0.575 | 0.728 |
+| sage | row | 0.752 | 0.714 | 0.574 | 0.712 |
+| sage | sum | 0.768 | 0.718 | 0.684 | 0.715 |
+| sage | noloop | 0.757 | 0.714 | 0.575 | 0.728 |
+| vgae | sym | 0.784 | 0.739 | 0.589 | 0.740 |
+| vgae | row | 0.781 | 0.732 | 0.593 | 0.735 |
+| vgae | sum | 0.791 | 0.737 | 0.673 | 0.735 |
+| vgae | noloop | 0.771 | 0.693 | 0.589 | 0.721 |
 
 ## 3. Which kind of edge: triadic (CN > 0) vs bridging (CN = 0)
 
 | model | clean | del_tri | del_bridge | tri edges | bridge edges |
 |---|---|---|---|---|---|
-| sgdiff | 0.739 | 0.650 | 0.630 | 1992 | 2494 |
-| seal | 0.780 | 0.720 | 0.707 | 1992 | 2494 |
-| pencil | 0.779 | 0.727 | 0.721 | 1992 | 2494 |
-| gcn | 0.832 | 0.823 | 0.796 | 1992 | 2494 |
-| gat | 0.802 | 0.772 | 0.739 | 1992 | 2494 |
-| sage | 0.768 | 0.753 | 0.730 | 1992 | 2494 |
-| vgae | 0.783 | 0.780 | 0.747 | 1992 | 2494 |
+| sgdiff | 0.732 | 0.651 | 0.631 | 1984 | 2502 |
+| seal | 0.781 | 0.727 | 0.706 | 1984 | 2502 |
+| pencil | 0.795 | 0.740 | 0.736 | 1984 | 2502 |
+| gcn | 0.827 | 0.818 | 0.794 | 1984 | 2502 |
+| gat | 0.807 | 0.781 | 0.736 | 1984 | 2502 |
+| sage | 0.757 | 0.746 | 0.723 | 1984 | 2502 |
+| vgae | 0.784 | 0.774 | 0.743 | 1984 | 2502 |
 
 ## 4. Repairs on the inference graph (no retraining)
 
-Reference on the damaged graph itself: CN-only AUC 0.572, AA-only 0.572 — a repair cannot be expected to beat the prior it uses.
+Reference on the damaged graph itself: CN-only AUC 0.570, AA-only 0.570 — a repair cannot be expected to beat the prior it uses.
 
 | model | probe | base | repaired | gain |
 |---|---|---|---|---|
-| sgdiff | del + complete_cn | 0.521 | 0.634 | +0.113 |
-| sgdiff | del + complete_aa | 0.521 | 0.614 | +0.093 |
-| sgdiff | del_hub + complete_cn | 0.572 | 0.610 | +0.038 |
-| sgdiff | del_hub + complete_aa | 0.572 | 0.631 | +0.059 |
-| sgdiff | feat_shuffle + smooth1 | 0.739 | 0.739 | +0.000 |
-| sgdiff | feat_shuffle + smooth2 | 0.739 | 0.739 | +0.000 |
-| sgdiff | del + hybrid_cn0 | 0.521 | 0.521 | +0.000 |
-| sgdiff | del + hybrid_cn0.25 | 0.521 | 0.521 | +0.000 |
-| sgdiff | del + hybrid_cn0.5 | 0.521 | 0.521 | +0.000 |
-| sgdiff | del + hybrid_cn1 | 0.521 | 0.521 | +0.000 |
-| sgdiff | del + hybrid_cn2 | 0.521 | 0.521 | +0.000 |
-| seal | del + complete_cn | 0.639 | 0.645 | +0.006 |
-| seal | del + complete_aa | 0.639 | 0.638 | -0.002 |
-| seal | del_hub + complete_cn | 0.628 | 0.675 | +0.046 |
-| seal | del_hub + complete_aa | 0.628 | 0.661 | +0.033 |
-| seal | feat_shuffle + smooth1 | 0.734 | 0.736 | +0.001 |
-| seal | feat_shuffle + smooth2 | 0.734 | 0.726 | -0.008 |
-| seal | del + hybrid_cn0 | 0.639 | 0.639 | +0.000 |
-| seal | del + hybrid_cn0.25 | 0.639 | 0.646 | +0.006 |
-| seal | del + hybrid_cn0.5 | 0.639 | 0.646 | +0.007 |
-| seal | del + hybrid_cn1 | 0.639 | 0.646 | +0.007 |
-| seal | del + hybrid_cn2 | 0.639 | 0.646 | +0.007 |
-| pencil | del + complete_cn | 0.668 | 0.677 | +0.009 |
-| pencil | del + complete_aa | 0.668 | 0.671 | +0.003 |
-| pencil | del_hub + complete_cn | 0.636 | 0.675 | +0.039 |
-| pencil | del_hub + complete_aa | 0.636 | 0.670 | +0.034 |
-| pencil | feat_shuffle + smooth1 | 0.753 | 0.763 | +0.010 |
-| pencil | feat_shuffle + smooth2 | 0.753 | 0.763 | +0.010 |
-| pencil | del + hybrid_cn0 | 0.668 | 0.668 | +0.000 |
-| pencil | del + hybrid_cn0.25 | 0.668 | 0.670 | +0.002 |
-| pencil | del + hybrid_cn0.5 | 0.668 | 0.670 | +0.002 |
-| pencil | del + hybrid_cn1 | 0.668 | 0.670 | +0.002 |
-| pencil | del + hybrid_cn2 | 0.668 | 0.670 | +0.002 |
-| gcn | del + complete_cn | 0.790 | 0.784 | -0.006 |
-| gcn | del + complete_aa | 0.790 | 0.786 | -0.004 |
-| gcn | del_hub + complete_cn | 0.777 | 0.775 | -0.002 |
-| gcn | del_hub + complete_aa | 0.777 | 0.772 | -0.005 |
-| gcn | feat_shuffle + smooth1 | 0.628 | 0.662 | +0.034 |
-| gcn | feat_shuffle + smooth2 | 0.628 | 0.683 | +0.054 |
-| gcn | del + hybrid_cn0 | 0.790 | 0.790 | +0.000 |
-| gcn | del + hybrid_cn0.25 | 0.790 | 0.799 | +0.010 |
-| gcn | del + hybrid_cn0.5 | 0.790 | 0.801 | +0.011 |
-| gcn | del + hybrid_cn1 | 0.790 | 0.801 | +0.012 |
-| gcn | del + hybrid_cn2 | 0.790 | 0.802 | +0.012 |
-| gat | del + complete_cn | 0.708 | 0.716 | +0.008 |
-| gat | del + complete_aa | 0.708 | 0.719 | +0.011 |
-| gat | del_hub + complete_cn | 0.704 | 0.709 | +0.004 |
-| gat | del_hub + complete_aa | 0.704 | 0.712 | +0.007 |
-| gat | feat_shuffle + smooth1 | 0.637 | 0.663 | +0.025 |
-| gat | feat_shuffle + smooth2 | 0.637 | 0.667 | +0.030 |
-| gat | del + hybrid_cn0 | 0.708 | 0.708 | +0.000 |
-| gat | del + hybrid_cn0.25 | 0.708 | 0.715 | +0.007 |
-| gat | del + hybrid_cn0.5 | 0.708 | 0.716 | +0.008 |
-| gat | del + hybrid_cn1 | 0.708 | 0.717 | +0.009 |
-| gat | del + hybrid_cn2 | 0.708 | 0.717 | +0.009 |
-| sage | del + complete_cn | 0.729 | 0.727 | -0.002 |
-| sage | del + complete_aa | 0.729 | 0.728 | -0.001 |
-| sage | del_hub + complete_cn | 0.709 | 0.718 | +0.009 |
-| sage | del_hub + complete_aa | 0.709 | 0.717 | +0.008 |
-| sage | feat_shuffle + smooth1 | 0.570 | 0.602 | +0.032 |
-| sage | feat_shuffle + smooth2 | 0.570 | 0.635 | +0.065 |
-| sage | del + hybrid_cn0 | 0.729 | 0.729 | +0.000 |
-| sage | del + hybrid_cn0.25 | 0.729 | 0.740 | +0.011 |
-| sage | del + hybrid_cn0.5 | 0.729 | 0.741 | +0.012 |
-| sage | del + hybrid_cn1 | 0.729 | 0.741 | +0.012 |
-| sage | del + hybrid_cn2 | 0.729 | 0.741 | +0.012 |
-| vgae | del + complete_cn | 0.746 | 0.740 | -0.006 |
-| vgae | del + complete_aa | 0.746 | 0.746 | -0.000 |
-| vgae | del_hub + complete_cn | 0.719 | 0.721 | +0.003 |
-| vgae | del_hub + complete_aa | 0.719 | 0.719 | +0.001 |
-| vgae | feat_shuffle + smooth1 | 0.569 | 0.604 | +0.034 |
-| vgae | feat_shuffle + smooth2 | 0.569 | 0.627 | +0.058 |
-| vgae | del + hybrid_cn0 | 0.746 | 0.746 | +0.000 |
-| vgae | del + hybrid_cn0.25 | 0.746 | 0.759 | +0.013 |
-| vgae | del + hybrid_cn0.5 | 0.746 | 0.761 | +0.016 |
-| vgae | del + hybrid_cn1 | 0.746 | 0.762 | +0.016 |
-| vgae | del + hybrid_cn2 | 0.746 | 0.762 | +0.016 |
+| sgdiff | del + complete_cn | 0.522 | 0.619 | +0.097 |
+| sgdiff | del + complete_aa | 0.522 | 0.608 | +0.086 |
+| sgdiff | del_hub + complete_cn | 0.561 | 0.596 | +0.035 |
+| sgdiff | del_hub + complete_aa | 0.561 | 0.605 | +0.045 |
+| sgdiff | feat_shuffle + smooth1 | 0.732 | 0.732 | +0.000 |
+| sgdiff | feat_shuffle + smooth2 | 0.732 | 0.732 | +0.000 |
+| sgdiff | del + hybrid_cn0 | 0.522 | 0.522 | +0.000 |
+| sgdiff | del + hybrid_cn0.25 | 0.522 | 0.522 | +0.000 |
+| sgdiff | del + hybrid_cn0.5 | 0.522 | 0.522 | +0.000 |
+| sgdiff | del + hybrid_cn1 | 0.522 | 0.522 | +0.000 |
+| sgdiff | del + hybrid_cn2 | 0.522 | 0.522 | +0.000 |
+| seal | del + complete_cn | 0.644 | 0.650 | +0.006 |
+| seal | del + complete_aa | 0.644 | 0.639 | -0.005 |
+| seal | del_hub + complete_cn | 0.632 | 0.668 | +0.036 |
+| seal | del_hub + complete_aa | 0.632 | 0.659 | +0.026 |
+| seal | feat_shuffle + smooth1 | 0.726 | 0.725 | -0.001 |
+| seal | feat_shuffle + smooth2 | 0.726 | 0.718 | -0.008 |
+| seal | del + hybrid_cn0 | 0.644 | 0.644 | +0.000 |
+| seal | del + hybrid_cn0.25 | 0.644 | 0.650 | +0.006 |
+| seal | del + hybrid_cn0.5 | 0.644 | 0.651 | +0.007 |
+| seal | del + hybrid_cn1 | 0.644 | 0.651 | +0.007 |
+| seal | del + hybrid_cn2 | 0.644 | 0.651 | +0.007 |
+| pencil | del + complete_cn | 0.671 | 0.680 | +0.010 |
+| pencil | del + complete_aa | 0.671 | 0.675 | +0.005 |
+| pencil | del_hub + complete_cn | 0.650 | 0.690 | +0.040 |
+| pencil | del_hub + complete_aa | 0.650 | 0.684 | +0.034 |
+| pencil | feat_shuffle + smooth1 | 0.755 | 0.762 | +0.007 |
+| pencil | feat_shuffle + smooth2 | 0.755 | 0.763 | +0.008 |
+| pencil | del + hybrid_cn0 | 0.671 | 0.671 | +0.000 |
+| pencil | del + hybrid_cn0.25 | 0.671 | 0.672 | +0.002 |
+| pencil | del + hybrid_cn0.5 | 0.671 | 0.673 | +0.002 |
+| pencil | del + hybrid_cn1 | 0.671 | 0.673 | +0.002 |
+| pencil | del + hybrid_cn2 | 0.671 | 0.673 | +0.002 |
+| gcn | del + complete_cn | 0.781 | 0.773 | -0.008 |
+| gcn | del + complete_aa | 0.781 | 0.773 | -0.007 |
+| gcn | del_hub + complete_cn | 0.768 | 0.769 | +0.001 |
+| gcn | del_hub + complete_aa | 0.768 | 0.764 | -0.004 |
+| gcn | feat_shuffle + smooth1 | 0.629 | 0.659 | +0.030 |
+| gcn | feat_shuffle + smooth2 | 0.629 | 0.678 | +0.049 |
+| gcn | del + hybrid_cn0 | 0.781 | 0.781 | +0.000 |
+| gcn | del + hybrid_cn0.25 | 0.781 | 0.791 | +0.010 |
+| gcn | del + hybrid_cn0.5 | 0.781 | 0.792 | +0.011 |
+| gcn | del + hybrid_cn1 | 0.781 | 0.793 | +0.012 |
+| gcn | del + hybrid_cn2 | 0.781 | 0.793 | +0.012 |
+| gat | del + complete_cn | 0.705 | 0.711 | +0.006 |
+| gat | del + complete_aa | 0.705 | 0.715 | +0.010 |
+| gat | del_hub + complete_cn | 0.712 | 0.718 | +0.006 |
+| gat | del_hub + complete_aa | 0.712 | 0.720 | +0.007 |
+| gat | feat_shuffle + smooth1 | 0.627 | 0.660 | +0.033 |
+| gat | feat_shuffle + smooth2 | 0.627 | 0.665 | +0.039 |
+| gat | del + hybrid_cn0 | 0.705 | 0.705 | +0.000 |
+| gat | del + hybrid_cn0.25 | 0.705 | 0.711 | +0.006 |
+| gat | del + hybrid_cn0.5 | 0.705 | 0.712 | +0.007 |
+| gat | del + hybrid_cn1 | 0.705 | 0.712 | +0.007 |
+| gat | del + hybrid_cn2 | 0.705 | 0.712 | +0.007 |
+| sage | del + complete_cn | 0.714 | 0.711 | -0.003 |
+| sage | del + complete_aa | 0.714 | 0.712 | -0.002 |
+| sage | del_hub + complete_cn | 0.697 | 0.708 | +0.011 |
+| sage | del_hub + complete_aa | 0.697 | 0.706 | +0.009 |
+| sage | feat_shuffle + smooth1 | 0.575 | 0.602 | +0.027 |
+| sage | feat_shuffle + smooth2 | 0.575 | 0.627 | +0.052 |
+| sage | del + hybrid_cn0 | 0.714 | 0.714 | +0.000 |
+| sage | del + hybrid_cn0.25 | 0.714 | 0.724 | +0.010 |
+| sage | del + hybrid_cn0.5 | 0.714 | 0.726 | +0.012 |
+| sage | del + hybrid_cn1 | 0.714 | 0.726 | +0.012 |
+| sage | del + hybrid_cn2 | 0.714 | 0.726 | +0.012 |
+| vgae | del + complete_cn | 0.739 | 0.736 | -0.003 |
+| vgae | del + complete_aa | 0.739 | 0.737 | -0.002 |
+| vgae | del_hub + complete_cn | 0.722 | 0.731 | +0.009 |
+| vgae | del_hub + complete_aa | 0.722 | 0.727 | +0.005 |
+| vgae | feat_shuffle + smooth1 | 0.589 | 0.619 | +0.030 |
+| vgae | feat_shuffle + smooth2 | 0.589 | 0.641 | +0.051 |
+| vgae | del + hybrid_cn0 | 0.739 | 0.739 | +0.000 |
+| vgae | del + hybrid_cn0.25 | 0.739 | 0.751 | +0.012 |
+| vgae | del + hybrid_cn0.5 | 0.739 | 0.754 | +0.015 |
+| vgae | del + hybrid_cn1 | 0.739 | 0.755 | +0.016 |
+| vgae | del + hybrid_cn2 | 0.739 | 0.755 | +0.016 |
 
 ## 5. Model-side repair: give the sub-graph family more evidence (k = 2)
 
@@ -158,12 +158,12 @@ the k = 2 model should lose less under the deletion probes.
 
 | model | probe | k = 1 | k = 2 | gain |
 |---|---|---|---|---|
-| seal | clean | 0.780 | 0.850 | +0.070 |
-| seal | del | 0.639 | 0.661 | +0.022 |
-| seal | del_hub | 0.628 | 0.636 | +0.008 |
-| seal | ins_hub | 0.762 | 0.791 | +0.029 |
-| pencil | clean | 0.779 | 0.845 | +0.066 |
-| pencil | del | 0.668 | 0.672 | +0.004 |
-| pencil | del_hub | 0.636 | 0.638 | +0.002 |
-| pencil | ins_hub | 0.771 | 0.806 | +0.035 |
+| seal | clean | 0.781 | 0.856 | +0.075 |
+| seal | del | 0.644 | 0.648 | +0.004 |
+| seal | del_hub | 0.632 | 0.640 | +0.008 |
+| seal | ins_hub | 0.760 | 0.803 | +0.043 |
+| pencil | clean | 0.795 | 0.860 | +0.065 |
+| pencil | del | 0.671 | 0.688 | +0.017 |
+| pencil | del_hub | 0.650 | 0.662 | +0.012 |
+| pencil | ins_hub | 0.788 | 0.813 | +0.025 |
 

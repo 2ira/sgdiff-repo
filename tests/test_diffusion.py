@@ -31,11 +31,12 @@ def test_discrete_q_sample_flip_rate():
     schedule = UniformDiscreteSchedule(num_steps=4, beta_start=0.2, beta_end=0.2)
     model = StructureDiffusionModel(num_labels=8, hidden_dim=8, num_layers=1, num_steps=4,
                                     beta_start=0.2, beta_end=0.2)
-    x0 = torch.ones(4000, 4, 4)
+    x0 = torch.ones(4000, 4, 4) - torch.eye(4).unsqueeze(0)
     t = torch.full((4000,), 3, dtype=torch.long)
     x_t = model.q_sample(x0, t)
-    flip_rate = float((x_t != x0).float().mean())
-    expected = 1.0 - float(schedule.alphas_bar[2])
+    candidates = model.candidate_mask(torch.ones(4000, 4, dtype=torch.bool)).squeeze(-1)
+    flip_rate = float((x_t != x0)[candidates].float().mean())
+    expected = (1.0 - float(schedule.alphas_bar[2])) / 2
     assert abs(flip_rate - expected) < 0.03
 
 

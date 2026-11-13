@@ -1,9 +1,14 @@
 #!/usr/bin/env python
-"""Render a self-contained HTML report from the mechanism-probe artifacts.
+"""Render a self-contained HTML report from the experiment artifacts.
 
-Reads ``results/probe_<dataset>.json`` (written by ``scripts/run_probe.py``) and
-emits one HTML file with no external dependencies: every chart is a styled table
-or inline SVG, so it works offline and in a git diff.
+Section 00 is the reproduction layer (in-domain grid, 7-model benchmark,
+robustness grid and defences, likelihood audit, transfer matrix, low-data run),
+rendered straight from ``results/summary_*`` / ``benchmark_*`` / ``ablation_*`` /
+``robustness_*`` / ``transfer_matrix_*``. Sections 01-15 are the mechanism-probe
+layer, read from ``results/probe_*.json`` and friends.
+
+The output is one HTML file with no external dependencies: every chart is a
+styled table or inline SVG, so it works offline and in a git diff.
 
     python scripts/make_probe_report.py            # -> results/probe_report.html
     python scripts/make_probe_report.py --out /tmp/report.html
@@ -828,12 +833,343 @@ def calibration_panel(calibration: "Calibration") -> str:
     return body + note
 
 
+class Significance:
+    def __init__(self, payload: dict, dataset: str):
+        self.raw = payload
+        self.dataset = payload.get("dataset", dataset)
+        self.reps = payload.get("reps")
+        self.results: dict = payload.get("results", {})
+
+    def rows(self) -> list[tuple[str, str, dict]]:
+        out: list[tuple[str, str, dict]] = []
+        for model, per_probe in self.results.items():
+            for variant, cell in per_probe.items():
+                out.append((model, variant, cell))
+        out.sort(key=lambda r: r[2].get("damage") or 0.0, reverse=True)
+        return out
+
+
+def significance_panel(significance: "Significance") -> str:
+    rows = []
+    covering: list[str] = []
+    for model, variant, cell in significance.rows():
+        damage = cell.get("damage")
+        lo = cell.get("ci_low")
+        hi = cell.get("ci_high")
+        p = cell.get("p_no_damage")
+        covers = lo is not None and lo <= 0.0
+        label = PRETTY.get(variant, variant)
+        if covers:
+            covering.append(f"{model}/{label}")
+        rows.append(
+            "".join(
+                [
+                    f"<td><b>{html.escape(model)}</b></td>",
+                    f"<td>{html.escape(label)}</td>",
+                    f"<td>{fmt(cell.get('clean_auc'))}</td>",
+                    f"<td>{fmt(cell.get('auc'))}</td>",
+                    f'<td class="hm" style="{damage_style(damage)}">{fmt(damage, 3, signed=True)}</td>',
+                    f"<td>[{fmt(lo, 3, signed=True)}, {fmt(hi, 3, signed=True)}]</td>",
+                    f"<td>{fmt(p, 4)}</td>",
+                    f"<td>{'是' if covers else '否'}</td>",
+                ]
+            )
+        )
+    body = table(
+        ["模型", "探针", "clean AUC", "probe AUC", "ΔAUC", "95 % CI（配对）", "p(无伤害)", "CI 覆盖 0"],
+        rows,
+    )
+    if covering:
+        covers_txt = "、".join(html.escape(name) for name in covering)
+        sentence = f"只有 {covers_txt} 的区间覆盖 0，其余格子的伤害都不能读成噪声。"
+    else:
+        sentence = "所有格子的区间都不覆盖 0。"
+    note = (
+        f'<p class="note">对被评分测试对做 {significance.reps or 0} 次<b>配对</b>重采样'
+        "（clean 与 probe 在同一批 pair 上一起抽），`p` 为「伤害 ≤ 0」的单侧自助概率。"
+        f"{sentence}"
+        "但区间只描述「这个探针对这个模型做了什么」，<b>不覆盖训练种子</b>："
+        "换一个种子怎么变，这里没有答案。小 ΔAUC（≲0.03）应读作方向，而不是量级。</p>"
+    )
+    return body + note
+
+
+class Gated:
+    ORDER = ("clean", "del@50%", "del_hub@50%", "ins_hub@50%", "ins@50%", "feature_shuffle")
+
+    def __init__(self, payload: dict, dataset: str):
+        self.dataset = payload.get("dataset", dataset)
+        self.models: dict = payload.get("models", {})
+        self.thresholds: list[int] = payload.get("thresholds", [0])
+        self.gate: dict = payload.get("gate", {})
+        self.completion: dict = payload.get("completion", {})
+        self.bootstrap: dict = payload.get("bootstrap", {})
+
+    def model_ids(self) -> list[str]:
+        return list(self.models)
+
+    def variants(self, model: str) -> list[str]:
+        per = self.models.get(model, {})
+        ordered = [v for v in self.ORDER if v in per]
+        return ordered + sorted(v for v in per if v not in ordered)
+
+    def base_arm(self) -> str:
+        return f"route<={self.thresholds[0]}" if self.thresholds else "k1"
+
+    def ci(self, model: str, variant: str, arm: str) -> dict | None:
+        return self.bootstrap.get(model, {}).get(variant, {}).get(f"{arm}-k1")
+
+
+def _ci_text(entry: dict | None) -> str:
+    if not entry:
+        return "—"
+    return f"[{entry['ci_low']:+.3f}, {entry['ci_high']:+.3f}]"
+
+
+def gated_panel(gated: "Gated") -> str:
+    base_arm = gated.base_arm()
+    rows = []
+    for model in gated.model_ids():
+        per = gated.models[model]
+        clean = per.get("clean", {})
+        for variant in gated.variants(model):
+            cell = per[variant]
+            label = PRETTY.get(variant, variant)
+            ci_txt = _ci_text(gated.ci(model, variant, base_arm))
+            if variant == "clean":
+                k1, k2, routed = cell.get("k1"), cell.get("k2"), cell.get(base_arm)
+                delta = routed - k1 if None not in (routed, k1) else None
+                rows.append(
+                    "".join(
+                        [
+                            f"<td><b>{html.escape(model)}</b></td>",
+                            f"<td>{html.escape(label)} <span style=\"color:#64748b\">AUC</span></td>",
+                            f"<td>{fmt(k1)}</td>",
+                            f"<td>{fmt(k2)}</td>",
+                            f"<td>{fmt(routed)}</td>",
+                            f'<td class="hm" style="{damage_style(-(delta or 0.0))}">{fmt(delta, 3, signed=True)}</td>',
+                            f"<td>{ci_txt}</td>",
+                        ]
+                    )
+                )
+                continue
+            dmg = {
+                arm: clean.get(arm) - cell.get(arm)
+                for arm in ("k1", "k2", base_arm)
+                if None not in (clean.get(arm), cell.get(arm))
+            }
+            delta = dmg["k1"] - dmg[base_arm] if len(dmg) == 3 else None
+            rows.append(
+                "".join(
+                    [
+                        f"<td><b>{html.escape(model)}</b></td>",
+                        f"<td>{html.escape(label)} <span style=\"color:#64748b\">伤害</span></td>",
+                        f'<td class="hm" style="{damage_style(dmg.get("k1"))}">{fmt(dmg.get("k1"), 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(dmg.get("k2"))}">{fmt(dmg.get("k2"), 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(dmg.get(base_arm))}">{fmt(dmg.get(base_arm), 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(-(delta or 0.0))}">{fmt(delta, 3, signed=True)}</td>',
+                        f"<td>{ci_txt}</td>",
+                    ]
+                )
+            )
+    body = table(
+        ["模型", "行", "k = 1", "k = 2（全局）", f"按对路由（CN ≤ {gated.thresholds[0]}）", "路由 − k1", "95 % CI（配对）"],
+        rows,
+    )
+
+    # ---- routing frontier: is there a threshold that works?
+    taus = gated.thresholds
+    frontier_rows = []
+    for model in gated.model_ids():
+        per = gated.models[model]
+        clean = per.get("clean", {})
+        for variant in gated.variants(model):
+            if variant == "clean":
+                continue
+            cell = per[variant]
+            cells = [f"<td><b>{html.escape(model)}</b></td>", f"<td>{html.escape(PRETTY.get(variant, variant))}</td>"]
+            for arm in [f"route<={t}" for t in taus] + ["k2", "k1"]:
+                value = clean.get(arm) - cell.get(arm) if None not in (clean.get(arm), cell.get(arm)) else None
+                cells.append(f'<td class="hm" style="{damage_style(value)}">{fmt(value, 3, signed=True)}</td>')
+            frontier_rows.append("".join(cells))
+    frontier = table(
+        ["模型", "探针"] + [f"CN ≤ {t}" for t in taus] + ["始终 k2", "k = 1"],
+        frontier_rows,
+    )
+
+    # ---- can CN completion reach the low-evidence pairs?
+    completion = ""
+    if gated.completion:
+        comp_rows = []
+        for variant, entry in gated.completion.items():
+            comp_rows.append(
+                "".join(
+                    [
+                        f"<td>{html.escape(PRETTY.get(variant, variant))}</td>",
+                        f"<td>{entry['low_share']:.1%}</td>",
+                        f'<td class="hm" style="{damage_style(entry["recovered_share"])}">{entry["recovered_share"]:.1%}</td>',
+                        f"<td>{int(entry['added_edges'])}</td>",
+                    ]
+                )
+            )
+        completion = table(["探针", "CN = 0 占比", "补边后恢复证据的比例", "补回的边数"], comp_rows)
+
+    gate_rows = []
+    for variant, entry in gated.gate.items():
+        cells = "".join(f"<td>{entry['share'].get(str(t), float('nan')):.1%}</td>" for t in taus)
+        gate_rows.append(f"<td>{html.escape(PRETTY.get(variant, variant))}</td>{cells}")
+    gate = table(["探针"] + [f"CN ≤ {t}" for t in taus], gate_rows)
+
+    note = (
+        '<p class="note">k = 1 与 k = 2 两个子图模型都训练好，部署时按被评分图上的证据量逐对选模型；'
+        "「路由 − k1」在 clean 行是<b>白拿的上限</b>，在伤害行是<b>缺口缩小量</b>（为正才是修好了）。"
+        "阈值的整条前沿都落在「始终 k2」上，说明这一族门控没有可用工作点；"
+        "补边那一栏则给出原因：CN 先验只在有共同邻居的候选上定义，"
+        "而它要救的恰好是 <code>CN = 0</code> 的对，所以几乎恢复不了证据。</p>"
+    )
+    return body + note + frontier + "<p class=\"note\">路由前沿：每行是同一批 pair 上的伤害。</p>" + gate + completion
+
+
+class Splice:
+    ORDER = ("clean", "del@50%", "del_hub@50%", "ins_hub@50%")
+
+    def __init__(self, payload: dict, dataset: str):
+        self.dataset = payload.get("dataset", dataset)
+        self.models: dict = payload.get("models", {})
+        self.gate: dict = payload.get("gate", {})
+        self.bootstrap: dict = payload.get("bootstrap", {})
+
+    def model_ids(self) -> list[str]:
+        return list(self.models)
+
+    def variants(self, model: str) -> list[str]:
+        per = self.models.get(model, {})
+        ordered = [v for v in self.ORDER if v in per]
+        return ordered + sorted(v for v in per if v not in ordered)
+
+    def ci(self, model: str, variant: str, arm: str = "splice_q50") -> dict | None:
+        return self.bootstrap.get(model, {}).get(variant, {}).get(f"{arm}-k1")
+
+
+def splice_panel(splice: "Splice") -> str:
+    # ---- main: does the gate repair anything?
+    rows = []
+    for model in splice.model_ids():
+        per = splice.models[model]
+        clean = per.get("clean", {})
+        for variant in splice.variants(model):
+            row = per[variant]
+            label = PRETTY.get(variant, variant)
+            ci_txt = _ci_text(splice.ci(model, variant))
+            if variant == "clean":
+                k1 = clean.get("k1")
+                routed = clean.get("splice_q50")
+                delta = routed - k1 if None not in (routed, k1) else None
+                rows.append(
+                    "".join(
+                        [
+                            f"<td><b>{html.escape(model)}</b></td>",
+                            f"<td>{html.escape(label)} <span style=\"color:#64748b\">AUC</span></td>",
+                            f"<td>{fmt(k1)}</td>",
+                            f"<td>{fmt(clean.get('k2'))}</td>",
+                            f"<td>{fmt(clean.get('cn_gate'))}</td>",
+                            f"<td>{fmt(routed)}</td>",
+                            f'<td class="hm" style="{damage_style(-(delta or 0.0))}">{fmt(delta, 3, signed=True)}</td>',
+                            f"<td>{ci_txt}</td>",
+                        ]
+                    )
+                )
+                continue
+            dmg = {
+                arm: clean.get(arm) - row.get(arm)
+                for arm in ("k1", "k2", "cn_gate", "splice_q50")
+                if None not in (clean.get(arm), row.get(arm))
+            }
+            delta = dmg["k1"] - dmg["splice_q50"] if len(dmg) == 4 else None
+            rows.append(
+                "".join(
+                    [
+                        f"<td><b>{html.escape(model)}</b></td>",
+                        f"<td>{html.escape(label)} <span style=\"color:#64748b\">伤害</span></td>",
+                        f'<td class="hm" style="{damage_style(dmg.get("k1"))}">{fmt(dmg.get("k1"), 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(dmg.get("k2"))}">{fmt(dmg.get("k2"), 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(dmg.get("cn_gate"))}">{fmt(dmg.get("cn_gate"), 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(dmg.get("splice_q50"))}">{fmt(dmg.get("splice_q50"), 3, signed=True)}</td>',
+                        f'<td class="hm" style="{damage_style(-(delta or 0.0))}">{fmt(delta, 3, signed=True)}</td>',
+                        f"<td>{ci_txt}</td>",
+                    ]
+                )
+            )
+    body = table(
+        ["模型", "行", "k = 1", "k = 2", "CN 门控", "拼接门控（前 50 %）", "拼接 − k1", "95 % CI（配对）"],
+        rows,
+    )
+
+    # ---- frontier over the gate quantile
+    frontier_rows = []
+    arms = ["cn_gate", "splice_sign", "splice_q50", "splice_q70", "splice_q90", "k2", "k1"]
+    for model in splice.model_ids():
+        per = splice.models[model]
+        clean = per.get("clean", {})
+        for variant in splice.variants(model):
+            if variant == "clean":
+                continue
+            row = per[variant]
+            cells = [f"<td><b>{html.escape(model)}</b></td>", f"<td>{html.escape(PRETTY.get(variant, variant))}</td>"]
+            for arm in arms:
+                value = clean.get(arm) - row.get(arm) if None not in (clean.get(arm), row.get(arm)) else None
+                cells.append(f'<td class="hm" style="{damage_style(value)}">{fmt(value, 3, signed=True)}</td>')
+            frontier_rows.append("".join(cells))
+    frontier = table(
+        ["模型", "探针", "CN ≤ 0", "sign(Δ)", "前 50 %", "前 30 %", "前 10 %", "始终 k2", "k = 1"],
+        frontier_rows,
+    )
+
+    # ---- is the gate signal informative?
+    diag_rows = []
+    for model, gates in splice.gate.items():
+        for variant, entry in gates.items():
+            if variant == "clean":
+                continue
+            diag_rows.append(
+                "".join(
+                    [
+                        f"<td><b>{html.escape(model)}</b></td>",
+                        f"<td>{html.escape(PRETTY.get(variant, variant))}</td>",
+                        f"<td>{entry['fire_probe_sign']:.1%}</td>",
+                        f"<td>{entry['fire_probe_q50']:.1%}</td>",
+                        f"<td>{entry['delta_positive_share']:.1%}</td>",
+                        f"<td>{entry['delta_blank_positive_share']:.1%}</td>",
+                        f"<td>{fmt(entry['corr_own_vs_blank'])}</td>",
+                        f'<td class="hm" style="{focal(entry["auc_delta_predicts_drop"], 0.45, 0.65)}">'
+                        f"{fmt(entry['auc_delta_predicts_drop'])}</td>",
+                    ]
+                )
+            )
+    diag = table(
+        ["模型", "探针", "sign 门控触发率", "前 50 % 触发率", "Δ>0（真实特征）", "Δ>0（特征清零）", "corr(两者)", "AUC(Δ → 损失)"],
+        diag_rows,
+    )
+
+    note = (
+        '<p class="note">每个 pair 用同一套 k = 1 权重打分两次：原始子图，以及把一条合成路径 <code>u-w-v</code>'
+        "（DRNL 标签 2）拼进子图后。门的本意是「分数上升 = 这个 pair 缺证据」，但事实是"
+        "<b>97–100 % 的 pair 分数都会上升</b>，连拼接节点特征清零后也一样（corr ≈ 0.95），"
+        "所以这个信号测的是「路径存在」而不是「证据饥饿」；而上升的<b>幅度</b>对「哪些 pair 真的会掉分」"
+        "只有随机水平的区分度（AUC ≈ 0.5）。收紧分位数只是把系统沿 k1 ↔ k2 的轴推回去，没有任何设定优于不路由。</p>"
+    )
+    return body + note + frontier + '<p class="note">门控前沿：CN 门控问「状态」，拼接门控问「响应」，两者都是同一根轴上的点。</p>' + diag
+
+
 def insight_cards(
     cora: Probe,
     dense: Probe | None,
     third: Probe | None = None,
     deep: "Deep | None" = None,
     redesign: "Redesign | None" = None,
+    significance: "Significance | None" = None,
+    gated: "Gated | None" = None,
+    splice: "Splice | None" = None,
 ) -> str:
     cards: list[tuple[str, str, str]] = []
 
@@ -976,12 +1312,543 @@ def insight_cards(
         )
     )
 
+    if significance is not None:
+        sig_rows = significance.rows()
+        if sig_rows:
+            top_model, top_variant, top_cell = sig_rows[0]
+            covers = [
+                f"{m}/{PRETTY.get(v, v)}"
+                for m, v, c in sig_rows
+                if c.get("ci_low") is not None and c["ci_low"] <= 0.0
+            ]
+            cards.append(
+                (
+                    "小 ΔAUC 只是方向，不是量级",
+                    "把 seed 之间的差异当误差棒是错的：要估计的量来自 pair 采样，而 clean 与 probe 在同一批 pair 上打分，"
+                    "所以区间必须配对重采样才能得到。做完之后，0.02–0.03 一档的差距大多跨过 0——它们能说「这个探针伤了这个模型」，"
+                    "不能说「伤得比另一个多」。",
+                    f"{top_model} {PRETTY.get(top_variant, top_variant)} ΔAUC "
+                    f"{fmt(top_cell.get('damage'), 3, True)} "
+                    f"[{fmt(top_cell.get('ci_low'), 3, True)}, {fmt(top_cell.get('ci_high'), 3, True)}]；"
+                    + ("CI 覆盖 0：" + "、".join(covers) if covers else "所有区间都排除 0"),
+                )
+            )
+
+    if gated is not None:
+        models = gated.model_ids()
+        base_arm = gated.base_arm()
+        if models:
+            model = models[0]
+            per = gated.models[model]
+            clean = per.get("clean", {})
+            del_cell = per.get("del@50%", {})
+            if clean and del_cell:
+                gain = (clean.get(base_arm, 0.0) or 0.0) - (clean.get("k1", 0.0) or 0.0)
+                dmg_k1 = (clean.get("k1", 0.0) or 0.0) - (del_cell.get("k1", 0.0) or 0.0)
+                dmg_k2 = (clean.get("k2", 0.0) or 0.0) - (del_cell.get("k2", 0.0) or 0.0)
+                dmg_rt = (clean.get(base_arm, 0.0) or 0.0) - (del_cell.get(base_arm, 0.0) or 0.0)
+                reach = gated.completion.get("del@50%", {})
+                reach_txt = (
+                    f"；CN 补边只恢复了 {reach['recovered_share']:.1%} 的低证据对"
+                    if reach
+                    else ""
+                )
+                cards.append(
+                    (
+                        "门控问错了问题，所以修复无效",
+                        "按「图上还有没有证据」路由，在攻击前就已经命中大半 pair，于是删边缺口继承 k = 2："
+                        "整条阈值前沿都落在「始终 k2」上，没有可用工作点。而另一条退路——用 CN 先验补回被删的边——"
+                        "在它要救的那些 pair 上几乎恢复不了证据，因为 CN 先验只有对已有共同邻居的候选才有定义。"
+                        "「模型在有证据时会怎么做」这个更聪明的问法也试过了（下面那张卡），同样不行。",
+                        f"{gated.dataset} {model}：clean 路由 − k1 {fmt(gain, 3, True)}；"
+                        f"del 伤害 k1 {fmt(dmg_k1, 3, True)} / k2 {fmt(dmg_k2, 3, True)} / routed {fmt(dmg_rt, 3, True)}"
+                        f"{reach_txt}",
+                    )
+                )
+
+    if splice is not None:
+        splice_models = splice.model_ids()
+        if splice_models:
+            model = splice_models[0]
+            per = splice.models[model]
+            clean = per.get("clean", {})
+            del_cell = per.get("del@50%", {})
+            gate = splice.gate.get(model, {}).get("del@50%", {})
+            if clean and del_cell and gate:
+                dmg = {
+                    arm: (clean.get(arm, 0.0) or 0.0) - (del_cell.get(arm, 0.0) or 0.0)
+                    for arm in ("k1", "k2", "splice_q90")
+                }
+                cards.append(
+                    (
+                        "问响应也会满仓：拼接门控同样不是修复",
+                        "反事实拼接把「多一条证据，分数会不会上升」做成可测信号。结果两侧都失效："
+                        "97–100 % 的 pair 分数都会上升，把拼接节点的特征清零后仍是如此（corr ≈ 0.95），"
+                        "所以它测的是「路径存在」而不是「证据饥饿」；而上升幅度对「哪些 pair 真的掉分」"
+                        "只有随机水平的区分度。收紧分位数只是沿 k1 ↔ k2 的轴回退，最好的设定仍不如不路由。",
+                        f"{splice.dataset} {model}：Δ>0 {gate['delta_positive_share']:.1%}"
+                        f"（特征清零 {gate['delta_blank_positive_share']:.1%}，corr {fmt(gate['corr_own_vs_blank'])}），"
+                        f"AUC(Δ→掉分) {fmt(gate['auc_delta_predicts_drop'])}；"
+                        f"del 伤害 前 10 % {fmt(dmg['splice_q90'], 3, True)} / k1 {fmt(dmg['k1'], 3, True)}"
+                        f" / 始终 k2 {fmt(dmg['k2'], 3, True)}",
+                    )
+                )
+
     body = "".join(
         f'<div class="insight"><h4>{html.escape(title)}</h4><p>{text}</p>'
         f"<code>{html.escape(evidence)}</code></div>"
         for title, text, evidence in cards
     )
     return f'<div class="cards">{body}</div>'
+
+
+# --------------------------------------------------------------------------- #
+# 00 · whole-repository overview: reproduction layer + index of the report
+# --------------------------------------------------------------------------- #
+PAPER_AUC: dict[str, float] = {}  # RF@25% and 1%-training values are not clean full-training references.
+DATASET_ORDER = ["cora", "citeseer", "pubmed", "usair", "ns"]
+DATASET_LABEL = {"cora": "Cora", "citeseer": "Citeseer", "pubmed": "Pubmed", "usair": "USAir", "ns": "NS"}
+
+# (section no. in this report, experiment, artifact, one-line observation)
+ATTRIB_INDEX = [
+    ("01", "探针语义与启发式可用性", "probe_*",
+     "同样删 50 %，删随机边与删 hub 边移动的是不同启发式；插边不改共同邻居"),
+    ("02", "伤害矩阵 7 × 7", "probe_cora", "SGDiff 死于删边，GCN 族死于特征打乱，子图族对插入几乎无感"),
+    ("03", "组件消融（冻结权重）", "probe_cora", "SGDiff 只用结构仍有 0.728，只用特征掉到 0.497"),
+    ("04", "子图里还剩什么", "probe_cora", "删边把共享邻居率打掉，插边几乎不动它 —— 这就是不对称的全部原因"),
+    ("05", "USAir 对照（无属性无标签）", "probe_usair", "同一预算伤害小得多；hub 插边转为主要伤害源"),
+    ("06", "跨图稳定性（3 张不同性质的图）", "probe_citeseer / usair", "符号与排序一致，量级按机制预测偏移"),
+    ("07", "层级定位", "deep_cora", "属性伤害在第一次聚合之前，结构伤害在第二跳"),
+    ("08", "换传播算子（同权重）", "deep_cora / usair", "归一化不是载体，自环才是 —— 且只对稀疏图成立"),
+    ("09", "三角边 vs 桥边", "deep_cora", "桥边不亚于三角边；USAir 上该对比退化（仅 83 条桥边）"),
+    ("10", "修复实验（因果检验）", "deep_cora", "同一干预：补边只救 SGDiff，平滑只救属性模型"),
+    ("11", "k = 2 重训（模型侧修复）", "deep_cora", "抬天花板不抬地板：clean +0.075，删边缺口反而变大"),
+    ("12", "组件级重训（8 种子 × 3 图）", "redesign_*", "唯一显著变差的是去掉自环；没有单一部件能同时改善两侧"),
+    ("13", "工作点 / 自适应下界 / 校准", "operating / adaptive / calibration",
+     "伤害是分层而非平移；10 % 自适应 = 5-17× 固定探针；先验校准只沿前沿移动"),
+    ("14", "自助区间 / 证据路由 / 拼接门", "significance / gated / splice",
+     "0.12-0.21 的差异排除 0；两类 per-pair 门都饱和，修复仍是否定结果"),
+]
+
+SCOPE_HTML = (
+    '<div class="card"><h3 style="margin-top:0">没做、做不了的</h3>'
+    '<ul style="margin:0;padding-left:18px;color:#475569;font-size:13.5px">'
+    "<li><b><code>paper</code> 预算</b>（无上限 1-hop、全 MC 步）未跑：本机 &gt;2.5 h/模型。"
+    "所以「深度是装饰」只对 <code>cpu</code> / <code>full</code> 成立。</li>"
+    "<li><b>第 6 个数据集（Router）</b>不可分发 → 迁移矩阵是 5×5。</li>"
+    "<li><b>特征 DDPM 有效的情形</b>未出现：MSE ≈1.0（预测 0），贝叶斯分解在本机不可观测。</li>"
+    "</ul></div>"
+)
+PRUNED_HTML = (
+    '<div class="card"><h3 style="margin-top:0">已清理的低价值产物（不要重跑）</h3>'
+    '<ul style="margin:0;padding-left:18px;color:#475569;font-size:13.5px">'
+    "<li><code>ablation_hops2</code>：旧 hops 探针，被第 07/11 节的深探针取代。</li>"
+    "<li><code>*_synthetic_smoke</code>、<code>robustness_cora_seedcheck</code>：单种子自检，"
+    "结论已被 5 种子主网格覆盖。</li>"
+    "<li><code>attack_cora_*_seed0_cpu</code>、<code>transfer_*_seed0_cpu</code> 单次运行："
+    "被 <code>summary_attack_cora</code> 与 5×5 迁移矩阵取代。</li>"
+    "<li>无引用的一次性运行日志（<code>full_*</code> / <code>redesign_*</code> / "
+    "<code>score_dump_*</code> 等）。</li>"
+    "</ul></div>"
+)
+
+
+def _auc(entry) -> float | None:
+    """Mean AUC out of ``{auc: {mean, std[, n]}}`` or a bare ``{mean, std}``."""
+    if not isinstance(entry, dict):
+        return None
+    auc = entry.get("auc")
+    if isinstance(auc, dict):
+        value = auc.get("mean")
+        return float(value) if value is not None else None
+    if isinstance(auc, (int, float)):
+        return float(auc)
+    value = entry.get("mean")
+    return float(value) if isinstance(value, (int, float)) else None
+
+
+def _spread(entry) -> tuple[float | None, int | None]:
+    if not isinstance(entry, dict):
+        return None, None
+    auc = entry.get("auc") if isinstance(entry.get("auc"), dict) else {}
+    std = auc.get("std")
+    n = auc.get("n") or entry.get("n") or entry.get("num_seeds")
+    return (float(std) if std is not None else None), (int(n) if n is not None else None)
+
+
+def _agg_runs(runs: list[dict], model: str, variant: str) -> float | None:
+    values = [
+        float(r["metrics"]["auc"])
+        for r in runs
+        if r.get("model") == model and r.get("variant") == variant and r.get("metrics", {}).get("auc") is not None
+    ]
+    return sum(values) / len(values) if values else None
+
+
+def indomain_panel(full: dict | None) -> str:
+    if not full:
+        return ""
+    rows = []
+    for dataset in DATASET_ORDER:
+        entry = full.get(dataset)
+        value = _auc(entry)
+        if value is None:
+            continue
+        spread, seeds = _spread(entry)
+        paper = PAPER_AUC.get(dataset)
+        delta = (value - paper) if paper is not None else None
+        delta_cell = (
+            f'<td class="hm" style="{damage_style(delta, 0.16)}">{fmt(delta, 3, signed=True)}</td>'
+            if delta is not None else "<td>–</td>"
+        )
+        spread_cell = (
+            f"<td>单种子 · n={seeds}</td>" if seeds == 1 else f"<td>±{fmt(spread)} · n={seeds}</td>"
+        )
+        rows.append(
+            f"<tr><td><b>{DATASET_LABEL[dataset]}</b></td>"
+            f'<td class="hm" style="{auc_style(value)}">{fmt(value)}</td>'
+            f"{spread_cell}"
+            f"<td>{fmt(paper)}</td>{delta_cell}</tr>"
+        )
+    return table(["数据集", "AUC (full)", "std / 种子", "论文 clean AUC", "Δ vs 论文"], rows)
+
+
+def model_dataset_panel(probes: list) -> str:
+    """Clean AUC per (model, dataset) with the per-cell gap to GCN."""
+    probes = [p for p in probes if p is not None]
+    if not probes:
+        return ""
+    models: list[str] = []
+    for probe in probes:
+        for model in probe.models:
+            if model not in models:
+                models.append(model)
+    models.sort(key=lambda m: (m != "sgdiff", m))
+    headers = ["模型"]
+    for probe in probes:
+        seeds = len(probe.raw.get("seeds") or [])
+        headers.append(f"{DATASET_LABEL.get(probe.dataset, probe.dataset)} ({seeds} seeds)")
+    rows = []
+    for model in models:
+        cells = [f"<td><b>{html.escape(model)}</b></td>"]
+        for probe in probes:
+            value = probe.auc(model, "clean") if model in probe.models else None
+            if value is None:
+                cells.append('<td style="color:#cbd5e1">未跑</td>')
+                continue
+            reference = probe.auc("gcn", "clean") if "gcn" in probe.models else None
+            delta = (value - reference) if (reference is not None and model != "gcn") else None
+            sub = (
+                f'<br><span style="{damage_style(delta, 0.12)}font-size:11px;'
+                f'padding:0 4px;border-radius:3px">{fmt(delta, 3, signed=True)}</span>'
+                if delta is not None else ""
+            )
+            cells.append(f'<td class="hm">{fmt(value)}{sub}</td>')
+        rows.append("".join(cells))
+    leader_note = ""
+    last = probes[-1]
+    reference = last.auc("gcn", "clean") if "gcn" in last.models else None
+    if reference is not None:
+        leaders = [
+            m for m in models
+            if m != "gcn" and (value := last.auc(m, "clean")) is not None and value > reference
+        ]
+        if leaders:
+            leader_note = (
+                f"到无属性的 {DATASET_LABEL.get(last.dataset, last.dataset)} 上，"
+                f"{' / '.join(leaders)} 反而全部领先 GCN —— 逐格差把这条「属性通道」的结论"
+                "直接摆了出来，而按数据集平均会把它们抵消掉。"
+            )
+    caption = (
+        '<p class="note">同一脚本、同一协议（<code>run_probe.py</code>，evasion clean，<code>cpu</code> 预算），'
+        "所以同一列的 7 个数可以直接比。<b>灰底小字 = 该模型 − 同数据集 GCN</b>："
+        "SGDiff 在有属性的两张图上都落后 GCN。"
+        + leader_note
+        + "Pubmed / NS 只有 SGDiff 一行（见 00.1），所以不在矩阵里。"
+        "论文 Table 1 有逐模型迁移指标，Table 2 有逐模型攻击指标，Figure 2 是 1% 训练。"
+        "这些不能充当本表全量训练 clean 的参照；<b>这里是旧实现模型之间的差，不是与论文的差。</b></p>"
+    )
+    return table(headers, rows) + caption
+
+
+def benchmark_panel(bench: dict | None) -> str:
+    runs = (bench or {}).get("runs") or []
+    if not runs:
+        return ""
+    stats = []
+    for model in (bench.get("models") or []):
+        subset = [r for r in runs if r.get("model") == model]
+        if not subset:
+            continue
+        metrics = [r.get("metrics", {}) for r in subset]
+        stats.append(
+            (
+                sum(m.get("auc", 0.0) for m in metrics) / len(metrics),
+                model,
+                sum(m.get("ap", 0.0) for m in metrics) / len(metrics),
+                sum(m.get("hit@100", 0.0) for m in metrics) / len(metrics),
+                sum(r.get("num_params", 0) for r in subset) / len(subset),
+                sum(r.get("seconds", 0.0) for r in subset) / len(subset),
+            )
+        )
+    stats.sort(reverse=True)
+    rows = []
+    for rank, (auc, model, ap, hit, params, seconds) in enumerate(stats, 1):
+        label = f"<b>{html.escape(model)}</b>"
+        rows.append(
+            f"<tr><td>{rank}</td><td>{label}</td>"
+            f'<td class="hm" style="{auc_style(auc)}">{fmt(auc)}</td>'
+            f"<td>{fmt(ap)}</td><td>{fmt(hit)}</td>"
+            f"<td>{params / 1e6:.2f} M</td>"
+            f"<td>{(f'{seconds:.0f} s' if seconds >= 10 else f'{seconds:.1f} s')}</td></tr>"
+        )
+    return table(["#", "模型", "AUC", "AP", "hit@100", "参数", "拟合"], rows)
+
+
+def robustness_panel(rob: dict | None) -> str:
+    runs = (rob or {}).get("runs") or []
+    if not runs:
+        return ""
+    rows = []
+    for model in (rob.get("models") or []):
+        clean = _agg_runs(runs, model, "clean")
+        if clean is None:
+            continue
+        cells = [f"<td><b>{html.escape(model)}</b></td>", f'<td class="hm" style="{auc_style(clean)}">{fmt(clean)}</td>']
+        worst = None
+        for variant in ("rf@50%", "dice@50%", "ea@50%"):
+            value = _agg_runs(runs, model, variant)
+            if value is not None:
+                worst = max(worst or 0.0, (clean - value) / clean)
+            cells.append(f'<td class="hm" style="{auc_style(value)}">{fmt(value)}</td>')
+        cells.append(f'<td class="hm" style="{damage_style(worst, 0.30)}">{fmt(worst * 100 if worst else None, 1)} %</td>')
+        rows.append("".join(cells))
+    return table(["模型", "clean", "RF@50%", "DICE@50%", "EA@50%", "最大相对降幅"], rows)
+
+
+def purifier_panel(pur: dict | None) -> str:
+    summary = (pur or {}).get("summary") or {}
+    if not summary:
+        return ""
+    variants = ["clean", "rf@50%", "dice@50%", "clean|gddm", "rf@50%|gddm", "clean|gpr", "rf@50%|gpr"]
+    pairs = [("clean|gddm", "clean"), ("rf@50%|gddm", "rf@50%"), ("dice@50%|gddm", "dice@50%"),
+             ("clean|gpr", "clean"), ("rf@50%|gpr", "rf@50%"), ("dice@50%|gpr", "dice@50%")]
+    rows, below, total, exceptions = [], 0, 0, []
+    for model in (pur.get("models") or []):
+        if model not in summary:
+            continue
+        cells = [f"<td><b>{html.escape(model)}</b></td>"]
+        for variant in variants:
+            value = _auc(summary[model].get(variant))
+            cells.append(f'<td class="hm" style="{auc_style(value)}">{fmt(value)}</td>')
+        for defended, undefended in pairs:
+            dv, uv = _auc(summary[model].get(defended)), _auc(summary[model].get(undefended))
+            if dv is None or uv is None:
+                continue
+            total += 1
+            if dv < uv:
+                below += 1
+            else:
+                exceptions.append(f"{model} {defended} {fmt(dv - uv, 3, signed=True)}")
+        rows.append("".join(cells))
+    tail = (
+        "；唯一例外 " + "、".join(exceptions) + "，落在种子噪声内"
+        if exceptions else ""
+    )
+    caption = (
+        f'<p class="note">2025-26 净化器 GDDM / GPR-GAE 在打分前清洗推理图。'
+        f"受防御的 <b>{below}/{total}</b> 个格子低于对应未防御值 —— 包括 clean 图本身{tail}。"
+        "原因可测：GPR 把边精度 0.72 提到 0.94 的代价是删掉一半真边，"
+        "而 RF / DICE 是删除主导的扰动，删除主导的净化补不回来。</p>"
+    )
+    return table(["模型", "clean", "RF@50%", "DICE@50%", "clean+GDDM", "RF@50%+GDDM", "clean+GPR", "RF@50%+GPR"], rows) + caption
+
+
+def transfer_panel(matrix: dict | None) -> str:
+    variants = (matrix or {}).get("variants") or {}
+    key = "target_ns" if "target_ns" in variants else next(iter(variants), None)
+    if key is None:
+        return ""
+    payload = variants[key] or {}
+    source_avg = payload.get("source_avg_excl_diagonal") or {}
+    target_avg = payload.get("target_avg_excl_diagonal") or {}
+    diagonal = matrix.get("diagonal_in_domain") or {}
+    rows = []
+    for dataset in DATASET_ORDER:
+        if dataset not in source_avg and dataset not in target_avg:
+            continue
+        src, tgt, own = source_avg.get(dataset), target_avg.get(dataset), _auc(diagonal.get(dataset))
+        cells = [f"<td><b>{DATASET_LABEL[dataset]}</b></td>"]
+        for value in (src, tgt, own):
+            cells.append(f'<td class="hm" style="{auc_style(value)}">{fmt(value)}</td>')
+        if tgt is not None and own is not None:
+            cells.append(f'<td class="hm" style="{damage_style(tgt - own, 0.16)}">{fmt(tgt - own, 3, signed=True)}</td>')
+        else:
+            cells.append("<td>–</td>")
+        rows.append("".join(cells))
+    deltas = [
+        target_avg[dataset] - own
+        for dataset in DATASET_ORDER
+        if dataset in target_avg and (own := _auc(diagonal.get(dataset))) is not None
+    ]
+    worst = None
+    for source, targets in (payload.get("auc") or {}).items():
+        if not isinstance(targets, dict):
+            continue
+        for target, entry in targets.items():
+            if source == target:
+                continue
+            value = _auc(entry)
+            if value is not None and (worst is None or value < worst[0]):
+                worst = (value, source, target)
+    seeds = matrix.get("seeds") or []
+    spread = (
+        f"零样本的代价按目标侧算：Δ（目标 − in-domain）从 "
+        f"{fmt(min(deltas), 3, signed=True)} 到 {fmt(max(deltas), 3, signed=True)}，"
+        "五个目标全部为负 —— 「无需重训」成立，但不是免费。"
+        if deltas else ""
+    )
+    tail = (
+        f"最差单元 {DATASET_LABEL.get(worst[1], worst[1])} → "
+        f"{DATASET_LABEL.get(worst[2], worst[2])} 为 {fmt(worst[0])}，即随机水平。"
+        if worst else ""
+    )
+    best_src = max(source_avg, key=source_avg.get) if source_avg else None
+    worst_src = min(source_avg, key=source_avg.get) if source_avg else None
+    caption = (
+        f'<p class="note">{key} 变体，seeds {", ".join(str(s) for s in seeds)}，完整测试集。'
+        f"<b>作为源的排序</b>（{DATASET_LABEL.get(best_src, '–')} 最好、"
+        f"{DATASET_LABEL.get(worst_src, '–')} 最差）近似 in-domain 排序的镜像："
+        f"小图准确源过拟合自己的度分布。{spread}{tail}</p>"
+    )
+    return table(["数据集", "作为源（均值）", "作为目标（均值）", "in-domain", "Δ 目标 − in-domain"], rows[:5]) + caption
+
+
+def lowdata_note(low: dict | None, cpu_indomain: dict | None) -> str:
+    if not low:
+        return ""
+    value = _auc(low.get("cora"))
+    spread, seeds = _spread(low.get("cora"))
+    reference = _auc((cpu_indomain or {}).get("cora"))
+    if value is None:
+        return ""
+    return (
+        '<p class="note">1 % 标签（Cora）：'
+        f"<b>{fmt(value)} ± {fmt(spread)}</b>（{seeds} seeds）vs 全量 "
+        f"<b>{fmt(reference)}</b>（同 <code>cpu</code> 预算）。"
+        "结论成立但依赖 schedule：40 epoch 下差距 ≤0.03，8 epoch 时 1 % 那次崩到 0.49 —— "
+        "论文没报 schedule，所以这条 claim 的可复现性由 schedule 决定。</p>"
+    )
+
+
+LIKELIHOOD_LABEL = {
+    "reference": "参考（MC 平均）",
+    "same_condition": "两类共用同一条件",
+    "condition_flip": "条件取反",
+    "label_shuffle": "DRNL 标号打乱",
+    "single_t_low": "只取 1 步 @ 5 %·T",
+    "single_t_mid": "只取 1 步 @ 50 %·T",
+    "single_t_full": "只取 1 步 @ 100 %·T",
+    "structure_only": "只用结构流",
+    "feature_only": "只用特征流",
+}
+
+
+def likelihood_panel(ablation: dict | None) -> str:
+    rows_raw = (ablation or {}).get("rows") or []
+    if not rows_raw:
+        return ""
+    reference = None
+    for row in rows_raw:
+        if row.get("variant") == "reference":
+            reference = row.get("metrics", {}).get("auc")
+    rows = []
+    for row in rows_raw:
+        variant = row.get("variant", "")
+        value = row.get("metrics", {}).get("auc")
+        delta = (value - reference) if (value is not None and reference) else None
+        cells = [
+            f"<td><b>{html.escape(LIKELIHOOD_LABEL.get(variant, variant))}</b></td>",
+            f'<td class="hm" style="{auc_style(value)}">{fmt(value)}</td>',
+        ]
+        if delta is None:
+            cells.append("<td>–</td>")
+        else:
+            cells.append(f'<td class="hm" style="{damage_style(delta, 0.20)}">{fmt(delta, 3, signed=True)}</td>')
+        scoring = row.get("scoring") or ""
+        cells.append(f'<td style="white-space:normal;text-align:left;font-size:12px;color:#64748b">{html.escape(scoring)}</td>')
+        rows.append("".join(cells))
+    fusion = ((ablation or {}).get("fusion") or [{}])[0]
+    share = fusion.get("share_feature")
+    note = (
+        '<p class="note">冻结一个 checkpoint，只改打分或条件：Δ = 该变体 − 参考。'
+        "条件被真用（共用条件直接掉到机会水平），但<b>深度是装饰</b>（最便宜的一步反而最好，"
+        "散布 0.013）；DRNL 标号无信息；特征流在随机水平"
+        + (f"，在 logit 方差里只占 {share:.1e}" if isinstance(share, float) else "")
+        + "。所以它更像「一次性结构去噪 + 交叉熵调过的融合」，而不是两阶段生成似然。</p>"
+    )
+    return table(["变体", "AUC", "Δ vs 参考", "打分设置"], rows) + note
+
+
+def overview_section(overview: dict, probes: list) -> list[str]:
+    parts = [
+        '<h2><span class="num">00</span>全仓实验总览：两层、24 个实验</h2>',
+        '<p class="lede">本仓库有两层实验，结论不能混着读：'
+        "<b>复现层</b>问「论文的 claim 在同样数据、同样预算下成不成立」，"
+        "<b>归因层</b>问「为什么」。下面的 00.1-00.5 是复现层（数字直接来自产物 JSON），"
+        "00.6 是归因层 15 个实验的索引（细节在第 01-15 节）。</p>",
+        "<h3>00.1 历史 SGDiff in-domain：5 个数据集，论文差值已撤回</h3>",
+        '<div class="card">',
+        indomain_panel(overview.get("indomain_full")),
+        '<p class="note"><b>参照口径纠正：</b>此前的 0.884 / 0.871 / 0.951 来自论文 Table 2 '
+        'RF@25% 攻击结果，而非 clean 主表；USAir / NS 的 Figure 2 是 1% 训练。'
+        '这些数不能与本表全量训练 clean 直接相减，故撤回所谓“差 9–15 点”及相应原因归纳。'
+        '论文 clean 同协议数值尚未核实，表中留空。原方法指标须重新运行匹配的迁移、低数据或攻击实验。</p>',
+        "</div>",
+        "<h3>00.2 逐模型 × 逐数据集：每个格子给数，并在格内给出它相对 GCN 的差</h3>",
+        '<div class="card">',
+        model_dataset_panel(probes),
+        "</div>",
+        "<h3>00.3 同数据、同切分的 7 模型对比（可比性由指纹保证）</h3>",
+        '<div class="card">',
+        benchmark_panel(overview.get("benchmark")),
+        '<p class="note">SGDiff AUC 垫底，但 AP 第二、hit@100 第一：融合分数在排名头部更锐，'
+        "在中段更钝。代价是 40× 参数与 100× 拟合时间。</p>",
+        "</div>",
+        "<h3>00.4 鲁棒性网格（7 模型 × RF / DICE / EA × 3 预算 × 3 种子）与防御对照</h3>",
+        '<div class="card">',
+        robustness_panel(overview.get("robustness")),
+        '<p class="note">evasion 协议：干净权重，只扰动推理图。SGDiff 的相对降幅是其余模型的 2-3 倍，'
+        "且是唯一跌破 0.70 的模型 —— 论文的 C3 方向相反。</p>",
+        purifier_panel(overview.get("purifier")),
+        "</div>",
+        "<h3>00.5 另外三问：似然审计、零样本迁移、1 % 标签</h3>",
+        '<div class="card">',
+        likelihood_panel(overview.get("ablation")),
+        transfer_panel(overview.get("transfer")),
+        lowdata_note(overview.get("lowdata"), overview.get("indomain_cpu")),
+        "</div>",
+        "<h3>00.6 归因层索引：15 个实验，看第 01-15 节</h3>",
+        '<div class="card">',
+        table(
+            ["节", "实验", "产物", "观察"],
+            [
+                f"<td><b>{section}</b></td><td>{html.escape(name)}</td>"
+                f"<td><code>{html.escape(artifact)}</code></td><td style=\"white-space:normal;text-align:left\">"
+                f"{html.escape(note)}</td>"
+                for section, name, artifact, note in ATTRIB_INDEX
+            ],
+        ),
+        "</div>",
+        '<div class="grid2">',
+        SCOPE_HTML,
+        PRUNED_HTML,
+        "</div>",
+        '<p class="note">完整清单（含每个实验的脚本与详述章节）见 '
+        "<code>docs/experiments.md</code>；逐条论证见 <code>docs/attribution.md</code> 与 "
+        "<code>docs/findings.md</code>。</p>",
+    ]
+    return parts
 
 
 def build(
@@ -994,6 +1861,10 @@ def build(
     operating: "Operating | None" = None,
     adaptive: "Adaptive | None" = None,
     calibration: "Calibration | None" = None,
+    significance: "Significance | None" = None,
+    gated: "Gated | None" = None,
+    splice: "Splice | None" = None,
+    overview: dict | None = None,
 ) -> str:
     protocol = cora.raw.get("protocol", {})
     probe_cols = [p for p in PROBES if p in cora.variants]
@@ -1019,16 +1890,30 @@ def build(
     parts = [
         "<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">",
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
-        "<title>机制归因报告 · 每个模型到底在读什么</title>",
+        "<title>实验报告 · 复现结论与机制归因</title>",
         f"<style>{CSS}</style></head><body><div class=\"wrap\">",
         "<header class=\"hero\">",
-        "<h1>机制归因：每个模型到底在读图的哪个性质</h1>",
-        "<p class=\"lede\">把 RF / DICE / EA 这类「删边 + 插边」混合攻击拆成定向探针，"
-        "再用启发式可用性、分数对齐和组件消融把伤害归因到具体部件。核心结论："
+        "<h1>复现与机制归因：一个仓库、两层结论</h1>",
+        "<p class=\"lede\"><b>第 00 节</b>是复现层：论文的四条 claim 在同样数据、同样预算下成不成立，"
+        "以及 7 个模型的可比性、鲁棒性、防御、似然审计、迁移与低数据。"
+        "<b>第 01-15 节</b>是归因层：把这些混合攻击拆成定向探针，再用启发式可用性、"
+        "分数对齐和组件消融把伤害归因到具体部件。一句话结论："
         "<b>哪些攻击致命，取决于模型读的是什么性质，以及图有多稀疏</b>。</p>",
-        '<div class="chips">' + "".join(f'<span class="chip">{c}</span>' for c in chips) + "</div>",
+        '<div class="chips"><span class="chip">复现层 <b>9</b> 个实验</span>'
+        '<span class="chip">归因层 <b>15</b> 个实验</span>'
+        + "".join(f'<span class="chip">{c}</span>' for c in chips) + "</div>",
         "</header>",
+        '<aside role="alert" class="card" style="border:2px solid #d97706;background:#fffbeb">'
+        '<h3 style="margin-top:0;color:#92400e">历史结果：不是已验证的 SGDiff 原论文复现</h3>'
+        '<p>本页现有数据来自修正前实现。2026-11-13 原文审计发现特征去噪器、结构后验、'
+        'DRNL 扩散和两阶段训练等偏差；代码已进入 <code>sgdiff-paper-v2</code> 修正流程。'
+        '<b>旧 AUC 差距、特征流失效、鲁棒性及修复结论仅描述旧实现，不能据此否定论文。'
+        '须用修正后模型重新训练和评估。</b>新主实验写入 '
+        '<code>results/sgdiff-paper-v2/</code>，本页尚未包含新方法结果。</p></aside>',
     ]
+
+    if overview:
+        parts += overview_section(overview, [cora, third, dense])
 
     parts += [
         '<h2><span class="num">01</span>探针到底改变了什么</h2>',
@@ -1174,21 +2059,66 @@ def build(
                 f'<div class="card">{calibration_panel(calibration)}</div>',
             ]
 
+    if significance is not None or gated is not None:
+        parts += [
+            '<h2><span class="num">14</span>统计边界与证据路由：多大才算数，以及修复为什么还是没修好</h2>',
+            '<p class="lede">前几节把 ΔAUC 当数直接比大小。这一节先给每个伤害配上<b>配对</b>自助区间，'
+            "把「方向」和「量级」分开；再把「按证据路由」的修复做成可测实验，"
+            "看它是补上了删边缺口，还是只是把 k = 2 的缺口换了个名字。</p>",
+        ]
+        if significance is not None:
+            parts += [
+                '<h3>每个伤害的配对自助区间</h3>',
+                f'<div class="card">{significance_panel(significance)}</div>',
+            ]
+        if gated is not None:
+            parts += [
+                '<h3>两个子图模型并列，按 <code>CN = 0</code> 逐对路由</h3>',
+                f'<div class="card">{gated_panel(gated)}</div>',
+            ]
+        if splice is not None:
+            parts += [
+                '<h3>反事实拼接：问「模型在有证据时会怎么做」</h3>',
+                f'<div class="card">{splice_panel(splice)}</div>',
+            ]
+
     num = 12 if deep is not None else ("07" if third is not None else "06")
     if redesigns:
         num = int(num) + 1
     if operating is not None or adaptive is not None or calibration is not None:
         num = int(num) + 1
+    if significance is not None or gated is not None or splice is not None:
+        num = int(num) + 1
     conclusion_num = str(num)
     parts += [
         f'<h2><span class="num">{conclusion_num}</span>归因结论</h2>',
-        insight_cards(cora, dense, third, deep, next(iter(redesigns.values())) if redesigns else None),
+        insight_cards(
+            cora,
+            dense,
+            third,
+            deep,
+            next(iter(redesigns.values())) if redesigns else None,
+            significance,
+            gated,
+            splice,
+        ),
         "<footer>由 <code>scripts/make_probe_report.py</code> 依据 "
-        "<code>results/probe_*.json</code>、<code>results/deep_*.json</code> 与 "
-        "<code>results/redesign_*.json</code> 生成"
+        "<code>results/probe_*.json</code>、<code>results/deep_*.json</code>、"
+        "<code>results/redesign_*.json</code>、<code>results/operating_*.json</code>、"
+        "<code>results/adaptive_*.json</code>、<code>results/calibration_*.json</code>、"
+        "<code>results/significance_*.json</code>、<code>results/gated_*.json</code> 与 "
+        "<code>results/splice_*.json</code> 生成"
         "（<code>scripts/run_probe.py</code> / <code>scripts/run_deep_probe.py</code> / "
-        "<code>scripts/run_redesign.py</code> 产出）。"
-        "文字解读见 <code>docs/attribution.md</code>；探针语义见 <code>sgdiff/data/perturb.py</code>。"
+        "<code>scripts/run_redesign.py</code> / <code>scripts/run_operating_point.py</code> / "
+        "<code>scripts/run_adaptive_attack.py</code> / <code>scripts/run_evidence_calibration.py</code> / "
+        "<code>scripts/run_bootstrap_ci.py</code> / <code>scripts/run_gated_repair.py</code> / "
+        "<code>scripts/run_splice_gate.py</code> 产出）；第 00 节另读 "
+        "<code>results/summary_indomain_*</code>、<code>results/benchmark_*</code>、"
+        "<code>results/ablation_*</code>、<code>results/robustness_*</code>、"
+        "<code>results/transfer_matrix_*</code> 与 <code>results/summary_lowdata_cora</code>。"
+        "文字解读见 <code>docs/experiments.md</code>（全仓索引）、"
+        "<code>docs/attribution.md</code> 与 <code>docs/findings.md</code>；"
+        "探针语义见 <code>sgdiff/data/perturb.py</code>。"
         "协议：evasion（干净权重，仅扰动推理图，测试正例已移除），同一批测试对评分。</footer>",
         "</div></body></html>",
     ]
@@ -1246,11 +2176,56 @@ def main() -> int:
     adaptive = Adaptive(ad_raw, args.primary) if ad_raw else None
     cal_raw = _load(f"calibration_{args.primary}.json", Calibration)
     calibration = Calibration(cal_raw, args.primary) if cal_raw else None
+    sig_raw = _load(f"significance_{args.primary}.json", Significance)
+    significance = Significance(sig_raw, args.primary) if sig_raw else None
+    gate_raw = _load(f"gated_{args.primary}.json", Gated)
+    gated = Gated(gate_raw, args.primary) if gate_raw else None
+    splice_raw = _load(f"splice_{args.primary}.json", Splice)
+    splice = Splice(splice_raw, args.primary) if splice_raw else None
+
+    # reproduction layer: every artifact is optional, the section degrades gracefully
+    transfer_name = next(
+        (f"transfer_matrix_{p}.json" for p in ("cpu", "full") if (results / f"transfer_matrix_{p}.json").exists()),
+        "",
+    )
+    ablation_name = next(
+        (
+            name
+            for name in (f"ablation_{args.primary}_full.json", f"ablation_{args.primary}.json")
+            if (results / name).exists()
+        ),
+        "",
+    )
+    overview = {
+        "indomain_full": _load("summary_indomain_full.json", dict),
+        "indomain_cpu": _load("summary_indomain_cpu.json", dict),
+        "benchmark": _load(f"benchmark_{args.primary}.json", dict),
+        "robustness": _load(f"robustness_{args.primary}.json", dict),
+        "purifier": _load(f"robustness_{args.primary}_purify2.json", dict),
+        "ablation": _load(ablation_name, dict) if ablation_name else None,
+        "transfer": _load(transfer_name, dict) if transfer_name else None,
+        "lowdata": _load("summary_lowdata_cora.json", dict),
+    }
+    overview = {k: v for k, v in overview.items() if v}
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
-        build(cora, dense, third, deep, deep_other, redesigns or None, operating, adaptive, calibration),
+        build(
+            cora,
+            dense,
+            third,
+            deep,
+            deep_other,
+            redesigns or None,
+            operating,
+            adaptive,
+            calibration,
+            significance,
+            gated,
+            splice,
+            overview or None,
+        ),
         encoding="utf-8",
     )
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} kB)")
