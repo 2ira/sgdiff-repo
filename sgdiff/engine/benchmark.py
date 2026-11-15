@@ -52,7 +52,7 @@ from .factory import build_model, load_split, prepare_datasets, training_pairs
 from .trainer import Trainer
 
 METRICS = ("auc", "ap", "hit@100")
-KINDS = ("node_pair", "subgraph", "sgdiff", "robust_node_pair")
+KINDS = ("node_pair", "subgraph", "sgdiff", "robust_node_pair", "course")
 
 # Budgets shared by scripts/run_benchmark.py and scripts/run_ablation.py; they
 # mirror the profiles of scripts/run_experiments.py so that every table in
@@ -184,6 +184,10 @@ def build_registry(cfg: ExperimentConfig, feature_dim: Optional[int] = None) -> 
             note="the paper's sub-graph diffusion model",
         ),
     }
+    from .course_baselines import CLASSICAL, PATH_MODELS, build_course_model
+    for name in CLASSICAL + PATH_MODELS:
+        registry[name] = ModelSpec(name, "course", lambda fd, c, n=name: build_course_model(n, fd),
+            note="course heuristic / fusion or author-code SP4LP; see docs/course_sp4lp.md")
     if feature_dim is not None:  # early validation of the shared feature width
         for spec in registry.values():
             spec.builder(feature_dim, cfg)
@@ -281,6 +285,9 @@ def fit_model(
     this function and then re-scores the frozen model on perturbed graphs, so the
     attack comparison reuses the exact training protocol of the benchmark.
     """
+    if spec.kind == "course":
+        from .course_baselines import fit_course_model
+        return fit_course_model(spec, cfg, graph, datasets, seed, node_pair_epochs, device)
     if spec.kind == "node_pair":
         features = node_feature_matrix(graph)
         model = spec.builder(features.shape[1], cfg)

@@ -1,0 +1,10 @@
+........................................................................ [ 36%]
+............................................................s..s........ [ 72%]
+........................................................                 [100%]
+=============================== warnings summary ===============================
+tests/test_gcn_ablation_bridge.py::test_shared_matches_reference_outputs_gradients_and_dropout_rng[True-True]
+  /Users/zhujiatong/Desktop/学习/phd/data8002/final_project/sgdiff-course-sp4lp/tests/test_gcn_ablation_bridge.py:19: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /Users/runner/work/pytorch/pytorch/aten/src/ATen/Context.cpp:923.)
+    return edges, torch.sparse_coo_tensor(torch.stack([row, col]), values, (4, 4)).coalesce()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+198 passed, 2 skipped, 1 deselected, 1 warning in 180.58s (0:03:00)

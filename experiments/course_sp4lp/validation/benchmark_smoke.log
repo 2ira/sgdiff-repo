@@ -1,0 +1,26 @@
+[20:47:09] INFO    sgdiff.data.datasets | loading cached data/processed/synthetic.npz
+/Users/zhujiatong/Desktop/学习/phd/data8002/final_project/sgdiff-repo/.venv/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+[1/9] synthetic seed=0 cn: auc=0.7300, ap=0.7058, hit@100=0.5000 (0.0s)
+[2/9] synthetic seed=0 aa: auc=0.7412, ap=0.7467, hit@100=0.5000 (0.0s)
+[3/9] synthetic seed=0 pa: auc=0.4925, ap=0.5103, hit@100=0.5000 (0.0s)
+[4/9] synthetic seed=0 feature_dot: auc=0.8175, ap=0.8448, hit@100=0.5000 (0.0s)
+[5/9] synthetic seed=0 feature_cosine: auc=0.7700, ap=0.6990, hit@100=0.5000 (0.0s)
+[6/9] synthetic seed=0 fusion_lr: auc=0.7375, ap=0.7133, hit@100=0.5000 (1.0s)
+[7/9] synthetic seed=0 sp4lp: auc=0.6550, ap=0.6832, hit@100=0.5000 (1.2s)
+[8/9] synthetic seed=0 sp4lp_endpoints: auc=0.8575, ap=0.8712, hit@100=0.5000 (0.0s)
+[9/9] synthetic seed=0 sp4lp_featureless: auc=0.8375, ap=0.7668, hit@100=0.5000 (0.0s)
+
+| model | AUC | AP | Hit@100 | #params | fit (s) |
+|---|---|---|---|---|---|
+| sp4lp_endpoints | 0.8575 | 0.8712 | 0.5000 | 10,497 | 0.0 |
+| sp4lp_featureless | 0.8375 | 0.7668 | 0.5000 | 48,513 | 0.0 |
+| feature_dot | 0.8175 | 0.8448 | 0.5000 | 0 | 0.0 |
+| feature_cosine | 0.7700 | 0.6990 | 0.5000 | 0 | 0.0 |
+| aa | 0.7412 | 0.7467 | 0.5000 | 0 | 0.0 |
+| fusion_lr | 0.7375 | 0.7133 | 0.5000 | 6 | 1.0 |
+| cn | 0.7300 | 0.7058 | 0.5000 | 0 | 0.0 |
+| sp4lp | 0.6550 | 0.6832 | 0.5000 | 50,497 | 1.2 |
+| pa | 0.4925 | 0.5103 | 0.5000 | 0 | 0.0 |
+
+wrote results/course_sp4lp_smoke/benchmark_synthetic.json and .md

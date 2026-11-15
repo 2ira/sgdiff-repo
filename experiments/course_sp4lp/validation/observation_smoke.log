@@ -1,0 +1,16 @@
+/Users/zhujiatong/Desktop/学习/phd/data8002/final_project/sgdiff-repo/.venv/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+[20:41:18] INFO    sgdiff.data.datasets | loading cached data/processed/synthetic.npz
+START synthetic seed=0 pairs={'train': 64, 'val': 24, 'test': 32}
+FIT synthetic seed=0 gcn
+FIT synthetic seed=0 vgae
+FIT synthetic seed=0 seal
+FIT synthetic seed=0 sp4lp
+FIT synthetic seed=0 sp4lp_endpoints
+FIT synthetic seed=0 sp4lp_featureless
+PATHS clean evaluation synthetic seed=0
+DONE synthetic seed=0 clean 0.0s cn=0.441 sp4lp=0.531
+DONE synthetic seed=0 random_delete_40 0.0s cn=0.500 sp4lp=0.559
+DONE synthetic seed=0 degree_delete_40 0.0s cn=0.375 sp4lp=0.562
+DONE synthetic seed=0 feature_mask_40 0.0s cn=0.441 sp4lp=0.500
+DONE synthetic seed=0 joint_degree_40 0.0s cn=0.375 sp4lp=0.543

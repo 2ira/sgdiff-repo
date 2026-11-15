@@ -1,0 +1,377 @@
+{
+  "dataset": "synthetic",
+  "models": [
+    "cn",
+    "aa",
+    "pa",
+    "feature_dot",
+    "feature_cosine",
+    "fusion_lr",
+    "sp4lp",
+    "sp4lp_endpoints",
+    "sp4lp_featureless"
+  ],
+  "seeds": [
+    0
+  ],
+  "protocol": {
+    "split": "80/5/15 (positives) with equal-size random negatives",
+    "neg_ratio": 1.0,
+    "subgraph": {
+      "hops": 1,
+      "max_nodes_per_hop": 8,
+      "max_nodes_total": null,
+      "remove_target_edge": true
+    },
+    "metrics": [
+      "auc",
+      "ap",
+      "hit@100"
+    ],
+    "epochs": {
+      "sgdiff": 2,
+      "subgraph": 40,
+      "node_pair": 2
+    },
+    "device": "cpu"
+  },
+  "data_integrity": {
+    "0": {
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9",
+      "num_train_pairs": 128,
+      "num_val_pairs": 40,
+      "num_test_pairs": 40
+    }
+  },
+  "runs": [
+    {
+      "model": "cn",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.73,
+        "ap": 0.7057692307692307,
+        "hit@100": 0.5
+      },
+      "seconds": 0.005784249864518642,
+      "num_params": 0,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    },
+    {
+      "model": "aa",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.74125,
+        "ap": 0.7466511266511267,
+        "hit@100": 0.5
+      },
+      "seconds": 0.0025052502751350403,
+      "num_params": 0,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    },
+    {
+      "model": "pa",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.4925,
+        "ap": 0.5102636624960776,
+        "hit@100": 0.5
+      },
+      "seconds": 0.0017521660774946213,
+      "num_params": 0,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    },
+    {
+      "model": "feature_dot",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.8175,
+        "ap": 0.844816694957949,
+        "hit@100": 0.5
+      },
+      "seconds": 0.0011884579434990883,
+      "num_params": 0,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    },
+    {
+      "model": "feature_cosine",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.77,
+        "ap": 0.6989921090560477,
+        "hit@100": 0.5
+      },
+      "seconds": 0.0009215832687914371,
+      "num_params": 0,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    },
+    {
+      "model": "fusion_lr",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.7375,
+        "ap": 0.7133475870291897,
+        "hit@100": 0.5
+      },
+      "seconds": 1.0034586670808494,
+      "num_params": 6,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    },
+    {
+      "model": "sp4lp",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.655,
+        "ap": 0.6832053856591677,
+        "hit@100": 0.5
+      },
+      "seconds": 1.1827114159241319,
+      "num_params": 50497,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    },
+    {
+      "model": "sp4lp_endpoints",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.8575,
+        "ap": 0.8712132906522294,
+        "hit@100": 0.5
+      },
+      "seconds": 0.010935250204056501,
+      "num_params": 10497,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    },
+    {
+      "model": "sp4lp_featureless",
+      "seed": 0,
+      "metrics": {
+        "auc": 0.8375,
+        "ap": 0.7667790048116137,
+        "hit@100": 0.5
+      },
+      "seconds": 0.04100483329966664,
+      "num_params": 48513,
+      "split_fingerprint": "504892fa412a9b63",
+      "subgraph_fingerprint": "b6aaf77636574a71",
+      "train_pairs_fingerprint": "0c152a6fe92ea4e9"
+    }
+  ],
+  "summary": {
+    "aa": {
+      "auc": {
+        "mean": 0.74125,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.7466511266511267,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 0.0025052502751350403,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "cn": {
+      "auc": {
+        "mean": 0.73,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.7057692307692307,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 0.005784249864518642,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "feature_cosine": {
+      "auc": {
+        "mean": 0.77,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.6989921090560477,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 0.0009215832687914371,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "feature_dot": {
+      "auc": {
+        "mean": 0.8175,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.844816694957949,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 0.0011884579434990883,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "fusion_lr": {
+      "auc": {
+        "mean": 0.7375,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.7133475870291897,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 1.0034586670808494,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "pa": {
+      "auc": {
+        "mean": 0.4925,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.5102636624960776,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 0.0017521660774946213,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "sp4lp": {
+      "auc": {
+        "mean": 0.655,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.6832053856591677,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 1.1827114159241319,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "sp4lp_endpoints": {
+      "auc": {
+        "mean": 0.8575,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.8712132906522294,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 0.010935250204056501,
+        "std": 0.0,
+        "n": 1
+      }
+    },
+    "sp4lp_featureless": {
+      "auc": {
+        "mean": 0.8375,
+        "std": 0.0,
+        "n": 1
+      },
+      "ap": {
+        "mean": 0.7667790048116137,
+        "std": 0.0,
+        "n": 1
+      },
+      "hit@100": {
+        "mean": 0.5,
+        "std": 0.0,
+        "n": 1
+      },
+      "seconds": {
+        "mean": 0.04100483329966664,
+        "std": 0.0,
+        "n": 1
+      }
+    }
+  },
+  "markdown": "| model | AUC | AP | Hit@100 | #params | fit (s) |\n|---|---|---|---|---|---|\n| sp4lp_endpoints | 0.8575 | 0.8712 | 0.5000 | 10,497 | 0.0 |\n| sp4lp_featureless | 0.8375 | 0.7668 | 0.5000 | 48,513 | 0.0 |\n| feature_dot | 0.8175 | 0.8448 | 0.5000 | 0 | 0.0 |\n| feature_cosine | 0.7700 | 0.6990 | 0.5000 | 0 | 0.0 |\n| aa | 0.7412 | 0.7467 | 0.5000 | 0 | 0.0 |\n| fusion_lr | 0.7375 | 0.7133 | 0.5000 | 6 | 1.0 |\n| cn | 0.7300 | 0.7058 | 0.5000 | 0 | 0.0 |\n| sp4lp | 0.6550 | 0.6832 | 0.5000 | 50,497 | 1.2 |\n| pa | 0.4925 | 0.5103 | 0.5000 | 0 | 0.0 |"
+}

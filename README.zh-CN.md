@@ -220,3 +220,7 @@ RQ1 一段话总结：结构支路（无任何节点特征）确实可以零样�
 ## GCN 消融整合入口
 
 新增 [GCN 三组输入消融与跨数据集迁移](experiments/gcn_ablation/README.md)，复用本仓库 GCN 编码器及内积解码器。两套实验的划分、传播图和指标存在差异；比较历史结果前请阅读 [重合与协议审查](docs/gcn_ablation_integration.md)。
+
+## 课程基线、SP4LP与观测缺失实验
+
+新增CN、AA、PA、属性点积/余弦、逻辑回归融合及SP4LP三个版本，接入现有benchmark和攻击评价。SGDiff v2核心保持不变。运行方式和历史结果边界见[集成说明](docs/course_sp4lp.md)。

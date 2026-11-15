@@ -80,6 +80,13 @@ def score_variant(
     clean_features: Optional[np.ndarray] = None,
 ) -> dict[str, float]:
     """Score one (model, perturbed graph) pair with the shared metric code."""
+    if kind == "course":
+        from .course_baselines import score_course_model
+        from ..utils.metrics import summarize_scores
+        pairs = np.vstack([pos, neg])
+        labels = np.r_[np.ones(len(pos)), np.zeros(len(neg))]
+        scores = score_course_model(model, eval_graph, pairs, clean_features, device)
+        return {k: float(v) for k, v in summarize_scores(labels, scores).items() if k in METRICS}
     if kind in ("node_pair", "robust_node_pair"):
         edge_index = _edge_index(eval_graph, device)
         x = torch.as_tensor(clean_features, device=device)
@@ -235,7 +242,7 @@ def run_robustness(
         clean_eval_graph = graph.drop_edges(test_edges)
         clean_features = (
             node_feature_matrix(clean_eval_graph)
-            if any(registry[m].kind in ("node_pair", "robust_node_pair") for m in models)
+            if any(registry[m].kind in ("node_pair", "robust_node_pair", "course") for m in models)
             else None
         )
 

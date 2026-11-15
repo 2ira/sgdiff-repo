@@ -26,12 +26,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+investigation = ["torch-geometric>=2.6", "scikit-learn>=1.5", "matplotlib>=3.8", "pandas>=2.2"]
 
 [project.scripts]
 sgdiff = "sgdiff.cli.main:main"
 
 [tool.setuptools.packages.find]
 include = ["sgdiff*"]
+
+[tool.setuptools.package-data]
+"sgdiff.vendor.sp4lp" = ["LICENSE", "PROVENANCE.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

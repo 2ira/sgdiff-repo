@@ -1,0 +1,23 @@
+{
+  "benchmark_models": 9,
+  "shared_split": true,
+  "shared_training_queries": true,
+  "observation_models": 12,
+  "observation_conditions": 5,
+  "observation_metric_rows": 60,
+  "historical_rows_excluding_sgdiff": 1152,
+  "historical_models": [
+    "aa",
+    "cn",
+    "feature_cosine",
+    "feature_dot",
+    "fusion_lr",
+    "gcn",
+    "pa",
+    "seal",
+    "sp4lp",
+    "sp4lp_endpoints",
+    "sp4lp_featureless",
+    "vgae"
+  ]
+}

@@ -1,0 +1,50 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_shared_matches_reference_outputs_gradients_and_dropout_rng[True-False] __
+
+propagate = True, sparse = False
+
+    @pytest.mark.parametrize('propagate,sparse', [(True, False), (True, True), (False, False), (False, True)])
+    def test_shared_matches_reference_outputs_gradients_and_dropout_rng(propagate, sparse):
+        _, a = adjacency()
+        x = torch.tensor([[1., 0., 2.], [0., 1., 0.], [2., 0., 1.], [1., 1., 0.]])
+        if propagate:
+            x = a @ x
+        if sparse:
+            x = x.to_sparse()
+        torch.manual_seed(71)
+        reference = ReferenceLinkModel(3, 5, 2, .3, propagate)
+        expected_rng = torch.get_rng_state()
+        torch.manual_seed(71)
+        shared = SharedLinkModel(3, 5, 2, .3, propagate)
+        assert torch.equal(expected_rng, torch.get_rng_state())
+        pairs = torch.tensor([[0, 1], [0, 3], [1, 2]])
+        torch.manual_seed(32)
+        expected = reference.score(reference(x, a), pairs)
+        expected.square().sum().backward()
+        torch.manual_seed(32)
+        actual = shared.score(shared(x, a), pairs)
+        actual.square().sum().backward()
+        torch.testing.assert_close(actual, expected, rtol=1e-5, atol=1e-7)
+        first, second = shared.predictor.encoder.lins
+        for got, want in [(first.weight.grad.T, reference.weight.grad),
+                          (first.bias.grad, reference.bias.grad),
+                          (second.weight.grad, reference.output.weight.grad),
+                          (second.bias.grad, reference.output.bias.grad)]:
+>           torch.testing.assert_close(got, want, rtol=1e-5, atol=1e-7)
+E           AssertionError: Tensor-likes are not close!
+E
+E           Mismatched elements: 1 / 15 (6.7%)
+E           Greatest absolute difference: 2.0780134946107864e-07 at index (0, 2) (up to 1e-07 allowed)
+E           Greatest relative difference: 0.00011876736971316859 at index (0, 2) (up to 1e-05 allowed)
+
+tests/test_gcn_ablation_bridge.py:49: AssertionError
+=============================== warnings summary ===============================
+tests/test_gcn_ablation_bridge.py::test_shared_matches_reference_outputs_gradients_and_dropout_rng[True-False]
+  /Users/zhujiatong/Desktop/学习/phd/data8002/final_project/sgdiff-upstream-control/tests/test_gcn_ablation_bridge.py:19: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /Users/runner/work/pytorch/pytorch/aten/src/ATen/Context.cpp:923.)
+    return edges, torch.sparse_coo_tensor(torch.stack([row, col]), values, (4, 4)).coalesce()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_gcn_ablation_bridge.py::test_shared_matches_reference_outputs_gradients_and_dropout_rng[True-False]
+1 failed, 1 warning in 2.47s
