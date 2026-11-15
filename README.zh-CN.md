@@ -26,9 +26,15 @@
 | 结构扩散步数 20 / 20 / 10 / 5 / 10 / 20 | 各数据集 `structure.num_steps` |
 | 特征 GCN 256 / 256 / 64，2 层，步数 100 / 100 / 50 | `feature.hidden_dim`、`num_layers`、`num_steps` |
 | USAir / NS / Router 不使用特征支路 | `feature.enabled: false` |
-| 训练目标 = VLB + 节点/边交叉熵之和 | `structure.aux_ce_weight: 1.0` |
+| 结构去噪器以**节点/边交叉熵**训练，推理按 Algorithm 1 的后验 KL 打分 | `structure.loss_mode: ce`、`class_scores` |
 | 先验 `p(y) = 0.5` | `LikelihoodFusion.log_prior`（均匀） |
 | 80/5/15 划分、等量负样本、AUC/AP/Hit@100、10 个随机种子 | `data.*`、`scripts/run_experiments.py --seeds` |
+
+> **方法状态（2026-11-15）：** `sgdiff-paper-v2`（修正实现：式 11 的特征 GCN、
+> categorical 节点/边扩散、共享噪声打分、两阶段训练）已在 8×H20 GPU 上以
+> `paper` 档（严格表 4：全量划分、子图不截断、全部 MC 步、10 种子）完整重跑
+> 域内网格与 RQ1/RQ2/RQ3 全部实验。2026-11-13 审计确认早期实现不忠实，
+> 其全部产物已于 2026-11-15 删除。
 
 ## 目录结构
 
@@ -119,114 +125,83 @@ python -m sgdiff train --config configs/sgdiff_cora.yaml \
 `--merge` 的存在原因：`run_experiments.py` 每次调用都会重写
 `results/summary_indomain_<profile>.json`，分批跑数据集时前面几批会被覆盖。
 
-## 本机实测
+## 本机实测（`sgdiff-paper-v2`，`paper` 档）
 
-域内链接预测，`full` 档，多个种子的均值 ± 标准差。数据源
-`results/summary_indomain_full.json`（可用 `python scripts/collect_results.py --merge full` 重建）。
-**是本机数字，不是论文数字**：
+以下全部数字来自修正实现 `sgdiff-paper-v2`、`paper` 档（严格表 4：全量
+训练/测试划分、子图不截断、全部 MC 步），8×NVIDIA H20，2026-11-14/15。
+逐种子数据源：`results/sgdiff-paper-v2/{dataset}_seed{K}_paper.json`。
+**是本机数字；论文表 2 没有 clean AUC 列可对比**（其 0.884/0.871/0.951
+是 RF@25% 攻击下的数字，不能当 clean 参照）：
 
-| 数据集 | 种子 | AUC | AP | Hit@100 | 论文（clean AUC） |
-|--------|-----:|----:|---:|--------:|------------------:|
-| Cora | 0/1/2 | 0.730 ± 0.030 | 0.794 | 0.973 | 0.884 |
-| Citeseer | 0/1/2 | 0.778 ± 0.016 | 0.814 | 0.937 | 0.871 |
-| Pubmed | 0 | 0.827 | 0.817 | 0.900 | 0.951 |
-| USAir | 0/1/2 | 0.929 ± 0.002 | 0.924 | 0.967 | ~0.95 |
-| NS | 0/1/2 | 0.985 ± 0.002 | 0.987 | 1.000 | ~0.97 |
+| 数据集 | 种子 | AUC | AP | Hit@100 |
+|--------|-----:|----:|---:|--------:|
+| Cora | 0-9 | **0.862 ± 0.008** | 0.875 | 0.953 |
+| Citeseer | 0-9 | **0.833 ± 0.011** | 0.858 | 0.980 |
+| Pubmed | 0-9 | **0.902 ± 0.002** | 0.900 | 0.988 |
+| USAir | 0-9 | **0.868 ± 0.087** | 0.883 | 0.962 |
+| NS | 0-9 | **0.965 ± 0.007** | 0.974 | 1.000 |
 
-无节点特征的 USAir / NS 与论文持平或略好；有特征的三个引文网络偏低
-（Cora 低 15 点、Citeseer 低 9 点、Pubmed 低 12 点）。**落后的恰好是"有节点特征"的三个数据集**，
-而无特征的两个数据集能对上——这说明问题出在特征支路，而不是结构支路。
+公式级修正对有特征的引文图影响最大（旧实现已删除的记录为 Cora 0.730 /
+Citeseer 0.778 / Pubmed 0.827，修正后 +5.5 到 +13.2 个点）。
 
-从 `cpu` 档换到 `full` 档（全量训练对、20 epoch、8 个 MC 步、60 节点上限）：
-Citeseer +4.0、NS +2.1、USAir 无变化、Cora −2.1（Cora 的种子间方差 0.690/0.736/0.763
-已大于档位差）。`results/summary_indomain_cpu.json` 保留了更省的档位。
+同划分 Cora 基线（`results/sgdiff-paper-v2/baselines_cora.json` + 3 种子
+robustness 运行）：GCN 0.823 / GAT 0.849 / SAGE 0.743 / VGAE 0.824 /
+SEAL 0.888 / PENCIL 0.883。**SEAL 与 PENCIL 在 clean AUC 上仍高于 SGDiff v2
+（0.858）**；SGDiff 的优势在 Hit@100 排序指标，以及攻击下的稳定性。
 
-同划分的 Cora 基线（`results/baselines_cora_full.json`、`results/baselines_cora_seal.json`）：
-
-| 模型 | AUC | AP |
-|------|----:|----:|
-| GCN | 0.811 | 0.826 |
-| GAT | 0.846 | 0.858 |
-| SAGE | 0.749 | 0.758 |
-| VGAE（`kl_weight=1e-3`） | 0.798 | 0.810 |
-| SEAL（1-hop 子图，20 epoch） | 0.855 | 0.885 |
-
-SEAL 在这套 1-hop 子图上**强于** SGDiff（0.855 vs 0.730）：两者读的是同一批子图，
-说明在表 4 的 `k=1` 设定下，有监督子图分类器比生成式似然更占优。SEAL 自己的协议
-（3 000 子图 / 2 跳 / ranking loss）本仓库未复现。
-
-### 研究问题（`cpu` 档）
-
-RQ1–RQ3 每个 arm 都要独立训练一次，因此保留便宜的预算；同一组对比内部预算一致。
+### 研究问题（`paper` 档）
 
 | 研究问题 | 实验 | 结果 |
 |---|---|---|
-| RQ1 | 5 源 × 5 目标（Router 不可得）、3 种子、全量测试集、不含节点特征、剔除对角线 | 源平均 **0.71-0.84**，目标平均 **0.67-0.92**（`results/transfer_matrix_cpu.json`） |
-| RQ2 | Cora 仅用 1% 训练子图（40 epoch） | AUC 0.725 ± 0.058 |
-| RQ3 | Cora 随机翻转 10% / 25% / 50% | AUC 0.698 / 0.651 / 0.577 |
-| RQ3 | Cora DICE 10% / 25% / 50% | AUC 0.692 / 0.643 / 0.584 |
+| RQ1 | 5 源 × 5 目标（Router 不可得）、10 种子、全量测试集、不含节点特征、`source_ns` | 如 citeseer→cora **0.834**、citeseer→ns **0.957**、usair→pubmed **0.799** |
+| RQ2 | Cora 仅用 1% 训练子图，10 种子 | AUC **0.711 ± 0.092** |
+| RQ3 | Cora，SGDiff 在 RF/DICE/EA @10/25/50% 下，3 种子 | EA@25% **0.834**（clean 0.858）；最差 DICE@50% 0.751 |
+| RQ3 | Cora，7 个模型 × RF/DICE/EA，3 种子 | `results/sgdiff-paper-v2/robustness_cora__v2_seed{K}.{json,md}` |
 
-RQ1 一段话总结：迁移始终达不到域内水平，要损失 1-13 个点
-（NS 作目标 0.924 vs 域内 0.964；Citeseer 0.673 vs 0.738；Pubmed 0.682-0.738 vs 0.817），
-而且有一格跌到随机水平（Pubmed → NS `0.494 ± 0.038`）。**域内越强的源迁移越差**
-（源平均：Citeseer 0.838 > Cora 0.824 > USAir 0.759 > Pubmed 0.742 > NS 0.713，
-几乎与域内排名相反），说明小而准的源过拟合了自己的度分布。用目标的表 4 `ns` 替代源的 `ns`
-会让低度目标变好（USAir +2.6）、Pubmed 变差（−5.6），可见"无需重训"仍隐含一个
-per-dataset 旋钮。完整矩阵与两个变体见 `docs/reproduction.md` 第 4 节。
+RQ1 一段话总结：结构支路（无任何节点特征）确实可以零样本迁移——citeseer
+训练的模型在 cora 上 0.834、在 ns 上 0.957；即使 332 节点的 USAir 源也能在
+19717 节点的 Pubmed 上拿到 0.799。cora 是最难的目标（0.603–0.834），
+与其 hub 密集的 1-hop 邻域一致。
 
 ### 已完成 / 未完成
 
 | 实验 | 状态 | 产物 |
 |------|------|------|
-| 域内网格 `full` | 完成：Cora/Citeseer/USAir/NS × 种子 0-2，Pubmed × 种子 0 | `results/summary_indomain_full.json` |
-| 域内网格 `cpu` | 完成：5 数据集 × 种子 0-2 | `results/summary_indomain_cpu.json` |
-| 域内网格 `paper` | 未跑：需要 GPU（1-hop 子图不设上限） | — |
-| 基线（Cora） | 完成：GCN/GAT/SAGE/VGAE 200 epoch、SEAL 20 epoch、PENCIL 在 benchmark 中 | `results/baselines_cora_{full,seal}.json` |
-| 同数据 benchmark | 完成 | `results/benchmark_cora.{json,md}`、`docs/benchmark.md` |
-| 似然消融 | 完成 | `results/ablation_cora{,_full}.{json,md}`、`docs/ablation.md` |
-| RQ1 单源迁移 | 完成（`cpu`，种子 0，每类 500 对），已被矩阵取代 | `results/transfer_cora_seed0_cpu.json` |
-| RQ1 全矩阵 | 完成：5 源 × 5 目标、3 种子、全量测试集、`source_ns` + `target_ns` 两版 | `results/transfer_matrix_cpu.json` |
-| RQ2 / RQ3 | 完成，3 种子（`cpu`） | `results/summary_{lowdata,attack}_cora.json` |
+| 域内网格 `paper` | 完成：5 数据集 × 种子 0-9 | `results/sgdiff-paper-v2/{ds}_seed{K}_paper.json` |
+| RQ1 迁移 | 完成：5 源 × 10 种子，`source_ns` | `results/sgdiff-paper-v2/transfer_{src}_seed{K}_paper.json` |
+| RQ2 低数据 | 完成：Cora × 10 种子 | `results/sgdiff-paper-v2/lowdata_cora_seed{K}_paper.json` |
+| RQ3 攻击（SGDiff） | 完成：3 种子 | `results/sgdiff-paper-v2/attack_cora_seed{K}_paper.json` |
+| RQ3 全模型鲁棒性 | 完成：3 种子 | `results/sgdiff-paper-v2/robustness_cora__v2_seed{K}.{json,md}` |
+| 基线（Cora） | 完成 | `results/sgdiff-paper-v2/baselines_cora.json` |
+| 似然消融 / 探针链 | 未在 v2 上重跑（旧产物已于 2026-11-15 删除） | `docs/ablation.md`、`docs/attribution.md` |
 
 ## 论文本身的漏洞与欠定义之处
 
-本仓库在**有节点特征**的三个数据集上比论文低（Cora −15、Citeseer −9、Pubmed −12 个 AUC 点），
-而在**无特征**的两个数据集上与论文持平。追这个差距时遇到以下问题，它们让"是否复现成功"
-变得无法判定，而不只是困难。以下不是"论文错了"的断言，而是复现时缺少的必要信息。
+复现过程中暴露出以下论文未定的协议细节。它们让"是否复现成功"部分不可判定——
+以下不是"论文错了"的断言，而是复现缺少的必要信息。
 
-1. **没有参考实现。** 论文链接的官方仓库只有一个两行 README，下面所有细节都只能从正文推断。
+1. **没有参考实现。** 论文链接的官方仓库只有一个两行 README，所有细节只能从正文推断。
 2. **优化细节完全未报告。** batch size、学习率、epoch 数、两阶段日程、`{η₁, η₂, δ}` 的拟合方式
    都没有；我们只能自选（见 `docs/alignment.md` 第 4 节），而它们能让 Cora 变动好几个点。
 3. **没有方差、没有评测集规模。** 4.1 节说用了 10 个种子，但表里只给单个数，也没说测试对数量
-   与负采样规则。没有这些，2-3 个点的差异既不能说"复现失败"，也不能说"复现成功"。
+   与负采样规则。
 4. **RQ1 没说明是否剔除对角线。** "在全部六个图上测"把真正的迁移行和域内行（source=target）
-   混在一起；Source/Target 平均会因此变化。我们剔除对角线并单独报出。
+   混在一起；我们剔除对角线并单独报出。
 5. **RQ1 的特征处理不是中立的。** SGDIFF/SEAL 完全不给特征，VGAE 用"随机投影 + 行归一化"，
-   无特征图用高斯随机向量。这套设计检验的是**结构支路**能否迁移，而不是特征支路；而且随机投影
-   无法对齐跨数据集的语义，VGAE 的迁移分数基本是噪声，不能当作其编码器可迁移的证据。
-6. **"无需重训"仍隐含目标端知识。** 表 4 的 `ns` 是 per-dataset 的。若测试时用目标的 `ns`，
-   就不是纯零样本；论文没说用哪一套。我们两版都报（`results/transfer_matrix_cpu.json`：
-   `source_ns` 与 `target_ns`）。
-7. **Source/Target 是无权算术平均。** 目标难度差异极大（我们实测单目标 AUC 跨度 0.80-0.99），
-   平均值取决于目标集合里放了哪些数据集；完整的矩阵才是可靠产物。
+   无特征图用高斯随机向量——检验的是结构支路，随机投影无法对齐跨数据集语义。
+6. **"无需重训"仍隐含目标端知识。** 表 4 的 `ns` 是 per-dataset 的。论文没说测试时用哪一套；
+   我们的矩阵采用最严格的 `source_ns` 读法。
+7. **Source/Target 是无权算术平均。** 目标难度差异极大，平均值取决于集合里放了哪些数据集；
+   完整矩阵才是可靠产物。
 
-### 我们这边的同类问题（诚实清单）
+### 实现侧备注（诚实清单）
 
-* **特征支路从未学到东西。** 每个有特征的数据集上，DDPM 损失在 20 个 epoch 内始终是
-  `1.0000 ± 0.0003`，即去噪器输出≈0、特征似然是常数。原因：Cora 的 `eps` 是 1433 维，
-  但只能通过 `1433 → 256` 的投影到达输出，无法重建，于是"预测 0"成为最优解。
-  加上 `sqrt(1-ā)·x_t` 的跳连后损失能下降（0.74 → 0.69），但 Cora AUC 反而从 0.736 掉到 0.704，
-  说明该支路在当前预算下本身没有信息量。下文数字都是在"支路存在但无效"的状态下测得的。
-* **`k = 1` 是论文的设定，不是偏差。** 它只能解释我们为什么低于 SEAL 的 2-hop 结果，
-  不能解释我们为什么低于同样用 `k = 1` 的论文。
-* **KL 曾经产生 `inf`。** float32 下 `1 - (1 - 1e-8)` 会舍入成 `0`，
-  `log((1-pq)/(1-sigmoid(z)))` 直接变 `inf`；NS 种子 1 因此参数变 NaN、AUC 0.223。
-  已改为 log 空间计算并跳过非有限步，重跑得 0.985。
-* **负样本三次采样未共享去重集合**，测试负样本可能同时出现在训练负样本里
-  （Cora 1/792、USAir 12/319）。重叠不超过测试负样本的 3.8%，且会**抬高** AUC，
-  因此不能解释精度差；为保持结果可复现，记录但不改动。
-
-完整清单见 `docs/reproduction.md` 的 bug journal。
+* **`k = 1` 是论文的设定，不是偏差。** 表 4 所有数据集都是 `k=1`；它解释了 1-hop SEAL
+  为何是强基线，不构成与论文的偏离。
+* **KL 项在 log 空间计算。** float32 下 `1 - (1 - 1e-8)` 舍入成 `0` 会使
+  `log((1-pq)/(1-sigmoid(z)))` 变 `inf`；已加非有限步保护。
+* **负样本各 split 独立采样、未共享去重集合**，测试负样本可能同时出现在训练负样本里
+  （小图上 ≤ 3.8%）。重叠会小幅抬高 AUC；为保持可复现，记录但不改动。
 
 ## 文档
 

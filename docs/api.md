@@ -148,6 +148,6 @@ Per-run metrics are written to `results/<dataset>_seed<k>_<profile>.json`.
 grid is run in batches rebuild it from the per-seed files:
 
 ```bash
-python scripts/collect_results.py --merge full   # -> results/summary_indomain_full.json
+python scripts/collect_results.py --merge paper   # -> results/sgdiff-paper-v2/summary_indomain_paper.json
 python scripts/collect_results.py --write       # -> results/RESULTS.md
 ```

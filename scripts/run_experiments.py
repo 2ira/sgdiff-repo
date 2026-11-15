@@ -296,6 +296,9 @@ def run_lowdata(dataset: str, seeds, profile, ratio: float = 0.01) -> dict:
         extra = [f"data.train_ratio={ratio}"]
         if ratio <= 0.02:
             extra += ["train.epochs=40", "train.pretrain_epochs=10", "train.patience=40"]
+        # Distinct run name: must not collide with (nor overwrite) the in-domain
+        # checkpoints that live under runs/<method>/{dataset}_seed{K}_{profile}.
+        extra.append(f"train.run_name=lowdata_{dataset}_seed{seed}_{profile}")
         result, _cfg, tag = _train(dataset, seed, profile, extra)
         metrics = dict(result["test"])
         metrics.update({"dataset": dataset, "seed": seed, "ratio": ratio})
@@ -314,7 +317,10 @@ def run_attack(
     attacks: list[str] | None = None,
 ) -> dict:
     """RQ3: RF / DICE / EA perturbations of the inference graph (SGDiff, evasion)."""
-    result, _cfg, tag = _train(dataset, seed, profile)
+    # Distinct run name: retraining here must not collide with the in-domain
+    # checkpoints under runs/<method>/{dataset}_seed{K}_{profile}.
+    extra = [f"train.run_name=attack_{dataset}_seed{seed}_{profile}"]
+    result, _cfg, tag = _train(dataset, seed, profile, extra)
     model, cfg = load_checkpoint(f"{result['run_dir']}/best.pt", device=resolve_device("auto"))
     graph = api.load_graph(dataset)
     split = make_link_split(graph, seed=cfg.data.seed)

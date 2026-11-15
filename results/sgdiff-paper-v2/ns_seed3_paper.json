@@ -1,0 +1,85 @@
+{
+  "auc": 0.9682810307777008,
+  "ap": 0.9762803924416019,
+  "hit@100": 1.0,
+  "dataset": "ns",
+  "seed": 3,
+  "profile": "paper",
+  "method_version": "sgdiff-paper-v2",
+  "protocol": {
+    "structure_training_loss": "ce",
+    "feature_training_loss": "epsilon_mse",
+    "fusion_frozen": true,
+    "preprocessing": {
+      "train_context": "train",
+      "val_context": "train",
+      "test_context": "train+val (transductive)",
+      "drnl": "final_subgraph_opposite_endpoint_removed; endpoints=1; unreachable=0",
+      "feature_mode": "structural",
+      "feature_normalization": "none",
+      "feature_dim": 17,
+      "max_label": 16,
+      "hops": 1,
+      "max_nodes_per_hop": 5,
+      "max_nodes_total": null,
+      "remove_target": true,
+      "hit_metric": "precision@k over the pooled candidates (legacy hit@k key)",
+      "marginals": {
+        "source": "training_pairs_subgraphs",
+        "num_pairs": 4388,
+        "node_counts": [
+          12637,
+          8776,
+          5008,
+          2635,
+          176,
+          0,
+          19,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "edge_counts": [
+          49608,
+          47155
+        ],
+        "node_marginal": [
+          0.4320194181395508,
+          0.30002393080578443,
+          0.17120782195480497,
+          0.0900823903456292,
+          0.006016888311510718,
+          0.0,
+          0.000649550442719907,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "edge_marginal": [
+          0.5126752994429689,
+          0.4873247005570311
+        ],
+        "edge_counting": "valid strict upper triangle; absent=0; present=1"
+      },
+      "max_steps_per_epoch": null
+    },
+    "feature_normalization": "none",
+    "structure_noise_schedule": "cosine",
+    "schedule_status": "chosen reproducible budget; training epochs unspecified in paper"
+  },
+  "seconds": 920.2
+}

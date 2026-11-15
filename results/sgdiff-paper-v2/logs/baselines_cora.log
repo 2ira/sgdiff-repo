@@ -1,0 +1,6 @@
+[00:06:22] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+gcn {'auc': 0.8232084098561371, 'ap': 0.8374586728091775, 'hit@100': 0.97, 'best_val_auc': 0.9641729797979798, 'epochs_run': 40}
+gat {'auc': 0.8493847885419855, 'ap': 0.8564590867473418, 'hit@100': 0.97, 'best_val_auc': 0.9262367998163453, 'epochs_run': 40}
+sage {'auc': 0.7426123609835731, 'ap': 0.7441621878154656, 'hit@100': 0.86, 'best_val_auc': 0.9363808539944903, 'epochs_run': 160}
+vgae {'auc': 0.8236165314763799, 'ap': 0.8212947351662875, 'hit@100': 0.94, 'best_val_auc': 0.9495810376492194, 'epochs_run': 50}
+seal {'best_val_auc': 0.9078713269054178, 'epochs_run': 11, 'test_auc': 0.88792, 'test_ap': 0.9100234658481664, 'test_hit@100': 0.99}

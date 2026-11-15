@@ -1,0 +1,85 @@
+{
+  "auc": 0.8112517122590244,
+  "ap": 0.8444726273600469,
+  "hit@100": 0.99,
+  "dataset": "citeseer",
+  "seed": 5,
+  "profile": "paper",
+  "method_version": "sgdiff-paper-v2",
+  "protocol": {
+    "structure_training_loss": "ce",
+    "feature_training_loss": "epsilon_mse",
+    "fusion_frozen": true,
+    "preprocessing": {
+      "train_context": "train",
+      "val_context": "train",
+      "test_context": "train+val (transductive)",
+      "drnl": "final_subgraph_opposite_endpoint_removed; endpoints=1; unreachable=0",
+      "feature_mode": "attribute",
+      "feature_normalization": "none",
+      "feature_dim": 3703,
+      "max_label": 16,
+      "hops": 1,
+      "max_nodes_per_hop": 20,
+      "max_nodes_total": null,
+      "remove_target": true,
+      "hit_metric": "precision@k over the pooled candidates (legacy hit@k key)",
+      "marginals": {
+        "source": "training_pairs_subgraphs",
+        "num_pairs": 7282,
+        "node_counts": [
+          32351,
+          14564,
+          1935,
+          7530,
+          1256,
+          0,
+          375,
+          0,
+          88,
+          0,
+          0,
+          21,
+          0,
+          0,
+          6,
+          0,
+          4
+        ],
+        "edge_counts": [
+          260933,
+          66467
+        ],
+        "node_marginal": [
+          0.5565284706691898,
+          0.25054188886977463,
+          0.0332874591432995,
+          0.12953724410803372,
+          0.021606743505934972,
+          0.0,
+          0.006451057973507655,
+          0.0,
+          0.0015138482711164632,
+          0.0,
+          0.0,
+          0.0003612592465164287,
+          0.0,
+          0.0,
+          0.00010321692757612249,
+          0.0,
+          6.881128505074832e-05
+        ],
+        "edge_marginal": [
+          0.7969853390348198,
+          0.2030146609651802
+        ],
+        "edge_counting": "valid strict upper triangle; absent=0; present=1"
+      },
+      "max_steps_per_epoch": null
+    },
+    "feature_normalization": "none",
+    "structure_noise_schedule": "cosine",
+    "schedule_status": "chosen reproducible budget; training epochs unspecified in paper"
+  },
+  "seconds": 2033.0
+}

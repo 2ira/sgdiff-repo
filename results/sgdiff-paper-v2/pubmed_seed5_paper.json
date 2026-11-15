@@ -1,0 +1,85 @@
+{
+  "auc": 0.9003895817976896,
+  "ap": 0.8983047050272542,
+  "hit@100": 0.99,
+  "dataset": "pubmed",
+  "seed": 5,
+  "profile": "paper",
+  "method_version": "sgdiff-paper-v2",
+  "protocol": {
+    "structure_training_loss": "ce",
+    "feature_training_loss": "epsilon_mse",
+    "fusion_frozen": true,
+    "preprocessing": {
+      "train_context": "train",
+      "val_context": "train",
+      "test_context": "train+val (transductive)",
+      "drnl": "final_subgraph_opposite_endpoint_removed; endpoints=1; unreachable=0",
+      "feature_mode": "attribute",
+      "feature_normalization": "none",
+      "feature_dim": 500,
+      "max_label": 16,
+      "hops": 1,
+      "max_nodes_per_hop": 20,
+      "max_nodes_total": null,
+      "remove_target": true,
+      "hit_metric": "precision@k over the pooled candidates (legacy hit@k key)",
+      "marginals": {
+        "source": "training_pairs_subgraphs",
+        "num_pairs": 70918,
+        "node_counts": [
+          670318,
+          141836,
+          18829,
+          149946,
+          36092,
+          0,
+          12416,
+          0,
+          3115,
+          0,
+          0,
+          980,
+          0,
+          0,
+          264,
+          0,
+          81
+        ],
+        "edge_counts": [
+          9233270,
+          1297877
+        ],
+        "node_marginal": [
+          0.64835372099389,
+          0.1371884663262651,
+          0.018212031024967188,
+          0.14503272633011471,
+          0.034909375099745905,
+          0.0,
+          0.012009165500344818,
+          0.0,
+          0.0030129309385932756,
+          0.0,
+          0.0,
+          0.0009478883851754125,
+          0.0,
+          0.0,
+          0.00025534952416970296,
+          0.0,
+          7.834587673388614e-05
+        ],
+        "edge_marginal": [
+          0.8767582486504082,
+          0.12324175134959184
+        ],
+        "edge_counting": "valid strict upper triangle; absent=0; present=1"
+      },
+      "max_steps_per_epoch": null
+    },
+    "feature_normalization": "none",
+    "structure_noise_schedule": "cosine",
+    "schedule_status": "chosen reproducible budget; training epochs unspecified in paper"
+  },
+  "seconds": 10692.0
+}

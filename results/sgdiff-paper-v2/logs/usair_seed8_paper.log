@@ -1,0 +1,78 @@
+[19:57:38] INFO    sgdiff.data.datasets | loading cached data/processed/usair.npz
+[19:57:48] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 0, 'stage': 'pretrain', 'loss': 1.439, 'structure': 1.439, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.3808}
+[19:57:52] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 1, 'stage': 'pretrain', 'loss': 1.2793, 'structure': 1.2793, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.3191}
+[19:57:57] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 2, 'stage': 'pretrain', 'loss': 1.2054, 'structure': 1.2054, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.3025}
+[19:58:02] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 3, 'stage': 'pretrain', 'loss': 1.2256, 'structure': 1.2256, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.3421}
+[19:58:06] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 4, 'stage': 'pretrain', 'loss': 1.2358, 'structure': 1.2358, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.3056}
+[19:58:11] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 5, 'stage': 'pretrain', 'loss': 1.2179, 'structure': 1.2179, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2829}
+[19:58:16] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 6, 'stage': 'pretrain', 'loss': 1.1839, 'structure': 1.1839, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2633}
+[19:58:20] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 7, 'stage': 'pretrain', 'loss': 1.1735, 'structure': 1.1735, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2781}
+[19:58:25] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 8, 'stage': 'pretrain', 'loss': 1.1819, 'structure': 1.1819, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2638}
+[19:58:29] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 9, 'stage': 'pretrain', 'loss': 1.1737, 'structure': 1.1737, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.235}
+[19:58:34] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 10, 'stage': 'pretrain', 'loss': 1.1606, 'structure': 1.1606, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2397}
+[19:58:39] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 11, 'stage': 'pretrain', 'loss': 1.1645, 'structure': 1.1645, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2553}
+[19:58:43] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 12, 'stage': 'pretrain', 'loss': 1.1493, 'structure': 1.1493, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2373}
+[19:58:48] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 13, 'stage': 'pretrain', 'loss': 1.1182, 'structure': 1.1182, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2172}
+[19:58:52] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 14, 'stage': 'pretrain', 'loss': 1.114, 'structure': 1.114, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2102}
+[19:58:57] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 15, 'stage': 'pretrain', 'loss': 1.1477, 'structure': 1.1477, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2374}
+[19:59:01] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 16, 'stage': 'pretrain', 'loss': 1.1324, 'structure': 1.1324, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2248}
+[19:59:06] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 17, 'stage': 'pretrain', 'loss': 1.1116, 'structure': 1.1116, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2082}
+[19:59:11] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 18, 'stage': 'pretrain', 'loss': 1.1372, 'structure': 1.1372, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2032}
+[19:59:15] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 19, 'stage': 'pretrain', 'loss': 1.1217, 'structure': 1.1217, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2054}
+[19:59:20] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 20, 'stage': 'pretrain', 'loss': 1.1184, 'structure': 1.1184, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2128}
+[19:59:24] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 21, 'stage': 'pretrain', 'loss': 1.1256, 'structure': 1.1256, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2375}
+[19:59:29] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 22, 'stage': 'pretrain', 'loss': 1.1383, 'structure': 1.1383, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2161}
+[19:59:33] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 23, 'stage': 'pretrain', 'loss': 1.1195, 'structure': 1.1195, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2095}
+[19:59:38] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 24, 'stage': 'pretrain', 'loss': 1.1133, 'structure': 1.1133, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2022}
+[19:59:42] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 25, 'stage': 'pretrain', 'loss': 1.1393, 'structure': 1.1393, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2044}
+[19:59:47] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 26, 'stage': 'pretrain', 'loss': 1.1175, 'structure': 1.1175, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2013}
+[19:59:52] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 27, 'stage': 'pretrain', 'loss': 1.1372, 'structure': 1.1372, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2171}
+[19:59:56] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 28, 'stage': 'pretrain', 'loss': 1.1146, 'structure': 1.1146, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2249}
+[20:00:01] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 29, 'stage': 'pretrain', 'loss': 1.1162, 'structure': 1.1162, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1941}
+[20:00:05] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 30, 'stage': 'pretrain', 'loss': 1.1074, 'structure': 1.1074, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2028}
+[20:00:10] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 31, 'stage': 'pretrain', 'loss': 1.1405, 'structure': 1.1405, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2096}
+[20:00:14] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 32, 'stage': 'pretrain', 'loss': 1.0966, 'structure': 1.0966, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2144}
+[20:00:19] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 33, 'stage': 'pretrain', 'loss': 1.1232, 'structure': 1.1232, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2173}
+[20:00:24] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 34, 'stage': 'pretrain', 'loss': 1.1164, 'structure': 1.1164, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2043}
+[20:00:28] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 35, 'stage': 'pretrain', 'loss': 1.0961, 'structure': 1.0961, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.208}
+[20:00:33] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 36, 'stage': 'pretrain', 'loss': 1.1215, 'structure': 1.1215, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1901}
+[20:00:37] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 37, 'stage': 'pretrain', 'loss': 1.1209, 'structure': 1.1209, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1931}
+[20:00:42] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 38, 'stage': 'pretrain', 'loss': 1.1173, 'structure': 1.1173, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.203}
+[20:00:46] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 39, 'stage': 'pretrain', 'loss': 1.0903, 'structure': 1.0903, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1961}
+[20:00:51] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 40, 'stage': 'pretrain', 'loss': 1.1215, 'structure': 1.1215, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1954}
+[20:00:55] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 41, 'stage': 'pretrain', 'loss': 1.1093, 'structure': 1.1093, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2098}
+[20:01:00] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 42, 'stage': 'pretrain', 'loss': 1.1129, 'structure': 1.1129, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2081}
+[20:01:04] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 43, 'stage': 'pretrain', 'loss': 1.1243, 'structure': 1.1243, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2134}
+[20:01:09] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 44, 'stage': 'pretrain', 'loss': 1.1095, 'structure': 1.1095, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1888}
+[20:01:14] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 45, 'stage': 'pretrain', 'loss': 1.0985, 'structure': 1.0985, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.193}
+[20:01:18] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 46, 'stage': 'pretrain', 'loss': 1.1106, 'structure': 1.1106, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.2027}
+[20:01:23] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 47, 'stage': 'pretrain', 'loss': 1.1221, 'structure': 1.1221, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1907}
+[20:01:27] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 48, 'stage': 'pretrain', 'loss': 1.0961, 'structure': 1.0961, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1812}
+[20:01:32] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 49, 'stage': 'pretrain', 'loss': 1.1188, 'structure': 1.1188, 'feature': 0.0, 'ce': 0.0, 'val_loss': 1.1939}
+[20:02:11] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 0, 'stage': 'finetune', 'loss': 0.6644, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6644, 'val_loss': 0.6785, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:02:51] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 1, 'stage': 'finetune', 'loss': 0.6614, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6614, 'val_loss': 0.6793, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:03:31] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 2, 'stage': 'finetune', 'loss': 0.6628, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6628, 'val_loss': 0.6793, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:04:10] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 3, 'stage': 'finetune', 'loss': 0.6646, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6646, 'val_loss': 0.6788, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:04:50] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 4, 'stage': 'finetune', 'loss': 0.6661, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6661, 'val_loss': 0.6783, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:05:29] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 5, 'stage': 'finetune', 'loss': 0.6624, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6624, 'val_loss': 0.6784, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:06:08] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 6, 'stage': 'finetune', 'loss': 0.6637, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6637, 'val_loss': 0.6792, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:06:47] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 7, 'stage': 'finetune', 'loss': 0.6623, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6623, 'val_loss': 0.6792, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:07:26] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 8, 'stage': 'finetune', 'loss': 0.6613, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6613, 'val_loss': 0.6798, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:08:05] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 9, 'stage': 'finetune', 'loss': 0.6559, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6559, 'val_loss': 0.6805, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:08:44] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 10, 'stage': 'finetune', 'loss': 0.6606, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6606, 'val_loss': 0.6797, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:09:23] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 11, 'stage': 'finetune', 'loss': 0.6641, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6641, 'val_loss': 0.679, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:10:02] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 12, 'stage': 'finetune', 'loss': 0.6613, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6613, 'val_loss': 0.6788, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:10:41] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 13, 'stage': 'finetune', 'loss': 0.6621, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6621, 'val_loss': 0.6787, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:11:20] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 14, 'stage': 'finetune', 'loss': 0.6645, 'structure': 0.0, 'feature': 0.0, 'ce': 0.6645, 'val_loss': 0.6788, 'val_auc': 0.5757, 'val_ap': 0.6491, 'val_hit@100': 0.56}
+[20:11:20] INFO    sgdiff.engine.trainer | early stopping finetune at epoch 14
+[20:11:26] INFO    sgdiff.engine.trainer | {'method_version': 'sgdiff-paper-v2', 'epoch': 'final', 'stage': 'test', 'test_auc': 0.6357, 'test_ap': 0.7203, 'test_hit@100': 0.89}
+[usair seed=8] auc=0.6357 ap=0.7203 hit@100=0.8900 (828.2s)
+{
+  "usair": {
+    "auc": 0.6357,
+    "ap": 0.7203,
+    "hit@100": 0.89,
+    "seed": 8.0,
+    "seconds": 828.2
+  }
+}

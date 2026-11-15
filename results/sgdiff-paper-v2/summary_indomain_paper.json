@@ -1,0 +1,41 @@
+{
+  "pubmed": {
+    "method_version": "sgdiff-paper-v2",
+    "num_seeds": 1,
+    "auc": {
+      "mean": 0.899588583381093,
+      "std": 0.0,
+      "values": [
+        0.899589
+      ]
+    },
+    "ap": {
+      "mean": 0.8921653242450456,
+      "std": 0.0,
+      "values": [
+        0.892165
+      ]
+    },
+    "hit@100": {
+      "mean": 0.99,
+      "std": 0.0,
+      "values": [
+        0.99
+      ]
+    },
+    "seed": {
+      "mean": 9.0,
+      "std": 0.0,
+      "values": [
+        9.0
+      ]
+    },
+    "seconds": {
+      "mean": 12591.6,
+      "std": 0.0,
+      "values": [
+        12591.6
+      ]
+    }
+  }
+}
