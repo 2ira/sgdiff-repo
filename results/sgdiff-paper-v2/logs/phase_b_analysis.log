@@ -1,0 +1,92 @@
+/apdcephfs_sgxy/share_304335953/hunyuan/xinyuirali/dev/sgdiff-repo/scripts/run_operating_point.py:201: RuntimeWarning: Mean of empty slice
+  k: float(np.nanmean([row[k] for row in rows if k in row])) for k in keys
+# Operating point and ranking decomposition: cora
+
+## 1. The same attack, four different verdicts
+
+Δ vs clean. `hit@100` = precision in the top-100; `tpr@fpr1%` = recall at a 1 % false-positive budget.
+
+| model | probe | ΔAUC | ΔAP | Δhit@100 | ΔTPR@1%FPR |
+|---|---|---:|---:|---:|---:|
+| gat | del | +0.103 | +0.095 | +0.047 | +0.121 |
+| gat | del_hub | +0.121 | +0.112 | +0.057 | +0.134 |
+| gat | ins_hub | +0.035 | +0.038 | +0.027 | +0.094 |
+| gat | feat_shuffle | +0.197 | +0.208 | +0.200 | +0.196 |
+| gcn | del | +0.059 | +0.066 | +0.047 | +0.075 |
+| gcn | del_hub | +0.075 | +0.077 | +0.060 | +0.064 |
+| gcn | ins_hub | +0.036 | +0.039 | +0.030 | +0.041 |
+| gcn | feat_shuffle | +0.178 | +0.190 | +0.197 | +0.148 |
+| pencil | del | +0.170 | +0.165 | +0.053 | +0.311 |
+| pencil | del_hub | +0.168 | +0.160 | +0.053 | +0.313 |
+| pencil | ins_hub | +0.039 | +0.042 | +0.020 | +0.249 |
+| pencil | feat_shuffle | +0.059 | +0.043 | +0.007 | +0.166 |
+| rgcn | del | +0.086 | +0.074 | +0.030 | +0.065 |
+| rgcn | del_hub | +0.109 | +0.089 | +0.017 | +0.077 |
+| rgcn | ins_hub | +0.082 | +0.095 | +0.093 | +0.129 |
+| rgcn | feat_shuffle | +0.228 | +0.251 | +0.337 | +0.201 |
+| rgcn_novar | del | +0.085 
+
+wrote results/sgdiff-paper-v2/operating_cora.json and .md
+
+# Operating point and ranking decomposition: citeseer
+
+## 1. The same attack, four different verdicts
+
+Δ vs clean. `hit@100` = precision in the top-100; `tpr@fpr1%` = recall at a 1 % false-positive budget.
+
+| model | probe | ΔAUC | ΔAP | Δhit@100 | ΔTPR@1%FPR |
+|---|---|---:|---:|---:|---:|
+| gat | del | +0.070 | +0.053 | -0.000 | -0.013 |
+| gat | del_hub | +0.106 | +0.095 | +0.017 | +0.023 |
+| gat | ins_hub | +0.033 | +0.041 | +0.043 | +0.032 |
+| gat | feat_shuffle | +0.161 | +0.225 | +0.383 | +0.139 |
+| gcn | del | +0.026 | +0.030 | +0.033 | +0.022 |
+| gcn | del_hub | +0.039 | +0.028 | -0.007 | -0.011 |
+| gcn | ins_hub | +0.031 | +0.037 | +0.047 | +0.041 |
+| gcn | feat_shuffle | +0.170 | +0.182 | +0.230 | +0.142 |
+| pencil | del | +0.094 | +0.103 | +0.033 | +0.300 |
+| pencil | del_hub | +0.085 | +0.099 | +0.060 | +0.313 |
+| pencil | ins_hub | +0.032 | +0.035 | +0.020 | +0.171 |
+| pencil | feat_shuffle | +0.099 | +0.070 | +0.010 | +0.193 |
+| rgcn | del | +0.049 | +0.046 | -0.007 | -0.002 |
+| rgcn | del_hub | +0.101 | +0.096 | +0.027 | +0.072 |
+| rgcn | ins_hub | +0.068 | +0.099 | +0.130 | +0.107 |
+| rgcn | feat_shuffle | +0.222 | +0.270 | +0.450 | +0.172 |
+| rgcn_novar | del | +0.
+
+wrote results/sgdiff-paper-v2/operating_citeseer.json and .md
+
+# Operating point and ranking decomposition: usair
+
+## 1. The same attack, four different verdicts
+
+Δ vs clean. `hit@100` = precision in the top-100; `tpr@fpr1%` = recall at a 1 % false-positive budget.
+
+| model | probe | ΔAUC | ΔAP | Δhit@100 | ΔTPR@1%FPR |
+|---|---|---:|---:|---:|---:|
+| gat | del | +0.018 | +0.006 | +0.003 | -0.054 |
+| gat | del_hub | +0.017 | +0.017 | +0.017 | +0.037 |
+| gat | ins_hub | +0.006 | -0.010 | -0.007 | -0.160 |
+| gcn | del | +0.048 | +0.043 | +0.020 | +0.106 |
+| gcn | del_hub | +0.040 | +0.040 | +0.023 | +0.152 |
+| gcn | ins_hub | +0.049 | +0.026 | +0.003 | +0.009 |
+| pencil | del | +0.049 | +0.038 | +0.010 | +0.122 |
+| pencil | del_hub | +0.050 | +0.046 | +0.023 | +0.236 |
+| pencil | ins_hub | +0.041 | +0.031 | +0.000 | +0.048 |
+| rgcn | del | +0.014 | +0.010 | -0.003 | -0.004 |
+| rgcn | del_hub | +0.025 | +0.031 | +0.020 | +0.120 |
+| rgcn | ins_hub | +0.066 | +0.084 | +0.097 | +0.194 |
+| rgcn_novar | del | +0.016 | +0.012 | +0.003 | +0.051 |
+| rgcn_novar | del_hub | +0.017 | +0.025 | +0.033 | +0.178 |
+| rgcn_novar | ins_hub | +0.057 | +0.072 | +0.090 | +0.211 |
+| sage | del | +0.038 | +0.025 | -0.003 | +0.088 |
+| sage | del_hub | +0.033 | +0.027 | 
+
+wrote results/sgdiff-paper-v2/operating_usair.json and .md
+
+wrote results/sgdiff-paper-v2/significance_cora.json and .md
+wrote results/sgdiff-paper-v2/significance_citeseer.json and .md
+wrote results/sgdiff-paper-v2/significance_usair.json and .md
+wrote results/sgdiff-paper-v2/calibration_cora.json and .md
+wrote results/sgdiff-paper-v2/calibration_citeseer.json and .md
+wrote results/sgdiff-paper-v2/calibration_usair.json and .md

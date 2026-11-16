@@ -1,0 +1,8 @@
+usage: run_score_dump.py [-h] [--dataset DATASET] [--config CONFIG]
+                         [--seeds [SEEDS ...]] [--models [MODELS ...]]
+                         [--variants [VARIANTS ...]]
+                         [--profile {cpu,full,paper,smoke}]
+                         [--max-pairs MAX_PAIRS] [--device DEVICE]
+                         [--root ROOT] [--output OUTPUT]
+                         [--overrides [OVERRIDES ...]]
+run_score_dump.py: error: unrecognized arguments: citeseer usair

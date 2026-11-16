@@ -1,0 +1,20 @@
+[23:14:49] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+Traceback (most recent call last):
+  File "/apdcephfs_sgxy/share_304335953/hunyuan/xinyuirali/dev/sgdiff-repo/scripts/run_ablation.py", line 77, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/apdcephfs_sgxy/share_304335953/hunyuan/xinyuirali/dev/sgdiff-repo/scripts/run_ablation.py", line 58, in main
+    result = run_ablation(
+        cfg,
+    ...<6 lines>...
+        tag=args.tag,
+    )
+  File "/apdcephfs_sgxy/share_304335953/hunyuan/xinyuirali/dev/sgdiff-repo/sgdiff/engine/ablation.py", line 425, in run_ablation
+    reference_model, reference_metrics = _fit(f"reference-s{seed}", None)
+                                         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/apdcephfs_sgxy/share_304335953/hunyuan/xinyuirali/dev/sgdiff-repo/sgdiff/engine/ablation.py", line 421, in _fit
+    summary = trainer.fit(datasets["train"], datasets["val"], test)
+  File "/apdcephfs_sgxy/share_304335953/hunyuan/xinyuirali/dev/sgdiff-repo/sgdiff/engine/trainer.py", line 115, in fit
+    raise FileExistsError(f"run already exists: {self.run_dir}; use a new name or train.resume=last.pt")
+FileExistsError: run already exists: runs/ablation/cora/reference-s0__v2; use a new name or train.resume=last.pt
+[W1115 23:14:50.300118269 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())

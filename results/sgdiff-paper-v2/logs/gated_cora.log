@@ -1,0 +1,84 @@
+[20:01:51] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[cora s0] seal clean: k1=0.886 k2=0.920 routed=0.921 (gate on 768/1000)
+[cora s0] seal del@50%: k1=0.662 k2=0.669 routed=0.670 (gate on 930/1000)
+[cora s0] seal del_hub@50%: k1=0.652 k2=0.647 routed=0.647 (gate on 943/1000)
+[cora s0] seal ins_hub@50%: k1=0.823 k2=0.811 routed=0.818 (gate on 750/1000)
+[cora s0] seal: fits 80s
+[cora s0] pencil clean: k1=0.891 k2=0.917 routed=0.889 (gate on 768/1000)
+[cora s0] pencil del@50%: k1=0.701 k2=0.800 routed=0.784 (gate on 930/1000)
+[cora s0] pencil del_hub@50%: k1=0.700 k2=0.785 routed=0.772 (gate on 943/1000)
+[cora s0] pencil ins_hub@50%: k1=0.842 k2=0.812 routed=0.675 (gate on 750/1000)
+[cora s0] pencil: fits 155s
+[20:05:47] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[cora s1] seal clean: k1=0.867 k2=0.903 routed=0.906 (gate on 766/1000)
+[cora s1] seal del@50%: k1=0.671 k2=0.675 routed=0.677 (gate on 923/1000)
+[cora s1] seal del_hub@50%: k1=0.634 k2=0.639 routed=0.639 (gate on 944/1000)
+[cora s1] seal ins_hub@50%: k1=0.828 k2=0.818 routed=0.831 (gate on 749/1000)
+[cora s1] seal: fits 78s
+[cora s1] pencil clean: k1=0.890 k2=0.888 routed=0.888 (gate on 766/1000)
+[cora s1] pencil del@50%: k1=0.751 k2=0.681 routed=0.682 (gate on 923/1000)
+[cora s1] pencil del_hub@50%: k1=0.733 k2=0.645 routed=0.645 (gate on 944/1000)
+[cora s1] pencil ins_hub@50%: k1=0.855 k2=0.821 routed=0.820 (gate on 749/1000)
+[cora s1] pencil: fits 142s
+[20:09:28] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[cora s2] seal clean: k1=0.864 k2=0.896 routed=0.896 (gate on 757/1000)
+[cora s2] seal del@50%: k1=0.649 k2=0.670 routed=0.672 (gate on 931/1000)
+[cora s2] seal del_hub@50%: k1=0.643 k2=0.646 routed=0.647 (gate on 936/1000)
+[cora s2] seal ins_hub@50%: k1=0.833 k2=0.827 routed=0.829 (gate on 742/1000)
+[cora s2] seal: fits 89s
+[cora s2] pencil clean: k1=0.868 k2=0.885 routed=0.883 (gate on 757/1000)
+[cora s2] pencil del@50%: k1=0.688 k2=0.681 routed=0.681 (gate on 931/1000)
+[cora s2] pencil del_hub@50%: k1=0.711 k2=0.651 routed=0.651 (gate on 936/1000)
+[cora s2] pencil ins_hub@50%: k1=0.835 k2=0.805 routed=0.808 (gate on 742/1000)
+[cora s2] pencil: fits 133s
+# Evidence-gated routing repair: cora
+
+Two sub-graph models are trained (k = 1 and k = 2); the router keeps the k2 score
+for pairs with `CN <= 0` on the graph being scored. Damage = clean − probe.
+
+| model | probe | k = 1 | k = 2 (global) | routed (`CN ≤ 0`) | routed − k1 | 95 % CI (paired) |
+|---|---|---:|---:|---:|---:|---|
+| seal | clean | 0.872 | 0.906 | 0.908 | +0.035 | — |
+| seal | del@50% | +0.212 | +0.235 | +0.235 | -0.023 | [-0.045, -0.002] |
+| seal | del_hub@50% | +0.229 | +0.262 | +0.263 | -0.034 | [-0.058, -0.010] |
+| seal | ins_hub@50% | +0.044 | +0.088 | +0.082 | -0.038 | [-0.056, -0.019] |
+| pencil | clean | 0.883 | 0.897 | 0.887 | +0.004 | — |
+| pencil | del@50% | +0.170 | +0.176 | +0.171 | -0.002 | [-0.032, +0.028] |
+| pencil | del_hub@50% | +0.168 | +0.203 | +0.197 | -0.029 | [-0.060, +0.003] |
+| pencil | ins_hub@50% | +0.039 | +0.084 | +0.119 | -0.080 | [-0.105, -0.056] |
+
+Positive `routed − k1` on a damage row = the router shrinks the damage; on the clean row it is the
+ceiling the router buys (or costs). The interval is a paired bootstrap over the scored pairs for the
+*damage difference* (clean and probe resampled jointly); it covers pair sampling, not training seeds.
+
+## Routing frontier: is there a threshold that works?
+
+| model | probe | route<=0 | route<=1 | route<=2 | always k2 | k = 1 |
+|---|---|---:|---:|---:|---:|---:|
+| seal | del@50% | +0.235 | +0.235 | +0.235 | +0.235 | +0.212 |
+| seal | del_hub@50% | +0.263 | +0.263 | +0.262 | +0.262 | +0.229 |
+| seal | ins_hub@50% | +0.082 | +0.086 | +0.087 | +0.088 | +0.044 |
+| pencil | del@50% | +0.171 | +0.174 | +0.175 | +0.176 | +0.170 |
+| pencil | del_hub@50% | +0.197 | +0.201 | +0.202 | +0.203 | +0.168 |
+| pencil | ins_hub@50% | +0.119 | +0.097 | +0.089 | +0.084 | +0.039 |
+
+Share of scored pairs the gate fires on (higher = more routing):
+
+| probe | `CN ≤ 0` | `CN ≤ 1` | `CN ≤ 2` |
+|---|---:|---:|---:|
+| clean | 76.4% | 92.3% | 97.7% |
+| del@50% | 92.8% | 99.2% | 99.9% |
+| del_hub@50% | 94.1% | 99.2% | 99.9% |
+| ins_hub@50% | 74.7% | 91.6% | 97.4% |
+
+## Can a CN-completion repair reach the low-evidence pairs?
+
+Deleted edges are rebuilt with the CN prior of §7.5 (same count as removed); a `CN = 0` pair
+benefits only if the completion creates a shared neighbour for *that pair*.
+
+| probe | `CN = 0` share | recovered by completion | edges added |
+|---|---:|---:|---:|
+| del@50% | 92.8% | 4.1% | 2233 |
+| del_hub@50% | 94.1% | 4.4% | 2230 |
+
+wrote results/sgdiff-paper-v2/gated_cora.json and .md

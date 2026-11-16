@@ -1,0 +1,262 @@
+{
+  "dataset": "citeseer",
+  "seed": 0,
+  "protocol": {
+    "split": "80/5/15 positives with equal-size random negatives",
+    "num_test_pairs": 1366,
+    "epochs": 50,
+    "pretrain_epochs": 10,
+    "num_mc_samples": null,
+    "structure_mc_samples": null,
+    "feature_mc_samples": null,
+    "hit_metric": "pooled precision@100 (legacy hit@100 key); not OGB Hits@100",
+    "preprocessing": {
+      "train_context": "train",
+      "val_context": "train",
+      "test_context": "train+val (transductive)",
+      "drnl": "final_subgraph_opposite_endpoint_removed; endpoints=1; unreachable=0",
+      "feature_mode": "attribute",
+      "feature_normalization": "none",
+      "feature_dim": 3703,
+      "max_label": 16,
+      "hops": 1,
+      "max_nodes_per_hop": 20,
+      "max_nodes_total": null,
+      "remove_target": true,
+      "hit_metric": "precision@k over the pooled candidates (legacy hit@k key)",
+      "marginals": {
+        "source": "training_pairs_subgraphs",
+        "num_pairs": 7282,
+        "node_counts": [
+          32356,
+          14564,
+          1770,
+          6753,
+          1133,
+          0,
+          284,
+          0,
+          46,
+          0,
+          0,
+          14,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "edge_counts": [
+          246798,
+          62057
+        ],
+        "node_marginal": [
+          0.5684369564835474,
+          0.2558633896101615,
+          0.031095729168496688,
+          0.11863811247167126,
+          0.019904780309551836,
+          0.0,
+          0.004989371233815288,
+          0.0,
+          0.0008081375942095185,
+          0.0,
+          0.0,
+          0.00024595491997680995,
+          0.0,
+          0.0,
+          1.756820856977214e-05,
+          0.0,
+          0.0
+        ],
+        "edge_marginal": [
+          0.7990739991258033,
+          0.20092600087419663
+        ],
+        "edge_counting": "valid strict upper triangle; absent=0; present=1"
+      }
+    },
+    "device": "cuda"
+  },
+  "reference_training": {
+    "metrics": {
+      "auc": 0.8382373432170962,
+      "ap": 0.8669451803713233,
+      "hit@100": 0.99
+    },
+    "seconds": 2214.2746501378715
+  },
+  "rows": [
+    {
+      "variant": "reference",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=both, t=MC-avg",
+      "metrics": {
+        "auc": 0.8342640448113461,
+        "ap": 0.8612943015424249,
+        "hit@100": 0.97,
+        "score_std": 3.362732410430908
+      },
+      "seconds": 12.14594941586256
+    },
+    {
+      "variant": "same_condition",
+      "training": "condition=true",
+      "scoring": "condition=same, labels=true, stream=both, t=MC-avg",
+      "metrics": {
+        "auc": 0.5,
+        "ap": 0.5,
+        "hit@100": 1.0,
+        "score_std": 0.0
+      },
+      "seconds": 11.830427568405867
+    },
+    {
+      "variant": "condition_flip",
+      "training": "condition=true",
+      "scoring": "condition=flip, labels=true, stream=both, t=MC-avg",
+      "metrics": {
+        "auc": 0.16573595518865397,
+        "ap": 0.33818391447571694,
+        "hit@100": 0.15,
+        "score_std": 3.362732410430908
+      },
+      "seconds": 11.833415556699038
+    },
+    {
+      "variant": "label_shuffle",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=shuffle, stream=both, t=MC-avg",
+      "metrics": {
+        "auc": 0.8228264760798218,
+        "ap": 0.8532893437421251,
+        "hit@100": 0.97,
+        "score_std": 3.3381242752075195
+      },
+      "seconds": 11.834166958928108
+    },
+    {
+      "variant": "single_t_low",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=both, t=0.05·T",
+      "metrics": {
+        "auc": 0.5145255300768078,
+        "ap": 0.5808236603394497,
+        "hit@100": 0.79,
+        "score_std": 5.233333110809326
+      },
+      "seconds": 0.5196247696876526
+    },
+    {
+      "variant": "single_t_mid",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=both, t=0.5·T",
+      "metrics": {
+        "auc": 0.7589525154933986,
+        "ap": 0.7906821640512025,
+        "hit@100": 0.97,
+        "score_std": 6.06820821762085
+      },
+      "seconds": 0.49196744710206985
+    },
+    {
+      "variant": "single_t_full",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=both, t=1·T",
+      "metrics": {
+        "auc": 0.7760000771722377,
+        "ap": 0.7802964338400822,
+        "hit@100": 0.91,
+        "score_std": 1.0451560020446777
+      },
+      "seconds": 0.5559690073132515
+    },
+    {
+      "variant": "structure_only",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=structure, t=MC-avg",
+      "metrics": {
+        "auc": 0.8100148127822949,
+        "ap": 0.8573488126850308,
+        "hit@100": 0.99,
+        "score_std": 3.0960352420806885
+      },
+      "seconds": 7.821619741618633
+    },
+    {
+      "variant": "feature_only",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=feature, t=MC-avg",
+      "metrics": {
+        "auc": 0.7175538973051884,
+        "ap": 0.7142615472482989,
+        "hit@100": 0.85,
+        "score_std": 0.7014496922492981
+      },
+      "seconds": 4.334728833287954
+    },
+    {
+      "variant": "trained_without_condition",
+      "training": "condition=random, denoisers frozen in stage 2",
+      "scoring": "condition=true (paper scoring)",
+      "metrics": {
+        "auc": 0.7128078046856411,
+        "ap": 0.7152984406732437,
+        "hit@100": 0.89,
+        "score_std": 0.7476995587348938
+      },
+      "seconds": 2265.595302503556
+    },
+    {
+      "variant": "trained_without_condition_unfrozen",
+      "training": "condition=random",
+      "scoring": "condition=true (paper scoring)",
+      "metrics": {
+        "auc": 0.8428419534008305,
+        "ap": 0.8799263024170756,
+        "hit@100": 0.99,
+        "score_std": 2.8008625507354736
+      },
+      "seconds": 3064.5619053058326
+    }
+  ],
+  "fusion": [
+    {
+      "model": "reference",
+      "eta1_feature": 0.12307167798280716,
+      "eta2_structure": 7.245904922485352,
+      "delta": -4.9673967361450195,
+      "feature_stream": true,
+      "std_feature_term": 0.6995545674001495,
+      "std_structure_term": 3.018402679036661,
+      "share_feature": 0.05097603107429711,
+      "share_structure": 0.9490239689257028,
+      "corr_terms": 0.40437956923673996
+    },
+    {
+      "model": "trained_without_condition",
+      "eta1_feature": 1.2626796960830688,
+      "eta2_structure": -18.183290481567383,
+      "delta": -10.444674491882324,
+      "feature_stream": true,
+      "std_feature_term": 0.6347098198650611,
+      "std_structure_term": 0.19515738042038253,
+      "share_feature": 0.9136251018579936,
+      "share_structure": 0.08637489814200634,
+      "corr_terms": 0.4773935335659063
+    },
+    {
+      "model": "trained_without_condition_unfrozen",
+      "eta1_feature": 0.07768570631742477,
+      "eta2_structure": 1.1711558103561401,
+      "delta": -3.3067052364349365,
+      "feature_stream": true,
+      "std_feature_term": 0.7928006577425806,
+      "std_structure_term": 2.895683960337088,
+      "share_feature": 0.06973224543080056,
+      "share_structure": 0.9302677545691994,
+      "corr_terms": -0.25454064004276167
+    }
+  ],
+  "markdown": "| variant | training | scoring | AUC | AP | precision@100 (legacy Hit@100) | score std |\n|---|---|---|---|---|---|---|\n| reference | condition=true | condition=true, labels=true, stream=both, t=MC-avg | 0.8343 | 0.8613 | 0.9700 | 3.3627 |\n| same_condition | condition=true | condition=same, labels=true, stream=both, t=MC-avg | 0.5000 | 0.5000 | 1.0000 | 0.0000 |\n| condition_flip | condition=true | condition=flip, labels=true, stream=both, t=MC-avg | 0.1657 | 0.3382 | 0.1500 | 3.3627 |\n| label_shuffle | condition=true | condition=true, labels=shuffle, stream=both, t=MC-avg | 0.8228 | 0.8533 | 0.9700 | 3.3381 |\n| single_t_low | condition=true | condition=true, labels=true, stream=both, t=0.05·T | 0.5145 | 0.5808 | 0.7900 | 5.2333 |\n| single_t_mid | condition=true | condition=true, labels=true, stream=both, t=0.5·T | 0.7590 | 0.7907 | 0.9700 | 6.0682 |\n| single_t_full | condition=true | condition=true, labels=true, stream=both, t=1·T | 0.7760 | 0.7803 | 0.9100 | 1.0452 |\n| structure_only | condition=true | condition=true, labels=true, stream=structure, t=MC-avg | 0.8100 | 0.8573 | 0.9900 | 3.0960 |\n| feature_only | condition=true | condition=true, labels=true, stream=feature, t=MC-avg | 0.7176 | 0.7143 | 0.8500 | 0.7014 |\n| trained_without_condition | condition=random, denoisers frozen in stage 2 | condition=true (paper scoring) | 0.7128 | 0.7153 | 0.8900 | 0.7477 |\n| trained_without_condition_unfrozen | condition=random | condition=true (paper scoring) | 0.8428 | 0.8799 | 0.9900 | 2.8009 |\n\nFusion weights and what each stream contributes to the logit spread (`d = score(class 1) - score(class 0)` on the test pairs):\n\n| model | eta_1 (feature) | eta_2 (structure) | delta | std(eta_1*d_feat) | std(eta_2*d_struct) | var share feat | corr |\n|---|---|---|---|---|---|---|---|\n| reference | 0.1231 | 7.2459 | -4.9674 | 0.6996 | 3.0184 | 0.051 | 0.404 |\n| trained_without_condition | 1.2627 | -18.1833 | -10.4447 | 0.6347 | 0.1952 | 0.914 | 0.477 |\n| trained_without_condition_unfrozen | 0.0777 | 1.1712 | -3.3067 | 0.7928 | 2.8957 | 0.070 | -0.255 |"
+}

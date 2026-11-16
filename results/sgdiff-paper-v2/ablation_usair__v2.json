@@ -1,0 +1,262 @@
+{
+  "dataset": "usair",
+  "seed": 0,
+  "protocol": {
+    "split": "80/5/15 positives with equal-size random negatives",
+    "num_test_pairs": 638,
+    "epochs": 50,
+    "pretrain_epochs": 10,
+    "num_mc_samples": null,
+    "structure_mc_samples": null,
+    "feature_mc_samples": null,
+    "hit_metric": "pooled precision@100 (legacy hit@100 key); not OGB Hits@100",
+    "preprocessing": {
+      "train_context": "train",
+      "val_context": "train",
+      "test_context": "train+val (transductive)",
+      "drnl": "final_subgraph_opposite_endpoint_removed; endpoints=1; unreachable=0",
+      "feature_mode": "structural",
+      "feature_normalization": "none",
+      "feature_dim": 17,
+      "max_label": 16,
+      "hops": 1,
+      "max_nodes_per_hop": 40,
+      "max_nodes_total": null,
+      "remove_target": true,
+      "hit_metric": "precision@k over the pooled candidates (legacy hit@k key)",
+      "marginals": {
+        "source": "training_pairs_subgraphs",
+        "num_pairs": 3402,
+        "node_counts": [
+          11229,
+          6804,
+          19106,
+          56914,
+          10496,
+          0,
+          1110,
+          0,
+          95,
+          0,
+          0,
+          8,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "edge_counts": [
+          1560064,
+          754837
+        ],
+        "node_marginal": [
+          0.10617134536652705,
+          0.06433251704282215,
+          0.18064918733394475,
+          0.5381277006136361,
+          0.09924075527358339,
+          0.0,
+          0.010495163715098853,
+          0.0,
+          0.0008982347323733252,
+          0.0,
+          0.0,
+          7.564081956828002e-05,
+          0.0,
+          0.0,
+          9.455102446035003e-06,
+          0.0,
+          0.0
+        ],
+        "edge_marginal": [
+          0.6739225565153758,
+          0.3260774434846242
+        ],
+        "edge_counting": "valid strict upper triangle; absent=0; present=1"
+      }
+    },
+    "device": "cuda"
+  },
+  "reference_training": {
+    "metrics": {
+      "auc": 0.9316044457110287,
+      "ap": 0.9342620288950918,
+      "hit@100": 0.99
+    },
+    "seconds": 1077.2324238494039
+  },
+  "rows": [
+    {
+      "variant": "reference",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=both, t=MC-avg",
+      "metrics": {
+        "auc": 0.9310148288637101,
+        "ap": 0.9332963716875939,
+        "hit@100": 0.97,
+        "score_std": 2.4566829204559326
+      },
+      "seconds": 4.918294172734022
+    },
+    {
+      "variant": "same_condition",
+      "training": "condition=true",
+      "scoring": "condition=same, labels=true, stream=both, t=MC-avg",
+      "metrics": {
+        "auc": 0.5,
+        "ap": 0.5,
+        "hit@100": 1.0,
+        "score_std": 0.0
+      },
+      "seconds": 4.934754904359579
+    },
+    {
+      "variant": "condition_flip",
+      "training": "condition=true",
+      "scoring": "condition=flip, labels=true, stream=both, t=MC-avg",
+      "metrics": {
+        "auc": 0.06898517113628994,
+        "ap": 0.3153026389554616,
+        "hit@100": 0.02,
+        "score_std": 2.4566829204559326
+      },
+      "seconds": 4.896295960992575
+    },
+    {
+      "variant": "label_shuffle",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=shuffle, stream=both, t=MC-avg",
+      "metrics": {
+        "auc": 0.9146922691404369,
+        "ap": 0.916003928432247,
+        "hit@100": 0.97,
+        "score_std": 2.195505142211914
+      },
+      "seconds": 4.940297111868858
+    },
+    {
+      "variant": "single_t_low",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=both, t=0.05·T",
+      "metrics": {
+        "auc": 0.8434862078792464,
+        "ap": 0.8656379798125526,
+        "hit@100": 0.95,
+        "score_std": 5.037341117858887
+      },
+      "seconds": 0.49989668279886246
+    },
+    {
+      "variant": "single_t_mid",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=both, t=0.5·T",
+      "metrics": {
+        "auc": 0.8799490964121814,
+        "ap": 0.8949085222435893,
+        "hit@100": 1.0,
+        "score_std": 2.820997953414917
+      },
+      "seconds": 0.504772525280714
+    },
+    {
+      "variant": "single_t_full",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=both, t=1·T",
+      "metrics": {
+        "auc": 0.7632590088540797,
+        "ap": 0.8264659501343785,
+        "hit@100": 0.99,
+        "score_std": 0.011675246991217136
+      },
+      "seconds": 0.5024692080914974
+    },
+    {
+      "variant": "structure_only",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=structure, t=MC-avg",
+      "metrics": {
+        "auc": 0.9310148288637101,
+        "ap": 0.9332963716875939,
+        "hit@100": 0.97,
+        "score_std": 2.4566829204559326
+      },
+      "seconds": 4.917817384004593
+    },
+    {
+      "variant": "feature_only",
+      "training": "condition=true",
+      "scoring": "condition=true, labels=true, stream=feature, t=MC-avg",
+      "metrics": {
+        "auc": 0.5,
+        "ap": 0.5,
+        "hit@100": 1.0,
+        "score_std": 0.0
+      },
+      "seconds": 0.014382567256689072
+    },
+    {
+      "variant": "trained_without_condition",
+      "training": "condition=random, denoisers frozen in stage 2",
+      "scoring": "condition=true (paper scoring)",
+      "metrics": {
+        "auc": 0.8785684102947101,
+        "ap": 0.8982844516747649,
+        "hit@100": 0.99,
+        "score_std": 0.986362099647522
+      },
+      "seconds": 1034.0855342894793
+    },
+    {
+      "variant": "trained_without_condition_unfrozen",
+      "training": "condition=random",
+      "scoring": "condition=true (paper scoring)",
+      "metrics": {
+        "auc": 0.954796041705565,
+        "ap": 0.9584554279665052,
+        "hit@100": 0.99,
+        "score_std": 7.4790191650390625
+      },
+      "seconds": 1746.0617145560682
+    }
+  ],
+  "fusion": [
+    {
+      "model": "reference",
+      "eta1_feature": 0.0,
+      "eta2_structure": 1.0095235109329224,
+      "delta": -3.714726686477661,
+      "feature_stream": false,
+      "std_feature_term": 0.0,
+      "std_structure_term": 2.45668347666219,
+      "share_feature": 0.0,
+      "share_structure": 1.0,
+      "corr_terms": NaN
+    },
+    {
+      "model": "trained_without_condition",
+      "eta1_feature": 0.0,
+      "eta2_structure": -1.52869713306427,
+      "delta": -5.623466968536377,
+      "feature_stream": false,
+      "std_feature_term": 0.0,
+      "std_structure_term": 0.986362048078857,
+      "share_feature": 0.0,
+      "share_structure": 1.0,
+      "corr_terms": NaN
+    },
+    {
+      "model": "trained_without_condition_unfrozen",
+      "eta1_feature": 0.0,
+      "eta2_structure": 0.7220132350921631,
+      "delta": -2.5674593448638916,
+      "feature_stream": false,
+      "std_feature_term": 0.0,
+      "std_structure_term": 7.47901915149719,
+      "share_feature": 0.0,
+      "share_structure": 1.0,
+      "corr_terms": NaN
+    }
+  ],
+  "markdown": "| variant | training | scoring | AUC | AP | precision@100 (legacy Hit@100) | score std |\n|---|---|---|---|---|---|---|\n| reference | condition=true | condition=true, labels=true, stream=both, t=MC-avg | 0.9310 | 0.9333 | 0.9700 | 2.4567 |\n| same_condition | condition=true | condition=same, labels=true, stream=both, t=MC-avg | 0.5000 | 0.5000 | 1.0000 | 0.0000 |\n| condition_flip | condition=true | condition=flip, labels=true, stream=both, t=MC-avg | 0.0690 | 0.3153 | 0.0200 | 2.4567 |\n| label_shuffle | condition=true | condition=true, labels=shuffle, stream=both, t=MC-avg | 0.9147 | 0.9160 | 0.9700 | 2.1955 |\n| single_t_low | condition=true | condition=true, labels=true, stream=both, t=0.05·T | 0.8435 | 0.8656 | 0.9500 | 5.0373 |\n| single_t_mid | condition=true | condition=true, labels=true, stream=both, t=0.5·T | 0.8799 | 0.8949 | 1.0000 | 2.8210 |\n| single_t_full | condition=true | condition=true, labels=true, stream=both, t=1·T | 0.7633 | 0.8265 | 0.9900 | 0.0117 |\n| structure_only | condition=true | condition=true, labels=true, stream=structure, t=MC-avg | 0.9310 | 0.9333 | 0.9700 | 2.4567 |\n| feature_only | condition=true | condition=true, labels=true, stream=feature, t=MC-avg | 0.5000 | 0.5000 | 1.0000 | 0.0000 |\n| trained_without_condition | condition=random, denoisers frozen in stage 2 | condition=true (paper scoring) | 0.8786 | 0.8983 | 0.9900 | 0.9864 |\n| trained_without_condition_unfrozen | condition=random | condition=true (paper scoring) | 0.9548 | 0.9585 | 0.9900 | 7.4790 |\n\nFusion weights and what each stream contributes to the logit spread (`d = score(class 1) - score(class 0)` on the test pairs):\n\n| model | eta_1 (feature) | eta_2 (structure) | delta | std(eta_1*d_feat) | std(eta_2*d_struct) | var share feat | corr |\n|---|---|---|---|---|---|---|---|\n| reference | 0.0000 | 1.0095 | -3.7147 | 0.0000 | 2.4567 | 0.000 | nan |\n| trained_without_condition | 0.0000 | -1.5287 | -5.6235 | 0.0000 | 0.9864 | 0.000 | nan |\n| trained_without_condition_unfrozen | 0.0000 | 0.7220 | -2.5675 | 0.0000 | 7.4790 | 0.000 | nan |"
+}

@@ -1,0 +1,84 @@
+[20:13:19] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[cora s0] seal clean: k1=0.886 q50=0.915 k2=0.920 (sign gate fires 99.9%, Δ median +3.9360)
+[cora s0] seal del@50%: k1=0.662 q50=0.677 k2=0.669 (sign gate fires 100.0%, Δ median +3.7785)
+[cora s0] seal del_hub@50%: k1=0.652 q50=0.665 k2=0.647 (sign gate fires 100.0%, Δ median +3.9981)
+[cora s0] seal ins_hub@50%: k1=0.823 q50=0.815 k2=0.811 (sign gate fires 99.9%, Δ median +3.7542)
+[cora s0] seal: fits+scores 80s
+[cora s0] pencil clean: k1=0.891 q50=0.891 k2=0.917 (sign gate fires 95.7%, Δ median +5.4738)
+[cora s0] pencil del@50%: k1=0.701 q50=0.750 k2=0.800 (sign gate fires 98.1%, Δ median +5.3393)
+[cora s0] pencil del_hub@50%: k1=0.700 q50=0.748 k2=0.785 (sign gate fires 98.5%, Δ median +6.0352)
+[cora s0] pencil ins_hub@50%: k1=0.842 q50=0.678 k2=0.812 (sign gate fires 95.7%, Δ median +4.8528)
+[cora s0] pencil: fits+scores 153s
+[20:17:12] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[cora s1] seal clean: k1=0.867 q50=0.905 k2=0.903 (sign gate fires 100.0%, Δ median +3.8842)
+[cora s1] seal del@50%: k1=0.671 q50=0.683 k2=0.675 (sign gate fires 100.0%, Δ median +3.5325)
+[cora s1] seal del_hub@50%: k1=0.634 q50=0.648 k2=0.639 (sign gate fires 100.0%, Δ median +3.9428)
+[cora s1] seal ins_hub@50%: k1=0.828 q50=0.825 k2=0.818 (sign gate fires 100.0%, Δ median +3.6649)
+[cora s1] seal: fits+scores 73s
+[cora s1] pencil clean: k1=0.890 q50=0.886 k2=0.888 (sign gate fires 92.5%, Δ median +18.3378)
+[cora s1] pencil del@50%: k1=0.751 q50=0.722 k2=0.681 (sign gate fires 96.7%, Δ median +18.8280)
+[cora s1] pencil del_hub@50%: k1=0.733 q50=0.710 k2=0.645 (sign gate fires 96.6%, Δ median +21.7240)
+[cora s1] pencil ins_hub@50%: k1=0.855 q50=0.822 k2=0.821 (sign gate fires 94.9%, Δ median +14.9364)
+[cora s1] pencil: fits+scores 134s
+[20:20:40] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[cora s2] seal clean: k1=0.864 q50=0.889 k2=0.896 (sign gate fires 99.0%, Δ median +6.2242)
+[cora s2] seal del@50%: k1=0.649 q50=0.665 k2=0.670 (sign gate fires 99.5%, Δ median +5.5743)
+[cora s2] seal del_hub@50%: k1=0.643 q50=0.653 k2=0.646 (sign gate fires 99.7%, Δ median +6.4732)
+[cora s2] seal ins_hub@50%: k1=0.833 q50=0.816 k2=0.827 (sign gate fires 98.9%, Δ median +5.1360)
+[cora s2] seal: fits+scores 95s
+[cora s2] pencil clean: k1=0.868 q50=0.877 k2=0.885 (sign gate fires 91.7%, Δ median +15.6124)
+[cora s2] pencil del@50%: k1=0.688 q50=0.707 k2=0.681 (sign gate fires 98.0%, Δ median +15.2472)
+[cora s2] pencil del_hub@50%: k1=0.711 q50=0.710 k2=0.651 (sign gate fires 97.4%, Δ median +17.7158)
+[cora s2] pencil ins_hub@50%: k1=0.835 q50=0.819 k2=0.805 (sign gate fires 91.4%, Δ median +11.9517)
+[cora s2] pencil: fits+scores 145s
+# Counterfactual splice gate: cora
+
+For every pair the k = 1 model is scored twice: once on its enclosing sub-graph, once with a
+synthetic shared neighbour `w` spliced in (`u-w`, `v-w`, DRNL label 2). The gate routes to the
+k = 2 model for the pairs whose score the splice raises most. Damage = clean − probe.
+
+| model | probe | k = 1 | k = 2 (global) | `CN = 0` gate | splice gate (top 50 %) | splice − k1 | 95 % CI (paired) |
+|---|---|---:|---:|---:|---:|---:|---|
+| seal | clean | 0.872 | 0.906 | 0.908 | 0.903 | +0.031 | — |
+| seal | del@50% | +0.212 | +0.235 | +0.235 | +0.228 | -0.017 | [-0.036, +0.003] |
+| seal | del_hub@50% | +0.229 | +0.262 | +0.263 | +0.248 | -0.019 | [-0.040, +0.003] |
+| seal | ins_hub@50% | +0.044 | +0.088 | +0.082 | +0.085 | -0.041 | [-0.058, -0.023] |
+| pencil | clean | 0.883 | 0.897 | 0.887 | 0.885 | +0.002 | — |
+| pencil | del@50% | +0.170 | +0.176 | +0.171 | +0.158 | +0.011 | [-0.011, +0.033] |
+| pencil | del_hub@50% | +0.168 | +0.203 | +0.197 | +0.162 | +0.007 | [-0.017, +0.030] |
+| pencil | ins_hub@50% | +0.039 | +0.084 | +0.119 | +0.112 | -0.073 | [-0.096, -0.050] |
+
+Positive `splice − k1` on a damage row = the splice gate shrinks the damage; on the clean row it is
+the ceiling it buys. The interval is a paired bootstrap over scored pairs for the damage difference;
+it covers pair sampling, not training seeds.
+
+## Gate frontier: sign is useless, magnitude is not
+
+The splice raises the score for almost every pair, so the *sign* gate degenerates into "always k2".
+The quantile gates route only the pairs with the largest rise; `CN = 0` is the §7.11 gate, shown for
+reference.
+
+| model | probe | `CN = 0` | sign(Δ) | top 50 % | top 30 % | top 10 % | always k2 | k = 1 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| seal | del@50% | +0.235 | +0.235 | +0.228 | +0.220 | +0.212 | +0.235 | +0.212 |
+| seal | del_hub@50% | +0.263 | +0.262 | +0.248 | +0.238 | +0.230 | +0.262 | +0.229 |
+| seal | ins_hub@50% | +0.082 | +0.088 | +0.085 | +0.075 | +0.044 | +0.088 | +0.044 |
+| pencil | del@50% | +0.171 | +0.178 | +0.158 | +0.153 | +0.168 | +0.176 | +0.170 |
+| pencil | del_hub@50% | +0.197 | +0.201 | +0.162 | +0.151 | +0.167 | +0.203 | +0.168 |
+| pencil | ins_hub@50% | +0.119 | +0.090 | +0.112 | +0.075 | +0.049 | +0.084 | +0.039 |
+
+## Is the gate signal informative?
+
+`Δ` is computed on the graph being scored (deployment-time signal). `AUC(Δ → drop)` asks whether the
+magnitude ranks the pairs that lose score under deletion above the ones that do not; 0.5 is chance.
+
+| model | probe | sign gate fires | top 50 % fires | `CN = 0` share | Δ > 0 (own feats) | Δ > 0 (blank feats) | corr(own, blank) | AUC(Δ → drop) |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| seal | del@50% | 99.8% | 50.0% | 92.8% | 99.8% | 100.0% | 0.986 | 0.528 |
+| seal | del_hub@50% | 99.9% | 50.0% | 94.1% | 99.9% | 100.0% | 0.986 | 0.531 |
+| seal | ins_hub@50% | 99.6% | 50.0% | 74.7% | 99.6% | 99.8% | 0.992 | 0.527 |
+| pencil | del@50% | 97.6% | 50.0% | 92.8% | 97.6% | 98.1% | 0.964 | 0.511 |
+| pencil | del_hub@50% | 97.5% | 50.0% | 94.1% | 97.5% | 98.2% | 0.960 | 0.523 |
+| pencil | ins_hub@50% | 94.0% | 50.0% | 74.7% | 94.0% | 95.8% | 0.979 | 0.590 |
+
+wrote results/sgdiff-paper-v2/splice_cora.json and .md

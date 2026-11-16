@@ -1,0 +1,16 @@
+[18:59:34] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[1/6] cora seed=0 rgcn: clean=0.831 rf@10%=0.802 dice@10%=0.794 ea@10%=0.823 rf@25%=0.789 dice@25%=0.790 ea@25%=0.804 rf@50%=0.736 dice@50%=0.742 ea@50%=0.777 (0.6s fit)
+[2/6] cora seed=0 rgcn_novar: clean=0.823 rf@10%=0.804 dice@10%=0.795 ea@10%=0.816 rf@25%=0.784 dice@25%=0.780 ea@25%=0.799 rf@50%=0.725 dice@50%=0.746 ea@50%=0.768 (0.5s fit)
+[18:59:37] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[1/6] cora seed=1 rgcn: clean=0.830 rf@10%=0.803 dice@10%=0.797 ea@10%=0.813 rf@25%=0.786 dice@25%=0.784 ea@25%=0.800 rf@50%=0.762 dice@50%=0.730 ea@50%=0.775 (0.4s fit)
+[2/6] cora seed=1 rgcn_novar: clean=0.827 rf@10%=0.803 dice@10%=0.797 ea@10%=0.814 rf@25%=0.782 dice@25%=0.781 ea@25%=0.799 rf@50%=0.753 dice@50%=0.727 ea@50%=0.777 (0.4s fit)
+[18:59:38] INFO    sgdiff.data.datasets | loading cached data/processed/cora.npz
+[1/6] cora seed=2 rgcn: clean=0.817 rf@10%=0.796 dice@10%=0.794 ea@10%=0.809 rf@25%=0.774 dice@25%=0.779 ea@25%=0.788 rf@50%=0.738 dice@50%=0.724 ea@50%=0.762 (0.4s fit)
+[2/6] cora seed=2 rgcn_novar: clean=0.817 rf@10%=0.796 dice@10%=0.793 ea@10%=0.804 rf@25%=0.775 dice@25%=0.776 ea@25%=0.783 rf@50%=0.750 dice@50%=0.718 ea@50%=0.759 (0.4s fit)
+
+| model | #params | AUC clean | AUC rf@10% | AUC dice@10% | AUC ea@10% | AUC rf@25% | AUC dice@25% | AUC ea@25% | AUC rf@50% | AUC dice@50% | AUC ea@50% |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| rgcn | 100,224 | 0.826 ± 0.008 | 0.801 ± 0.004 | 0.795 ± 0.002 | 0.815 ± 0.007 | 0.783 ± 0.008 | 0.784 ± 0.006 | 0.797 ± 0.008 | 0.745 ± 0.014 | 0.732 ± 0.009 | 0.771 ± 0.008 |
+| rgcn_novar | 100,224 | 0.822 ± 0.005 | 0.801 ± 0.004 | 0.795 ± 0.002 | 0.811 ± 0.006 | 0.780 ± 0.005 | 0.779 ± 0.003 | 0.794 ± 0.009 | 0.743 ± 0.015 | 0.730 ± 0.014 | 0.768 ± 0.009 |
+
+wrote results/sgdiff-paper-v2/robustness_cora__v2_rgcn.json and .md
