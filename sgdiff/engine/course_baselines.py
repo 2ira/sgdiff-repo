@@ -8,8 +8,14 @@ from torch.nn import functional as F
 from .baseline_trainer import _edge_index, node_feature_matrix
 from ..utils.metrics import summarize_scores
 from ..utils.seed import resolve_device
+from ..models.baselines.spectral_walk import (
+    SPECTRAL_WALK_MODELS,
+    katz_scores,
+    random_walk_scores,
+    spectral_scores,
+)
 
-CLASSICAL = ('cn', 'aa', 'pa', 'feature_dot', 'feature_cosine', 'fusion_lr')
+CLASSICAL = ('cn', 'aa', 'pa', 'feature_dot', 'feature_cosine', 'fusion_lr') + SPECTRAL_WALK_MODELS
 PATH_MODELS = ('sp4lp', 'sp4lp_endpoints', 'sp4lp_featureless')
 
 
@@ -46,8 +52,12 @@ class ClassicalBaseline(nn.Module):
         super().__init__()
         self.name = name
         self.scaler = self.regressor = None
+        self.seed = 0
+        self.embedding_cache = {}
+        self.learned_parameters = 0
 
-    def fit(self, graph, pairs, labels):
+    def fit(self, graph, pairs, labels, seed=0):
+        self.seed = int(seed)
         if self.name == 'fusion_lr':
             from sklearn.preprocessing import StandardScaler
             from sklearn.linear_model import LogisticRegression
@@ -58,6 +68,15 @@ class ClassicalBaseline(nn.Module):
         return self
 
     def scores(self, graph, pairs):
+        if self.name == 'katz':
+            return katz_scores(graph, pairs)
+        if self.name == 'spectral':
+            return spectral_scores(graph, pairs)
+        if self.name in ('deepwalk', 'node2vec'):
+            self.learned_parameters = graph.num_nodes * 64
+            return random_walk_scores(
+                graph, pairs, self.name, seed=self.seed, cache=self.embedding_cache,
+            )
         values = heuristic_scores(graph, pairs)
         if self.name == 'fusion_lr':
             return self.regressor.decision_function(self.scaler.transform(fusion_inputs(values)))
@@ -97,7 +116,7 @@ def fit_course_model(spec, cfg, graph, datasets, seed, epochs, device):
     features = node_feature_matrix(context)
     model = build_course_model(spec.name, features.shape[1])
     if isinstance(model, ClassicalBaseline):
-        model.fit(context, train.pairs, train.labels)
+        model.fit(context, train.pairs, train.labels, seed=seed)
     else:
         model.to(resolve_device(str(device)))
         dev = next(model.parameters()).device
@@ -141,4 +160,6 @@ def fit_course_model(spec, cfg, graph, datasets, seed, epochs, device):
     count = sum(p.numel() for p in model.parameters())
     if isinstance(model, ClassicalBaseline) and model.regressor is not None:
         count = model.regressor.coef_.size + model.regressor.intercept_.size
+    elif isinstance(model, ClassicalBaseline):
+        count = model.learned_parameters
     return model, metrics, count

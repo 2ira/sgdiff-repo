@@ -185,9 +185,24 @@ def build_registry(cfg: ExperimentConfig, feature_dim: Optional[int] = None) -> 
         ),
     }
     from .course_baselines import CLASSICAL, PATH_MODELS, build_course_model
+    course_notes = {
+        "cn": "common-neighbour score on the observed graph",
+        "aa": "Adamic-Adar degree-weighted common neighbours",
+        "pa": "preferential attachment (endpoint degree product)",
+        "feature_dot": "raw node-attribute dot product",
+        "feature_cosine": "raw node-attribute cosine similarity",
+        "fusion_lr": "logistic fusion of structural and attribute scores",
+        "katz": "five-hop attenuated all-walk similarity",
+        "spectral": "32-dimensional normalised-Laplacian embedding",
+        "deepwalk": "uniform-walk skip-gram embedding",
+        "node2vec": "second-order-walk skip-gram embedding (p=1, q=2)",
+        "sp4lp": "author-code SP4LP adapted to the shared protocol",
+        "sp4lp_endpoints": "SP4LP endpoint-only ablation",
+        "sp4lp_featureless": "SP4LP featureless ablation",
+    }
     for name in CLASSICAL + PATH_MODELS:
         registry[name] = ModelSpec(name, "course", lambda fd, c, n=name: build_course_model(n, fd),
-            note="course heuristic / fusion or author-code SP4LP; see docs/course_sp4lp.md")
+            note=course_notes[name])
     if feature_dim is not None:  # early validation of the shared feature width
         for spec in registry.values():
             spec.builder(feature_dim, cfg)

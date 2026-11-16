@@ -9,9 +9,11 @@ pip install -e '.[dev,investigation]'
 python scripts/run_benchmark.py --list-models
 ```
 
-New registry names: `cn`, `aa`, `pa`, `feature_dot`, `feature_cosine`, `fusion_lr`, `sp4lp`, `sp4lp_endpoints`, `sp4lp_featureless`.
+New registry names: `cn`, `aa`, `pa`, `feature_dot`, `feature_cosine`, `fusion_lr`, `katz`, `spectral`, `deepwalk`, `node2vec`, `sp4lp`, `sp4lp_endpoints`, `sp4lp_featureless`.
 
 CN counts common neighbors; AA downweights high-degree common neighbors; PA multiplies endpoint degrees. Attribute dot/cosine use raw attributes (constant scores when absent). LR fits standardized log1p(CN,AA,PA), signed-log1p(dot), and cosine (signed-log equals log1p for the nonnegative citation features) on clean training queries only, C=1. Its parameter count includes its coefficients/intercept. SP4LP uses the authors' MIT source pinned in `sgdiff/vendor/sp4lp/PROVENANCE.md`, width64 and exact BFS with a32-node path cap. Query edges are hidden from paths. Both ablations are independently retrained. The GNN still aggregates the train graph containing train-positive edges, as with conventional full-graph link prediction.
+
+The course extensions cover three complementary non-neural structure views. `katz` uses the five-hop truncation of the Week-6 all-walk similarity with attenuation `0.85 / max_degree`; since the adjacency spectral radius is at most the maximum degree, this guarantees convergence of the corresponding infinite series. `spectral` uses 32 low-frequency normalised-Laplacian coordinates and cosine link scores, following Week 9. `deepwalk` and `node2vec` use 64-dimensional skip-gram embeddings from five 20-step walks per node; Node2Vec fixes `p=1, q=2` for the local/BFS-like setting discussed in Week 8, while DeepWalk is the uniform `p=q=1` case. Both use a single worker and fixed per-run seed. These transductive representations are recomputed on the observed inference graph, as Katz and spectral scores are, and never use edge labels or raw node attributes.
 
 SP4LP is an optional dependency: basic benchmark imports do not import PyG. Its shared-harness trainer uses lr.001, the requested node-pair epoch budget, and clean validation AUROC every5 epochs (or final epoch), patience6 validation checks. Selected weights are frozen under attack. Validation and test use the actual query arrays and context graphs from `prepare_datasets`. Pure feature heuristics intentionally recompute from the observed raw attributes; SP4LP uses the clean standardized feature matrix shared with node models in the attack harness. Path inputs are rebuilt on every attacked/purified graph.
 
@@ -19,10 +21,10 @@ SP4LP is an optional dependency: basic benchmark imports do not import PyG. Its 
 
 ```bash
 python scripts/run_benchmark.py --dataset synthetic --profile smoke \
-  --models cn aa pa feature_dot feature_cosine fusion_lr sp4lp sp4lp_endpoints sp4lp_featureless \
+  --models cn aa pa katz spectral deepwalk node2vec feature_dot feature_cosine fusion_lr sp4lp sp4lp_endpoints sp4lp_featureless \
   --node-pair-epochs 2 --device cpu --output results/course_sp4lp_smoke
 python scripts/run_robustness.py --dataset synthetic --profile smoke \
-  --models cn aa pa feature_dot feature_cosine fusion_lr sp4lp sp4lp_endpoints sp4lp_featureless \
+  --models cn aa pa katz spectral deepwalk node2vec feature_dot feature_cosine fusion_lr sp4lp sp4lp_endpoints sp4lp_featureless \
   --attacks rf dice --ratios .1 --node-pair-epochs 2 --max-pairs 20 --device cpu \
   --output results/course_sp4lp_smoke --tag integration
 ```
