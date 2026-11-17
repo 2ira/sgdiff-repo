@@ -1,0 +1,72 @@
+{
+  "job_id": 49078609,
+  "job_name": "bifrost-2026111722565600-chenby10",
+  "status": "JOB_FAILED",
+  "site": "fuyao_sh_n2",
+  "gpu": "RTX5000PRO",
+  "gpu_count": 1,
+  "queue": "rc-wbc-5000",
+  "time_limit_hours": 12,
+  "url": "https://fuyao-v3.xiaopeng.link/#/jobs/debug?run=fuyao_sh_n2-49078609",
+  "source_revision": "7ac8c5f",
+  "experiment_plan": {
+    "datasets": [
+      "cora",
+      "citeseer"
+    ],
+    "missing_rates": [
+      0.0,
+      0.4
+    ],
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "models": [
+      "fsd_none",
+      "fsd_fp",
+      "fsd_gamma1",
+      "fsd",
+      "seal",
+      "sgdiff",
+      "vgae"
+    ],
+    "profile": "cpu",
+    "device": "cuda",
+    "primary_cells": 720,
+    "vgae_cells": 120,
+    "total_cells": 840
+  },
+  "previous_attempt": {
+    "job_id": 49078011,
+    "status": "failed_before_training",
+    "reason": "Python 3.8 does not meet repository Python>=3.9"
+  },
+  "python": "3.11.15",
+  "pytorch": "2.7.0+cu128",
+  "environment": "isaaclab_env",
+  "gpu_name": "NVIDIA RTX PRO 5000 72GB Blackwell",
+  "artifact_directory": "results/line-c-fsd/cuda (repository)",
+  "source_note": "FSD/SEAL/SGDiff started from cb7e60e; 7ac8c5f changes only the approved VGAE correction/test, then VGAE was rerun in the same CUDA job.",
+  "evaluation_status": "complete_840_unique_cells",
+  "artifact_status": "all_eight_native_json_verified",
+  "archive_error": "OSError [Errno 122] Disk quota exceeded writing /workspace/chenby10@xiaopeng.com/sgdiff-linec/49078609/results.tar.gz",
+  "failed_recovery_job": {
+    "job_id": 49084921,
+    "job_name": "bifrost-2026111723414000-chenby10",
+    "status": "JOB_FAILED",
+    "url": "https://fuyao-v3.xiaopeng.link/#/jobs/debug?run=fuyao_sh_n2-49084921",
+    "scope": "citeseer missing40, six primary models, seeds 0/1/2; identical native command and source 7ac8c5f",
+    "handoff": "download and verify native output before acknowledging job exit",
+    "reason": "120-second handoff expired before result was downloaded"
+  },
+  "recovery_job": {
+    "job_id": 49091270,
+    "job_name": "bifrost-2026111800072701-chenby10",
+    "status": "JOB_COMPLETE",
+    "url": "https://fuyao-v3.xiaopeng.link/#/jobs/debug?run=fuyao_sh_n2-49091270",
+    "scope": "same Citeseer missing40 command, six primary models, seeds 0/1/2, source 7ac8c5f",
+    "handoff": "native output downloaded and byte-verified; job acknowledged exit"
+  }
+}

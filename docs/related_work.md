@@ -180,3 +180,5 @@ Use `--models fsd_none fsd_fp fsd_gamma1 fsd seal sgdiff` in
 one fixed whole-node attribute mask to **all** models before training; the
 structure attacks remain inference-only. Masked values do not enter attribute
 standardization. Existing default commands retain complete attributes.
+
+The [controlled study and reproduction commands](line_c_fsd_study.md) compare these four controls with corrected VGAE, SEAL and SGDiff (seven models total). All eight native JSON files, metrics and run provenance are included.
