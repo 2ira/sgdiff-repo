@@ -196,8 +196,8 @@ class VGAE(nn.Module):
 
     def forward(self, x, edge_index, num_nodes):
         mean, log_std = self.encode(x, edge_index, num_nodes)
-        std = torch.exp(0.5 * log_std)
-        z = mean + std * torch.randn_like(std)
+        std = torch.exp(log_std)
+        z = mean + std * torch.randn_like(std) if self.training else mean
         kl = -0.5 * (1 + 2 * log_std - mean.pow(2) - log_std.exp().pow(2)).sum(dim=1).mean()
         return z, kl
 

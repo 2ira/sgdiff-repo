@@ -24,9 +24,12 @@ def node_feature_matrix(graph: GraphData, degree_bins: int = 16) -> np.ndarray:
     """Standardised attributes, or a degree encoding for featureless graphs."""
     if graph.has_features:
         x = np.asarray(graph.x, dtype=np.float32)
-        mean, std = x.mean(0, keepdims=True), x.std(0, keepdims=True)
+        observed = np.asarray(graph.meta.get("observed_nodes", np.ones(len(x), dtype=bool)))
+        mean, std = x[observed].mean(0, keepdims=True), x[observed].std(0, keepdims=True)
         std[std < 1e-6] = 1.0
-        return (x - mean) / std
+        out = (x - mean) / std
+        out[~observed] = 0
+        return out
     deg = graph.degrees().astype(np.float32)
     bins = np.clip(np.floor(np.log2(np.maximum(deg, 1.0))).astype(np.int64), 0, degree_bins - 1)
     one_hot = np.zeros((graph.num_nodes, degree_bins), dtype=np.float32)
@@ -95,7 +98,7 @@ def train_node_pair_baseline(
 
         if (epoch + 1) % 10 == 0 and len(split.val_pos):
             metrics = evaluate_node_pair_baseline(
-                model, x_eval, ei_eval, eval_graph.num_nodes, split.val_pos, split.val_neg, device
+                model, x_train, ei_train, train_graph.num_nodes, split.val_pos, split.val_neg, device
             )
             if metrics["auc"] > best_auc:
                 best_auc, bad = metrics["auc"], 0

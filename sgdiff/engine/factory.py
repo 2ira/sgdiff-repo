@@ -10,6 +10,7 @@ import torch
 from ..config import ExperimentConfig
 from ..data.datasets import load_graph
 from ..data.graph import GraphData
+from ..data.feature_mask import observed_nodes
 from ..data.splits import LinkSplit, make_link_split, subsample_pairs
 from ..data.subgraph import SubgraphExtractor
 from ..models.sgdiff import SGDiff
@@ -205,6 +206,14 @@ def training_pairs(split: LinkSplit, cfg: ExperimentConfig) -> tuple[np.ndarray,
 def load_split(cfg: ExperimentConfig):
     """Load the dataset and create the 80/5/15 link split from the configuration."""
     graph = load_graph(cfg.data.name, root=cfg.data.root, download=cfg.data.download, use_cache=True)
+    if cfg.data.feature_missing_rate:
+        if not graph.has_features:
+            raise ValueError("feature missingness requires original node attributes")
+        observed = observed_nodes(graph.num_nodes, cfg.data.feature_missing_rate, cfg.data.seed)
+        x = graph.x.copy()
+        x[~observed] = 0
+        graph = GraphData(graph.name, graph.num_nodes, graph.edges, x=x, y=graph.y,
+                          meta={**graph.meta, "observed_nodes": observed.tolist()})
     split = make_link_split(
         graph,
         val_ratio=cfg.data.val_ratio,
