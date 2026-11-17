@@ -225,6 +225,7 @@ def run_robustness(
         cfg = copy.deepcopy(config)
         cfg.data.seed = int(seed)
         cfg.train.seed = int(seed)
+        cfg.train.device = str(device)
         set_seed(int(seed))
 
         graph, split = load_split(cfg)
@@ -312,7 +313,7 @@ def run_robustness(
                 subgraph_epochs=subgraph_epochs,
                 node_pair_epochs=node_pair_epochs,
                 device=device,
-                run_root=f"{run_root}/{cfg.data.name}",
+                run_root=f"{run_root}/{cfg.data.name}/{tag or 'default'}",
             )
             fit_seconds = time.perf_counter() - started
             clean_metrics: dict[str, float] = {}
@@ -391,6 +392,8 @@ def run_robustness(
                 "node_pair": node_pair_epochs,
             },
             "device": str(device),
+            "feature_missing_rate": config.data.feature_missing_rate,
+            "resolved_config": config.to_dict(),
             "defenses": defense_names,
             "purifier": {"epochs": purifier_epochs, "steps": purifier_steps},
         },

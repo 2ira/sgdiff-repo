@@ -40,6 +40,7 @@ from ..models.baselines import (
     VGAE,
 )
 from ..models.sgdiff import SGDiff
+from ..models.baselines.fsd import FSDGAE
 from ..utils.io import save_json
 from ..utils.seed import resolve_device, set_seed
 from .baseline_trainer import (
@@ -132,6 +133,15 @@ def build_registry(cfg: ExperimentConfig, feature_dim: Optional[int] = None) -> 
     """Return the model zoo used by the benchmark, keyed by name."""
     num_labels = cfg.subgraph.max_label + 1
     registry = {
+        **{
+            name: ModelSpec(name, "node_pair",
+                lambda fd, c, method=method, gamma=gamma: FSDGAE(
+                    fd, c.data.feature_missing_rate, c.data.seed, method, gamma),
+                note=f"label-free FSD-CAP stage-1 adaptation: {method}, gamma={gamma}; shared GAE")
+            for name, method, gamma in (
+                ("fsd_none", "none", 1.2), ("fsd_fp", "fp", 1.0),
+                ("fsd_gamma1", "fsd", 1.0), ("fsd", "fsd", 1.2))
+        },
         "gcn": ModelSpec(
             "gcn",
             "node_pair",

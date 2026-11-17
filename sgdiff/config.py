@@ -19,6 +19,7 @@ class DataConfig:
     max_eval_pairs: Optional[int] = 1000
     download: bool = True
     seed: int = 0
+    feature_missing_rate: float = 0.0  # shared, fixed row mask before any model sees X
 
 
 @dataclass

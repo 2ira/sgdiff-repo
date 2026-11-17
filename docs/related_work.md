@@ -163,3 +163,20 @@ Measured on this reproduction (Cora, full training split):
 5. FSD-CAP (2601.18938), SDG (2601.23233) - the two cheapest extensions of SGDiff itself.
 
 BibTeX for every entry above is in [`references.bib`](references.bib).
+
+## Line C integration: label-free FSD stage 1
+
+`fsd`, `fsd_gamma1`, `fsd_fp`, and `fsd_none` are registered with the existing
+benchmark/robustness interfaces. They share a two-layer 32/16 GAE and differ
+only in parameter-free feature completion. This is an **FSD-CAP stage-1
+adaptation**, not a full FSD-CAP reproduction: the author's CAP stage trains a
+node classifier with extra class labels, which are excluded here to retain the
+SGDiff link-supervision budget. Author reference:
+[`ssjcode/FSD-CAP`](https://github.com/ssjcode/FSD-CAP), revision `a601613`,
+`fsdcap.py::FsdCap.stage1`; paper: [ICLR 2026](https://openreview.net/pdf?id=LAr64ymrMJ).
+
+Use `--models fsd_none fsd_fp fsd_gamma1 fsd seal sgdiff` in
+`scripts/run_robustness.py`. `--overrides data.feature_missing_rate=0.4` applies
+one fixed whole-node attribute mask to **all** models before training; the
+structure attacks remain inference-only. Masked values do not enter attribute
+standardization. Existing default commands retain complete attributes.
