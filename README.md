@@ -61,6 +61,9 @@ full mapping lives in [`docs/alignment.md`](docs/alignment.md).
 The optional [NCNC / LPFormer / Refined-GAE study](experiments/new_link_models/README.md)
 adds pinned author-model adapters, protected-target robustness experiments and
 retrained component ablations under a documented shared protocol.
+Read the [complete measured report (Chinese)](experiments/new_link_models/benchmarks/report.md):
+all 14 conditions, component variants, metrics and 756 seed-level evaluations,
+including random deletion, degree-weighted deletion and insertion.
 
 ```
 sgdiff-repro/

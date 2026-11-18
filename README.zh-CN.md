@@ -38,6 +38,11 @@
 
 ## 目录结构
 
+2026-11-18 新增的 **NCNC / LPFormer / Refined-GAE** 实验见
+[完整实验报告](experiments/new_link_models/benchmarks/report.md)：Cora/Citeseer、3 个种子、
+54 组训练、756 次评估。报告包含随机删边、按度删边、插边、RF/DICE/EA 全部预算、
+特征打乱和组件消融，展开全部指标与逐种子结果；采用独立统一协议，不与历史 SGDiff 表直接排名。
+
 ```
 sgdiff-repro/
 ├── sgdiff/                     # 可安装的库

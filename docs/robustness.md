@@ -1,5 +1,13 @@
 # Robustness under structural attacks (RQ3)
 
+**New three-model study (2026-11-18):** NCNC / LPFormer / Refined-GAE on
+Cora/Citeseer are documented in the
+[complete measured report](../experiments/new_link_models/benchmarks/report.md).
+It includes random deletion 50%, degree-weighted deletion 50%, insertion 50%,
+RF/DICE/EA at 10%/25%/50%, feature shuffle, all component variants and all 756
+seed-level evaluations. These use a separately documented protected-target
+protocol and must not be directly ranked against the historical tables below.
+
 `scripts/run_robustness.py` implements the paper's Sec. 4.4 question for **every**
 model of the zoo (SGDiff, SEAL, PENCIL, GCN, GAT, SAGE, VGAE) with the three
 attacks the paper uses — random flip (RF), DICE and embedding attack (EA) — all

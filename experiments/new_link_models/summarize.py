@@ -9,6 +9,7 @@ import numpy as np
 
 from .adapters import VARIANTS
 from .protocol import metrics
+from .reporting import write_report
 
 
 def mean_std(values):
@@ -78,72 +79,6 @@ def summarize(root):
             paired_summary.append(entry)
         with (root / 'paired_components_summary.csv').open('w', newline='') as f:
             writer = csv.DictWriter(f, paired_summary[0].keys(), lineterminator='\n'); writer.writeheader(); writer.writerows(paired_summary)
-    lookup = {(r['dataset'], r['model'], r['component'], r['attack'], r['ratio']): r for r in summary}
-    datasets = sorted({r['dataset'] for r in records})
-    models = sorted({r['model'] for r in records})
-    complete_runs = len(epochs)
-    report = ['# NCNC / LPFormer / Refined-GAE: measured reproduction and robustness', '',
-              f'Completed {complete_runs} configurations and {len(records)} evaluations. '
-              'Each configuration is one (dataset, model, component, seed).', '',
-              'Author model classes are called from pinned external repositories. '
-              'These are author-architecture reproductions under a shared protocol, not claims of reproducing original paper tables.', '',
-              'Data: canonical Planetoid Cora/Citeseer, raw attributes; 80/5/15 positive split, balanced disjoint fixed negatives. '
-              'All models use positive minibatch size 512, retaining a nonempty visible graph after target masking. '
-              'Clean validation selects checkpoints. Test context is train+validation. '
-              'Attacks edit this visible graph after protecting all test candidates. '
-              'EA is the documented linear-surrogate transfer attack, not DeepRobust parity.', '',
-              'AUC/AP are standard ranking metrics. Hits@100 compares positives strictly against the 100th-highest global negative. '
-              'Precision@100 is a separate metric, with order-independent cutoff ties. '
-              'Values below are percentages, mean ± sample standard deviation.', '', '## Clean full-model results', '',
-              '| Dataset | Model | Seeds | AUC | AP | Hits@100 |', '|---|---|---|---|---|---|']
-    def cell(row, metric='auc'):
-        if row is None:
-            return 'N/A'
-        return f"{100 * row[metric + '_mean']:.2f} ± {100 * row[metric + '_std']:.2f}"
-    for ds in datasets:
-        for model in models:
-            row = lookup.get((ds, model, 'full', 'clean', 0.))
-            if row:
-                report.append(f"| {ds} | {model} | {row['n_seeds']} | {cell(row)} | {cell(row, 'ap')} | {cell(row, 'hits100')} |")
-    report += ['', '## Full-model structural evasion (AUC)', '',
-               '| Dataset | Model | Clean | RF 25% | DICE 25% | EA 25% | RF 50% | DICE 50% | EA 50% |',
-               '|---|---|---|---|---|---|---|---|---|']
-    for ds in datasets:
-        for model in models:
-            vals = [lookup.get((ds, model, 'full', a, r)) for a, r in [('clean', 0.), ('rf', .25), ('dice', .25), ('ea', .25), ('rf', .5), ('dice', .5), ('ea', .5)]]
-            if any(v is not None for v in vals):
-                report.append('| ' + ' | '.join([ds, model] + [cell(v) for v in vals]) + ' |')
-    report += ['', '## Retrained component ablations (AUC)', '',
-               '| Dataset | Model | Component | Clean | RF 50% | DICE 50% | EA 50% |', '|---|---|---|---|---|---|---|']
-    for ds in datasets:
-        for model in models:
-            for component in VARIANTS[model]:
-                vals = [lookup.get((ds, model, component, a, r)) for a, r in [('clean', 0.), ('rf', .5), ('dice', .5), ('ea', .5)]]
-                if vals[0] is not None:
-                    report.append('| ' + ' | '.join([ds, model, component] + [cell(v) for v in vals]) + ' |')
-    report += ['', '## Frozen-model mechanism probes (AUC)', '',
-               '| Dataset | Model | Clean | Random deletion 50% | Hub deletion 50% | Insertion 50% | Feature shuffle |',
-               '|---|---|---|---|---|---|---|']
-    for ds in datasets:
-        for model in models:
-            vals = [lookup.get((ds, model, 'full', a, r)) for a, r in [('clean', 0.), ('delete', .5), ('delete_hub', .5), ('insert', .5), ('feature_shuffle', 0.)]]
-            if vals[0] is not None:
-                report.append('| ' + ' | '.join([ds, model] + [cell(v) for v in vals]) + ' |')
-    report += ['', '## Interpretation limits', '',
-               '- Frozen probes measure sensitivity; component rows are independent retraining experiments.',
-               '- No prespecified robustness ranking is assumed. Read attacked absolute performance together with clean-to-attack drops.',
-               '- Three seeds support an initial comparison, not a definitive significance or broad robustness claim.',
-               '- Shared train/validation/test masks and negatives differ from the authors’ original benchmark protocols. Hyperparameters and every departure are saved in config.json.',
-               '- LPFormer PPR is regenerated on every distinct attacked graph; the PE ablation retains the same neighborhood selection.',
-               '- No-norm Refined-GAE retains dropout, avoiding the author encoder’s norm/dropout switch coupling.', '']
-    if paired:
-        report += ['Paired seed-level full-minus-variant performance and variant-minus-full degradation '
-                   'are in `paired_components.csv` and `paired_components_summary.csv`. Positive performance '
-                   'deltas favor the full model; positive degradation deltas mean the variant loses more.', '']
-    report += ['## Robustness curves', '',
-               'Mean ± sample SD over three seeds; edit fractions refer to the visible inference graph.', '',
-               '![Full-model robustness AUC](robustness_auc.png)', '']
-    (root / 'report.md').write_text('\n'.join(report))
     actual_grid = {tuple(r[k] for k in ['dataset', 'model', 'component', 'seed']) for r in records}
     expected_grid = {(ds, model, component, seed) for ds in ['cora', 'citeseer']
                      for model, components in VARIANTS.items() for component in components for seed in range(3)}
@@ -154,6 +89,7 @@ def summarize(root):
                  extra_configurations=sorted(actual_grid - expected_grid),
                  complete=actual_grid == expected_grid and complete_runs == 54 and len(records) == 54 * 14)
     (root / 'audit.json').write_text(json.dumps(audit, indent=2) + '\n')
+    write_report(root)
     return audit
 
 

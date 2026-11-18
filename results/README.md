@@ -1,5 +1,12 @@
 # Results
 
+For the new NCNC / LPFormer / Refined-GAE study, read the
+[complete measured report](../experiments/new_link_models/benchmarks/report.md).
+All 54 training configurations and 756 evaluations are tabulated there,
+including deletion/insertion probes, every attack budget and component variant.
+The measured archive is under `experiments/new_link_models/benchmarks/`, outside
+the historical SGDiff results directory described below.
+
 Experiment outputs land here. **Everything on this page under
 `sgdiff-paper-v2/` was produced by the corrected implementation
 (`METHOD_VERSION = sgdiff-paper-v2`) at the `paper` profile** (Table 4

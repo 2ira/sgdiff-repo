@@ -39,7 +39,7 @@ arrays. Tests require exact equality with the pinned reference at eps 1e-5 and
 - Remove each positive minibatch from message passing and local neighborhoods.
   All models use **512 positive pairs per minibatch**, retaining visible training
   edges in both datasets. The author's Refined-GAE Citeseer batch size 4096 would
-  mask all 3642 training positives, leaving only self-loops; using a common batch
+  mask all 3641 training positives, leaving only self-loops; using a common batch
   avoids this degenerate context and aligns target-removal fractions across models.
   `settings` retains the original batch sizes as `author_batch_size` provenance.
   LPFormer follows the author's cached full-training-graph PPR during training;
@@ -173,6 +173,13 @@ The completed 54-configuration / 756-evaluation study is archived in
 [benchmarks/report.md](benchmarks/report.md), with a
 [Chinese interpretation](benchmarks/FINDINGS.zh-CN.md). It includes three seeds
 for each full model and each retrained component on Cora and Citeseer.
+The Markdown report expands all 14 conditions, every component and all metrics,
+with 252 aggregate rows and all 756 seed-level evaluations. To regenerate only
+the report from the measured archive, without model dependencies or training:
+
+```bash
+python -m experiments.new_link_models.reporting --output experiments/new_link_models/benchmarks
+```
 
 `summarize` recomputes all metrics from saved predictions, verifies that attack
 graphs match across models/components, and writes per-seed CSVs, mean/sample-SD

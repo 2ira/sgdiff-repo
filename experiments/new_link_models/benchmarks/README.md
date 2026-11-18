@@ -4,7 +4,10 @@ Completed on 2026-11-18: Cora/Citeseer × three author models × three component
 per model × seeds 0/1/2 = **54 training configurations and 756 evaluations**.
 Protocol: `new-link-models-evasion-v2-common-batch512`.
 
-- [Chinese findings](FINDINGS.zh-CN.md) and [complete tables/curves](report.md).
+- [Complete measured report (Chinese)](report.md): all 14 conditions, 252 aggregate
+  rows, 168 paired component rows, actual edit budgets, 54 training records and
+  all 756 seed-level evaluations, with AUC/AP/Hits@100/Precision@100 and drops.
+- [Chinese findings](FINDINGS.zh-CN.md): mechanism interpretation and limitations.
 - `per_seed.csv`, `summary.csv`: AUC/AP, strict global-pool Hits@100,
   separately named precision@100 and clean-to-attack drops.
 - `paired_components*.csv`: paired full-minus-variant performance and
@@ -38,3 +41,9 @@ that used author-specific batch sizes. Only fixed graph caches and splits were
 reused; all 54 published model weights were trained from scratch under the final
 protocol. These results do not replace original-paper benchmark tables or make
 historical SGDiff attack runs directly comparable.
+
+Regenerate only the Markdown report, without training or optional model libraries:
+
+```bash
+python -m experiments.new_link_models.reporting --output experiments/new_link_models/benchmarks
+```

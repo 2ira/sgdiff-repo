@@ -1,5 +1,10 @@
 # 实验总览：跑过什么、结果在哪、怎么复现
 
+**新增三模型实验（2026-11-18）**：NCNC / LPFormer / Refined-GAE 的完整结果见
+[完整实验报告](../experiments/new_link_models/benchmarks/report.md)。共 54 组训练、756 次评估，
+报告展开全部攻击预算、随机/按度删边、插边、特征打乱、组件消融和逐种子指标。
+该实验采用独立统一协议；下文为原有 SGDiff v2 实验记录。
+
 > **本页只记录 `sgdiff-paper-v2`（修正实现）的实验。** 2026-11-13 审计确认
 > 早期实现不忠实（categorical diffusion/后验错误、feature denoiser 不符
 > Eq. 11、两类噪声独立、训练调度非论文默认），旧实现的全部产物已于
