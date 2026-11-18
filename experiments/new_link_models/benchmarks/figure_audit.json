@@ -1,0 +1,28 @@
+{
+  "source": "Saved measured tables; no training or metric changes",
+  "units": "Raw 0-1 metric units in figure_points.csv; plots multiply by 100",
+  "uncertainty": "Sample SD across seeds; drops and component deltas paired within seed",
+  "records": {
+    "performance_overview": 168,
+    "attack_curves": 144,
+    "probe_damage": 24,
+    "component_effects": 168
+  },
+  "source_sha256": {
+    "summary.csv": "13f63b1206f290bcc38a01cd4b200cf39cde0dbb7eca700bba888d8c8aff4f19",
+    "per_seed.csv": "124b84160d39b972ce88db82fe5435b1703db66d8a6b695ac47286e7a3cbf96d",
+    "paired_components_summary.csv": "70569ab9e93273a09c09245bc4bdc4ee4a53f77a0832a09c280a2eda18584f59"
+  },
+  "output_sha256": {
+    "figure_points.csv": "ea944f7a47441ab08263a1147971e1eeea24e6f0f4482fd1864aa4bef5db47df",
+    "performance_overview.png": "191572fd90777e1d2332be43d73a8d18452a8d699dd45fcfd6d5190cdc81cb00",
+    "performance_overview.pdf": "a4e083b69b798435650ac4eaa9d05f76da326135fb80da519ae5a7c2353bea81",
+    "attack_curves.png": "8f5d737b0f4138cab64b2c4d49b21169cde843101b3d94ffec4d52408a82c1e7",
+    "attack_curves.pdf": "949ea9c7e32cff23f7d8c73d4cd94a7c33cbf715be550554ba58678af2d7f354",
+    "probe_damage.png": "3abe073dd0dcb70273d9cdf66c5aabbf1200d42b4fdec7825f86314b9a50fdcf",
+    "probe_damage.pdf": "9454f9d5fff367db23518716a284411c0612c5f8c1e8af5bb644f0adc5114b66",
+    "component_effects.png": "c3cb230904d6cb99aa42b794b1d10aa75c91133ffd2be2089fa7c87fd8efd9e1",
+    "component_effects.pdf": "a59cfee62826140a67671c33ce6c1f22bc1b6ae94d81a62f4800b13b028fada0"
+  },
+  "generator_sha256": "29b4485238401d37df006b56e52dd0e69ea6ec2a79a006ae2f9af129a85cb2a0"
+}

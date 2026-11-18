@@ -66,3 +66,43 @@ def test_report_has_every_aggregate_condition_and_component():
         for r in read_csv(ARCHIVE, 'summary.csv')]
     assert len(rendered) == 252
     assert sorted(rendered) == sorted(expected)
+
+
+def test_plotted_values_match_measured_tables_with_paired_uncertainty():
+    from collections import Counter
+    from experiments.new_link_models.plotting import figure_points, group_key
+    points = figure_points(ARCHIVE)
+    assert Counter(r['figure'] for r in points) == {
+        'performance_overview': 168, 'attack_curves': 144,
+        'probe_damage': 24, 'component_effects': 168}
+    sources = {group_key(r): r for r in read_csv(ARCHIVE, 'summary.csv')}
+    pairs = {group_key(r): r for r in read_csv(ARCHIVE, 'paired_components_summary.csv')}
+    for point in points:
+        source = (pairs if point['figure'] == 'component_effects' else sources)[group_key(point)]
+        for field in ['mean', 'std']:
+            assert point[field] == float(source[point['metric'] + '_' + field])
+
+
+def test_figure_source_validation_rejects_stale_paired_effects(tmp_path):
+    import csv
+    import shutil
+    from experiments.new_link_models.plotting import figure_points
+    for name in ['summary.csv', 'per_seed.csv']:
+        shutil.copyfile(ARCHIVE / name, tmp_path / name)
+    pairs = read_csv(ARCHIVE, 'paired_components_summary.csv')
+    pairs[0]['full_minus_variant_auc_std'] = '0.12345'
+    with (tmp_path / 'paired_components_summary.csv').open('w', newline='') as f:
+        writer = csv.DictWriter(f, pairs[0].keys())
+        writer.writeheader()
+        writer.writerows(pairs)
+    with pytest.raises(ValueError, match='Stale paired component AUC'):
+        figure_points(tmp_path)
+
+
+def test_all_four_figures_precede_the_first_report_table():
+    report = render_report(ARCHIVE)
+    first_table = report.index('\n| ')
+    for name in ['performance_overview', 'attack_curves', 'probe_damage', 'component_effects']:
+        assert report.index(f']({name}.png)') < first_table
+        assert (ARCHIVE / (name + '.png')).exists()
+        assert (ARCHIVE / (name + '.pdf')).exists()

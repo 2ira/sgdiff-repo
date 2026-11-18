@@ -121,6 +121,9 @@ def plot_results(root):
     fig.savefig(root / 'robustness_auc.png', dpi=200)
     fig.savefig(root / 'robustness_auc.pdf')
     plt.close(fig)
+    from .plotting import plot_figures
+    plot_figures(root)
+    write_report(root)
 
 
 def main():

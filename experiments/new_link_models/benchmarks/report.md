@@ -1,11 +1,12 @@
 # NCNC、LPFormer、Refined-GAE：完整复现、鲁棒性与组件消融实验报告
 
-本报告收录 **54 组训练、756 次评估、252 行跨种子汇总**。随机种子：0, 1, 2。所有表格由已保存的 CSV/JSON 自动生成，未用新训练替代已有结果。指标和汇总在生成前逐项核对。
+本报告收录 **54 组训练、756 次评估、252 行跨种子汇总**。随机种子：0, 1, 2。所有图表由已保存的 CSV/JSON 自动生成，未用新训练替代已有结果。指标和汇总在生成前逐项核对。
 
 结果位于 `feat/ncnc-lpformer-refined-gae` 分支。仓库历史 SGDiff 报告此前未接入这组独立实验；旧版三模型报告只展示部分汇总，把删边放在英文“mechanism probes”一节，且遗漏了 10% 攻击及消融模型的完整扰动表。本版将这些结果集中呈现。
 
 ## 阅读索引
 
+- [图形总览](#图形总览)
 - [实验范围与协议](#实验范围与协议)
 - [完整模型：干净图、删边与插边概览](#完整模型干净图删边与插边概览)
 - [完整模型：全部攻击与指标](#完整模型全部攻击与指标)
@@ -15,6 +16,44 @@
 - [训练记录](#训练记录)
 - [逐种子完整结果](#逐种子完整结果)
 - [结论、审计与尚未运行的设置](#结论审计与尚未运行的设置)
+
+## 图形总览
+
+先用四组图阅读整体表现、攻击强度和组件贡献，后文保留全部原始精度表格。所有图直接来自已完成实验，不包含补跑或模拟数据。图中使用英文标签，`Delete` 为随机删边，`Hub-del` 为按度加权删边，`Insert` 为随机插边。
+
+### 图1：完整模型在全部14个条件下的性能
+
+四个面板同时展示两个数据集的 AUC 和 AP，颜色共用 60%–100% 标尺，数字为三种子均值。从左到右依次为干净图、RF/DICE/EA 三档预算、两类删边、插边和特征打乱。热图不编码标准差，精确均值与标准差见后文表格。
+
+![图1：完整模型全部条件的AUC与AP热图](performance_overview.png)
+
+[图1 PDF](performance_overview.pdf)。结构编辑下 NCNC 通常保持较高绝对性能；特征打乱后的排序发生变化，不能用单一扰动代表整体鲁棒性。
+
+### 图2：攻击预算增加时，AUC和AP如何变化
+
+每个数据集各有 AUC/AP 两行，每列对应 RF、DICE、EA；横轴为可见边数的编辑预算。点为均值，误差棒为三种子的样本标准差。每行三个面板共用纵轴范围；纵轴截取性能区间以便观察差异。EA 是线性代理迁移攻击；RF/DICE 的 50% 编辑不是纯删边50%。
+
+![图2：三模型RF、DICE和EA的AUC与AP预算曲线](attack_curves.png)
+
+[图2 PDF](attack_curves.pdf)。随编辑预算增加，绝对性能通常下降；攻击种类和数据集会改变模型间的差距。误差棒不是置信区间或显著性检验。
+
+### 图3：删边、插边与特征打乱造成多少性能下降
+
+纵轴为同一种子内“干净 AUC − 受扰 AUC”的配对降幅，单位是百分点，越接近零越稳。误差棒是配对降幅的样本标准差。左列比较随机删边50%、按度加权删边50%、插边50%；右列单独显示特征打乱。各面板独立纵轴，避免较大的属性扰动掩盖删边差异。
+
+![图3：随机删边、按度删边、插边和特征打乱的配对AUC降幅](probe_damage.png)
+
+[图3 PDF](probe_damage.pdf)。本轮 Cora 上 LPFormer 对删边的降幅较大；NCNC 在删边下较稳，但对特征与节点对应关系的打乱敏感。低降幅仍需结合图1的绝对性能判断。
+
+### 图4：组件消融在全部条件下的配对效果
+
+每行是一个独立重训的组件变体，值为同一种子内“完整模型 AUC − 消融模型 AUC”的均值。蓝色/正值表示完整模型更高，红色/负值表示消融版本更高；单位为百分点。两个数据集共享各列色标，结构条件与特征打乱分别使用色标；热图只编码均值，配对标准差见后文“配对组件差值”。
+
+![图4：六种组件消融在14个条件下的配对AUC差值](component_effects.png)
+
+[图4 PDF](component_effects.pdf)。NCNC 补全的边际贡献较小；LPFormer 的位置编码和 Refined-GAE 的归一化/解码器效果依赖扰动类型。颜色和三种子均值不构成显著性证据。
+
+图中全部 504 个均值/标准差记录可追溯到 [figure_points.csv](figure_points.csv)，源表和图片指纹见 [figure_audit.json](figure_audit.json)。CSV 保留 0–1 单位，绘图乘以 100。
 
 ## 实验范围与协议
 
@@ -1589,12 +1628,6 @@
 - [配对逐种子差值](paired_components.csv)、[配对汇总](paired_components_summary.csv)。
 - [训练汇总](training_summary.csv)、[数据统计](dataset_statistics.json)、[环境与硬件](runtime.json)、[协议修订](protocol_revision.json)。
 
-### 鲁棒性曲线
-
-曲线仅展示完整模型 RF/DICE/EA；纯删边、插边及所有组件的完整数值以本文表格为准。
-
-![完整模型鲁棒性 AUC，三种子均值与标准差](robustness_auc.png)
-
 ### 再生成本报告
 
 ```bash
@@ -1603,3 +1636,12 @@ python -m experiments.new_link_models.reporting \
 ```
 
 该命令只读取已保存的 CSV/JSON，生成 Markdown；不启动训练、不改写实验指标。
+
+重新生成报告前的四组图（需要 matplotlib/numpy），再更新 Markdown：
+
+```bash
+python -m experiments.new_link_models.plotting \
+  --output experiments/new_link_models/benchmarks
+python -m experiments.new_link_models.reporting \
+  --output experiments/new_link_models/benchmarks
+```

@@ -8,6 +8,12 @@ Protocol: `new-link-models-evasion-v2-common-batch512`.
   rows, 168 paired component rows, actual edit budgets, 54 training records and
   all 756 seed-level evaluations, with AUC/AP/Hits@100/Precision@100 and drops.
 - [Chinese findings](FINDINGS.zh-CN.md): mechanism interpretation and limitations.
+- Four integrated figures appear before the report's tables: all-condition
+  AUC/AP heatmaps, AUC/AP attack curves with sample-SD bars, paired perturbation
+  damage and paired component effects. Each has standalone PNG/PDF exports:
+  `performance_overview`, `attack_curves`, `probe_damage`, `component_effects`.
+- `figure_points.csv` contains all 504 plotted mean/SD records in raw 0–1 units;
+  figures multiply these by 100. `figure_audit.json` records source/output hashes.
 - `per_seed.csv`, `summary.csv`: AUC/AP, strict global-pool Hits@100,
   separately named precision@100 and clean-to-attack drops.
 - `paired_components*.csv`: paired full-minus-variant performance and
@@ -46,4 +52,11 @@ Regenerate only the Markdown report, without training or optional model librarie
 
 ```bash
 python -m experiments.new_link_models.reporting --output experiments/new_link_models/benchmarks
+```
+
+Regenerate figures from the same saved tables (requires matplotlib/numpy), then
+run the Markdown command above:
+
+```bash
+python -m experiments.new_link_models.plotting --output experiments/new_link_models/benchmarks
 ```
