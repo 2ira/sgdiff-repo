@@ -4,11 +4,14 @@
     "passed": 205,
     "skipped": 2,
     "skip_reason": "Two MPS device parametrizations unavailable on Linux",
-    "output_summary": "205 passed, 2 skipped in 136.71s (0:02:16)"
+    "output_summary": "205 passed, 2 skipped in 136.71s (0:02:16)",
+    "test_source_sha256": "95f59170f8b7e0ffb1d385b3b7eaab987df69da42ae3fe46c336794466679967"
   },
   "author_protocol_module": {
     "passed": 18,
-    "description": "Forward/backward of all components, protected attacks, disjoint splits, tied metrics, DGL bridge outputs/gradients, PPR reference parity, process cache concurrency"
+    "description": "Forward/backward of all components, protected attacks, disjoint splits, tied metrics, DGL bridge outputs/gradients, PPR reference parity, process cache concurrency",
+    "test_source_sha256": "3a6f72a07df92cbada608b8c14253268f4524cf8c191e75811b7286e7f8e063f",
+    "output_summary": "18 passed in 19.51s"
   },
   "network_filesystem_cache_test": {
     "passed": 1,
@@ -31,7 +34,7 @@
     "introspection.py": "34fd31d8e421961eb2ba124318913cf9d0892f53a3ae69a27b1ebd034cb708c6",
     "prepare.py": "c119156c11cbf56f94c4c5ab22ce81838ae18bc69e57502b29d9ae34de77f099"
   },
-  "test_source_sha256": "95f59170f8b7e0ffb1d385b3b7eaab987df69da42ae3fe46c336794466679967",
+  "test_source_sha256": "3a6f72a07df92cbada608b8c14253268f4524cf8c191e75811b7286e7f8e063f",
   "completed_training_configurations": 54,
   "evaluations": 756,
   "checkpoint_reloads": 54,
@@ -53,5 +56,10 @@
     "Graph and PPR caches",
     "Per-epoch training histories"
   ],
-  "curation_csv_line_endings": "LF; parsed CSV values verified unchanged"
+  "curation_csv_line_endings": "LF; parsed CSV values verified unchanged",
+  "minimal_optional_environment_check": {
+    "passed": true,
+    "expected_skipped": 2,
+    "description": "No author checkout configured and numba import disabled: reference-only checks skip before loading optional numba"
+  }
 }

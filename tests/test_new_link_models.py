@@ -133,9 +133,10 @@ def test_ppr_cache_changes_with_graph(tmp_path):
 @pytest.mark.parametrize('eps', [1e-5, 1e-7])
 def test_ppr_array_backend_equals_author_reference(eps):
     import ast
+    root = author_root()
     from experiments.new_link_models.ppr_backend import calc_ppr
     from experiments.new_link_models.sources import verify
-    source = verify(author_root(), 'lpformer')
+    source = verify(root, 'lpformer')
     file = source / 'src/util/calc_ppr_scores.py'
     fn = next(n for n in ast.parse(file.read_text()).body if isinstance(n, ast.FunctionDef) and n.name == 'get_calc_ppr')
     namespace = {'np': np}
