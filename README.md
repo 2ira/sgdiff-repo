@@ -26,7 +26,8 @@ Results live in `results/sgdiff-paper-v2/`, checkpoints in `runs/sgdiff-paper-v2
 Historical reports remain visible but are explicitly marked as old-implementation
 results and are not paper-faithful evidence.
 
-The implementation uses plain PyTorch — no PyTorch Geometric, no DGL.
+The core SGDiff implementation uses plain PyTorch. Optional author-model
+experiments document their additional PyG/DGL dependencies separately.
 CPU is sufficient for equation/regression tests; uncapped Table 4 training should
 be run on a GPU. Corrected grid outputs go to `results/sgdiff-paper-v2/` and
 checkpoints to `runs/sgdiff-paper-v2/`.
@@ -56,6 +57,10 @@ full mapping lives in [`docs/alignment.md`](docs/alignment.md).
 | 80 / 5 / 15 split, equal negatives, AUC/AP/Hit@100, 10 seeds | `data.*`, `scripts/run_experiments.py --seeds` |
 
 ## Repository layout
+
+The optional [NCNC / LPFormer / Refined-GAE study](experiments/new_link_models/README.md)
+adds pinned author-model adapters, protected-target robustness experiments and
+retrained component ablations under a documented shared protocol.
 
 ```
 sgdiff-repro/
