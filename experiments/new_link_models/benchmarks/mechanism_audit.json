@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "attention_pair_records": 2304,
+  "candidate_counts_identical_across_lpformer_components": true,
+  "uniform_attention_checked": true,
+  "zero_pe_checked": true,
+  "datasets": {
+    "cora": {
+      "sampled_pairs": 384,
+      "mean_selected_nodes": 2.203125,
+      "fraction_at_most_one_candidate": 0.6927083333333334,
+      "mean_normalized_entropy_when_multiple_candidates": 0.07094754416489997
+    },
+    "citeseer": {
+      "sampled_pairs": 384,
+      "mean_selected_nodes": 1.0625,
+      "fraction_at_most_one_candidate": 0.7760416666666666,
+      "mean_normalized_entropy_when_multiple_candidates": 0.1664717595258103
+    }
+  }
+}

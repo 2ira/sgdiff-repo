@@ -1,0 +1,21 @@
+{
+  "planetoid_commit": "af6abf468a772cc055bec88c52e4d6f51b7c37e3",
+  "files": {
+    "raw/ind.citeseer.allx": "2ac30345d95c9ec933a817ee0bdd6a5f077f8c184a20e696910192d534414668",
+    "raw/ind.citeseer.ally": "f704b2d986dde6c2669934de1f3ae5696a6cf9455c0f6b2646a2d135ea0a1c95",
+    "raw/ind.citeseer.graph": "d79a4ef9d3e7169aee8946145f6b7306e35bc79bffad26346cfb94e10e9912a7",
+    "raw/ind.citeseer.test.index": "2af990671580b6b2df5d158d1038f8292e30c9cd821b5453f399659b25b723d4",
+    "raw/ind.citeseer.tx": "539a8906a2da97628d212f2fdd668c109a8b3f0d36574b59e5d3fd5b5303da21",
+    "raw/ind.citeseer.ty": "55e5bd1ba1e733a04598753ad1a8d57957f4b8f89e74519f41f4f4938767e4ce",
+    "raw/ind.cora.allx": "9419ba2f26f5c35243db64aba110e0f35a04851609e0dc5433450676ca6b8543",
+    "raw/ind.cora.ally": "2b998f5cc7fedc86e7f97ca2498f47a1ffc1462c29e2d578b23bf3f62b6e7d71",
+    "raw/ind.cora.graph": "58f13302f39dde8852dad6fe6d15b89b077b6d7f837626bce671ef80344b383d",
+    "raw/ind.cora.test.index": "297ce89af2b51a6a194181c7dbe1796c6a1cf9cd9349a88383b1b1e227867875",
+    "raw/ind.cora.tx": "b9afbaa4a400df991f6f02ef677e1e44da55ffc04801fd02f9e673987829226a",
+    "raw/ind.cora.ty": "41f5ac76596a1699cc33f53084a2419e92961c42bb75f36fc38e616d348532ad",
+    "processed/Citeseer.npz": "5c114c17a9ff742f90723a5d565a9ea5274e98bd99eaf9064d74f10c51d4efb4",
+    "processed/Citeseer_features.npz": "df106e3e5e27659caa239cbc2b506bf2f2dae89362e2e05dca4f671cadbf7ce2",
+    "processed/Cora.npz": "4a16ef965a01f3d0284f09b9e687d5674ad8365dc9fce30bed014de82788b23a",
+    "processed/Cora_features.npz": "d97fad2b21120d505fcaa270c7c3e0971e52bf74edec3883e5330396b4a98bfc"
+  }
+}

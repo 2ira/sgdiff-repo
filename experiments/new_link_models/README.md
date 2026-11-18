@@ -132,9 +132,13 @@ python -m experiments.new_link_models.run --model ncnc --dataset cora \
 python -m experiments.new_link_models.suite --data-root /path/to/data \
   --source-root /path/to/author-sources --output /path/to/formal --jobs 1
 python -m experiments.new_link_models.summarize --output /path/to/formal
+python -m experiments.new_link_models.audit --output /path/to/formal \
+  --data-root /path/to/data --source-root /path/to/author-sources
 python -m experiments.new_link_models.diagnostics --output /path/to/formal \
   --data-root /path/to/data
 python -m experiments.new_link_models.replay --output /path/to/formal \
+  --data-root /path/to/data --source-root /path/to/author-sources
+python -m experiments.new_link_models.introspection --output /path/to/formal \
   --data-root /path/to/data --source-root /path/to/author-sources
 ```
 
@@ -165,10 +169,17 @@ training trials, not bitwise-repeatability claims.
 
 ## Results
 
+The completed 54-configuration / 756-evaluation study is archived in
+[benchmarks/report.md](benchmarks/report.md), with a
+[Chinese interpretation](benchmarks/FINDINGS.zh-CN.md). It includes three seeds
+for each full model and each retrained component on Cora and Citeseer.
+
 `summarize` recomputes all metrics from saved predictions, verifies that attack
 graphs match across models/components, and writes per-seed CSVs, mean/sample-SD
 tables, paired component deltas, standalone PNG/PDF robustness plots and an audit.
 `diagnostics` adds candidate-stratified results and score/attribute correlations.
 `replay` reloads checkpoints and reproduces clean, DICE-50% and shuffled-feature
-predictions by default. Read the generated report together with this protocol.
+predictions by default. `introspection` exports learned depth/branch weights and
+LPFormer attention entropy, checking that uniform attention and zero-PE behave
+as intended on real held-out candidates. Read the report together with this protocol.
 Large datasets, PPR caches and trained checkpoints are not committed to Git.

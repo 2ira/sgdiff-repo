@@ -1,0 +1,14 @@
+{
+  "cora": {
+    "nodes": 2708,
+    "undirected_edges": 5278,
+    "feature_dim": 1433,
+    "known_attacker_class_labels": 2708
+  },
+  "citeseer": {
+    "nodes": 3327,
+    "undirected_edges": 4552,
+    "feature_dim": 3703,
+    "known_attacker_class_labels": 3312
+  }
+}

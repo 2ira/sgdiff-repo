@@ -15,7 +15,7 @@ from .run import graph_with_edges
 def write_csv(path, rows):
     if rows:
         with path.open('w', newline='') as handle:
-            writer = csv.DictWriter(handle, rows[0].keys())
+            writer = csv.DictWriter(handle, rows[0].keys(), lineterminator='\n')
             writer.writeheader()
             writer.writerows(rows)
 

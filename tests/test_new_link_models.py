@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 import torch
 
+pytest.importorskip('sklearn', reason='install experiments/new_link_models/requirements.txt')
+
 from experiments.new_link_models.protocol import edge_keys, metrics, perturb, split_data
 from sgdiff.data.graph import GraphData
 

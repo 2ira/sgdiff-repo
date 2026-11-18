@@ -1,0 +1,9 @@
+{
+  "full_cora_reference_matrices": [
+    {
+      "graph": "8d8583de57f591aa8c101b770712bb00df44e12096f103e5acf4d6f8ceffc5c1",
+      "nonzero_ppr": 5125591,
+      "exact_float32_and_indices": true
+    }
+  ]
+}

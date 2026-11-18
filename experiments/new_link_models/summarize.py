@@ -40,7 +40,7 @@ def summarize(root):
     if not records:
         raise RuntimeError('No completed experiments')
     with (root / 'per_seed.csv').open('w', newline='') as f:
-        writer = csv.DictWriter(f, records[0].keys()); writer.writeheader(); writer.writerows(records)
+        writer = csv.DictWriter(f, records[0].keys(), lineterminator='\n'); writer.writeheader(); writer.writerows(records)
     groups = defaultdict(list)
     for row in records:
         groups[tuple(row[k] for k in ['dataset', 'model', 'component', 'attack', 'ratio'])].append(row)
@@ -51,7 +51,7 @@ def summarize(root):
             result[metric + '_mean'], result[metric + '_std'] = mean_std([r[metric] for r in rows])
         summary.append(result)
     with (root / 'summary.csv').open('w', newline='') as f:
-        writer = csv.DictWriter(f, summary[0].keys()); writer.writeheader(); writer.writerows(summary)
+        writer = csv.DictWriter(f, summary[0].keys(), lineterminator='\n'); writer.writeheader(); writer.writerows(summary)
     by_seed = {tuple(r[k] for k in ['dataset', 'model', 'component', 'seed', 'attack', 'ratio']): r for r in records}
     paired = []
     for row in records:
@@ -66,7 +66,7 @@ def summarize(root):
                       {f'variant_minus_full_drop_{m}': row[f'drop_{m}'] - full[f'drop_{m}'] for m in ['auc', 'ap']})
     if paired:
         with (root / 'paired_components.csv').open('w', newline='') as f:
-            writer = csv.DictWriter(f, paired[0].keys()); writer.writeheader(); writer.writerows(paired)
+            writer = csv.DictWriter(f, paired[0].keys(), lineterminator='\n'); writer.writeheader(); writer.writerows(paired)
         paired_groups = defaultdict(list)
         for row in paired:
             paired_groups[tuple(row[k] for k in ['dataset', 'model', 'component', 'attack', 'ratio'])].append(row)
@@ -77,7 +77,7 @@ def summarize(root):
                 entry[metric + '_mean'], entry[metric + '_std'] = mean_std([r[metric] for r in rows])
             paired_summary.append(entry)
         with (root / 'paired_components_summary.csv').open('w', newline='') as f:
-            writer = csv.DictWriter(f, paired_summary[0].keys()); writer.writeheader(); writer.writerows(paired_summary)
+            writer = csv.DictWriter(f, paired_summary[0].keys(), lineterminator='\n'); writer.writeheader(); writer.writerows(paired_summary)
     lookup = {(r['dataset'], r['model'], r['component'], r['attack'], r['ratio']): r for r in summary}
     datasets = sorted({r['dataset'] for r in records})
     models = sorted({r['model'] for r in records})
@@ -140,11 +140,19 @@ def summarize(root):
         report += ['Paired seed-level full-minus-variant performance and variant-minus-full degradation '
                    'are in `paired_components.csv` and `paired_components_summary.csv`. Positive performance '
                    'deltas favor the full model; positive degradation deltas mean the variant loses more.', '']
+    report += ['## Robustness curves', '',
+               'Mean ± sample SD over three seeds; edit fractions refer to the visible inference graph.', '',
+               '![Full-model robustness AUC](robustness_auc.png)', '']
     (root / 'report.md').write_text('\n'.join(report))
+    actual_grid = {tuple(r[k] for k in ['dataset', 'model', 'component', 'seed']) for r in records}
+    expected_grid = {(ds, model, component, seed) for ds in ['cora', 'citeseer']
+                     for model, components in VARIANTS.items() for component in components for seed in range(3)}
     audit = dict(completed_training_runs=complete_runs, evaluations=len(records),
                  prediction_metrics_recomputed=True, attacked_graphs_identical_across_models=True,
                  expected_training_runs=54, expected_evaluations=54 * 14,
-                 complete=complete_runs == 54 and len(records) == 54 * 14)
+                 missing_configurations=sorted(expected_grid - actual_grid),
+                 extra_configurations=sorted(actual_grid - expected_grid),
+                 complete=actual_grid == expected_grid and complete_runs == 54 and len(records) == 54 * 14)
     (root / 'audit.json').write_text(json.dumps(audit, indent=2) + '\n')
     return audit
 
@@ -166,7 +174,8 @@ def plot_results(root):
             for model in models:
                 selected = sorted([r for r in rows if r['dataset'] == ds and r['model'] == model and r['attack'] in ['clean', attack]], key=lambda r: float(r['ratio']))
                 ax.errorbar([float(r['ratio']) * 100 for r in selected], [float(r['auc_mean']) * 100 for r in selected],
-                            yerr=[float(r['auc_std']) * 100 for r in selected], marker='o', capsize=3, label=model)
+                            yerr=[float(r['auc_std']) * 100 for r in selected], marker='o', capsize=3,
+                            label={'ncnc': 'NCNC', 'lpformer': 'LPFormer', 'refined_gae': 'Refined-GAE'}[model])
             ax.set(title=f'{ds.capitalize()} · {attack.upper()}', xlabel='Edited edges (% of visible graph)')
             ax.grid(alpha=.2)
             if j == 0:

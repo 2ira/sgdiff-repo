@@ -134,7 +134,7 @@ link prediction in depth, which is precisely SGDiff's niche.
 | C3 adversarial robustness | DiffHGLP, DiffGraph | `--attack` with RF / DICE, add a diffusion baseline | `scripts/run_experiments.py --attack` |
 | C4 automorphism / memory | EO-GNN, PENCIL, S3GRL | EO-GNN baseline + sub-graph/s throughput at fixed k | `models/baselines/pencil.py`, `docs/benchmark.md` |
 
-**Condition-shuffle ablation (implemented, with results).** `scripts/run_ablation.py`
+**Condition-shuffle ablation (implemented; historical analysis below).** `scripts/run_ablation.py`
 (see [`ablation.md`](ablation.md)) scores one checkpoint with a perturbed
 condition, permuted DRNL labels, a single diffusion step and a single likelihood
 stream, then retrains once with a randomized stage-1 condition. A large AUC drop
@@ -142,7 +142,12 @@ for `same_condition` means the likelihood genuinely depends on `y`; a flat AUC
 across `single_t_*` is the GCCM shortcut - the "diffusion depth" would be
 decorative and the score a deterministic regressor in disguise.
 
-Measured on this reproduction (Cora, full training split):
+The following measurements predate the corrected `sgdiff-paper-v2` implementation.
+They are historical results and do not establish the same conclusions for v2;
+consult the versioned results and [`reproduction.md`](reproduction.md) for the
+current implementation.
+
+Historical measurements (Cora, full training split):
 
 * `same_condition` 0.7179 -> 0.4951: the condition is really used, so C2/C3 are
   not carried by leakage.
@@ -163,3 +168,27 @@ Measured on this reproduction (Cora, full training split):
 5. FSD-CAP (2601.18938), SDG (2601.23233) - the two cheapest extensions of SGDiff itself.
 
 BibTeX for every entry above is in [`references.bib`](references.bib).
+
+## 11. Added non-diffusion comparators (2026-11-18)
+
+[NCNC, LPFormer and Refined-GAE](../experiments/new_link_models/README.md) now
+have adapters calling pinned external author model classes, plus a shared
+protected-target robustness and retrained-component protocol. These additions
+cover neural common-neighbor completion, pairwise attention/PPR, and a refined
+GAE encoder/decoder recipe. They are separate from the existing approximate
+baseline collection.
+
+The completed study uses Cora/Citeseer, seeds 0/1/2, and two independently
+retrained component variants per model: **54 training configurations and 756
+evaluations**. RF/DICE/linear-surrogate EA edit the visible train+validation
+inference graph; all test candidates are protected. Validation uses training
+edges only. A common positive minibatch size 512 retains a nonempty graph after
+training target masking. LPFormer PPR is rebuilt for each distinct attacked graph.
+
+Read the [measured report](../experiments/new_link_models/benchmarks/report.md),
+[Chinese findings](../experiments/new_link_models/benchmarks/FINDINGS.zh-CN.md),
+and [model/ablation guide](../experiments/new_link_models/MODEL_GUIDE.zh-CN.md).
+These are author-architecture comparisons under the documented shared protocol,
+which differs from the original authors' table protocols and from historical
+SGDiff attack runs. A direct SGDiff-vs-new-model table requires running SGDiff
+under the same protected-target protocol.

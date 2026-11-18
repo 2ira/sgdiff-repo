@@ -1,0 +1,10 @@
+{
+  "protocol": "new-link-models-evasion-v2-common-batch512",
+  "rationale": "Common batch512 retains graph edges after target masking and aligns per-minibatch removed fractions across models.",
+  "old_runs_excluded": {
+    "reason": "Use common batch size 512 to retain visible graph edges after minibatch target masking; author Refined-GAE Citeseer batch4096 exceeds3642 training edges. This is a protocol comparability correction, not test-metric tuning.",
+    "completed_runs_excluded": 9,
+    "reuse": "Only data-independent graph attacks and exact-graph PPR caches; no trained weights or predictions."
+  },
+  "reused_only": "fixed graph attacks, splits and exact-graph PPR caches; all model weights trained from scratch"
+}
