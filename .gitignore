@@ -33,3 +33,7 @@ checkpoints/*.pt
 
 # OS
 .DS_Store
+
+# Course observation-study weights stay local; compact predictions/receipts may
+# be shared explicitly when a completed investigation is ready for review.
+results/observation_robustness_v2/**/*.pt

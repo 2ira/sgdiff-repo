@@ -1,0 +1,36 @@
+{
+  "base_commit": "a2bcdd734374ef6780f9120344d047b28e187141",
+  "protected_upstream_files_unchanged": {
+    "sgdiff/models/sgdiff.py": true,
+    "sgdiff/models/feature_diffusion.py": true,
+    "sgdiff/models/structure_diffusion.py": true,
+    "sgdiff/models/transformer_denoiser.py": true,
+    "sgdiff/models/schedules.py": true,
+    "sgdiff/models/layers.py": true,
+    "sgdiff/models/fusion.py": true,
+    "sgdiff/engine/trainer.py": true,
+    "sgdiff/engine/factory.py": true,
+    "sgdiff/engine/evaluator.py": true,
+    "sgdiff/engine/baseline_trainer.py": true,
+    "sgdiff/data/splits.py": true,
+    "sgdiff/data/subgraph.py": true,
+    "sgdiff/utils/metrics.py": true,
+    "sgdiff/config.py": true,
+    "configs/default.yaml": true
+  },
+  "python": "3.11.8 | packaged by conda-forge | (main, Feb 16 2024, 20:49:36) [Clang 16.0.6 ]",
+  "platform": "macOS-15.7.3-arm64-arm-64bit",
+  "packages": {
+    "torch": "2.15.0",
+    "torch-geometric": "2.8.1",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "scikit-learn": "1.9.1",
+    "pandas": "3.1.1",
+    "pytest": "9.2.0"
+  },
+  "historical_non_sgdiff_metric_rows": 1152,
+  "new_registry_methods": 9,
+  "observation_smoke_model_condition_rows": 60,
+  "known_upstream_failure": "test_gcn_ablation_bridge.py::test_shared_matches_reference_outputs_gradients_and_dropout_rng[True-False]; also fails on unmodified a2bcdd7; gradient absolute difference 2.078e-7 at tolerance1e-7"
+}

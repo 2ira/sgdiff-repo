@@ -1,0 +1,116 @@
+{
+  "dataset": "cora",
+  "seed": 0,
+  "profile": "local",
+  "budget": {
+    "train_pairs": 4000,
+    "val_pairs": 512,
+    "test_pairs": 1024,
+    "sg_epochs": 12,
+    "pretrain": 3,
+    "epochs": 200,
+    "sub_epochs": 30,
+    "mc": 4,
+    "nodes": 40
+  },
+  "protocol": "clean train-only context for training, validation and test; frozen clean feature moments",
+  "split_fingerprint": "62930fab01443490",
+  "context_fingerprint": "7c28a3b85e4a2d26bfe6",
+  "query_fingerprint": "57880084dc185ec5",
+  "train_fingerprint": "8b0b00ad6aeafa0f",
+  "pair_counts": {
+    "train": 4000,
+    "val": 512,
+    "test": 1024
+  },
+  "graph": {
+    "nodes": 2708,
+    "edges": 5278,
+    "features": 1433
+  },
+  "config": {
+    "data": {
+      "name": "cora",
+      "root": "data",
+      "val_ratio": 0.05,
+      "test_ratio": 0.15,
+      "neg_ratio": 1.0,
+      "train_ratio": 1.0,
+      "max_train_pairs": 4000,
+      "max_eval_pairs": 1024,
+      "download": true,
+      "seed": 0
+    },
+    "subgraph": {
+      "hops": 1,
+      "max_nodes_per_hop": null,
+      "max_nodes_total": 40,
+      "max_label": 16,
+      "feature_mode": "auto",
+      "remove_target_edge": true
+    },
+    "structure": {
+      "arch": "transformer",
+      "node_attn": 256,
+      "edge_attn": 64,
+      "global_attn": 64,
+      "node_mlp": 256,
+      "edge_mlp": 128,
+      "global_mlp": 128,
+      "heads": 8,
+      "num_layers": 2,
+      "aux_ce_weight": 1.0,
+      "hidden_dim": 64,
+      "edge_dim": 16,
+      "num_steps": 20,
+      "beta_start": 0.0001,
+      "beta_end": 0.2,
+      "time_dim": 32,
+      "dropout": 0.1,
+      "normalize_score": true,
+      "num_mc_samples": 4,
+      "weight": 1.0
+    },
+    "feature": {
+      "enabled": true,
+      "hidden_dim": 256,
+      "num_layers": 2,
+      "num_steps": 100,
+      "beta_start": 0.0001,
+      "beta_end": 0.02,
+      "time_dim": 32,
+      "dropout": 0.1,
+      "arch": "gcn",
+      "num_mc_samples": 4,
+      "weight": 1.0
+    },
+    "model": {
+      "fusion_learnable": true,
+      "init_eta": 1.0
+    },
+    "train": {
+      "epochs": 12,
+      "pretrain_epochs": 3,
+      "batch_size": 32,
+      "eval_batch_size": 64,
+      "lr": 0.001,
+      "fusion_lr": 0.01,
+      "weight_decay": 0.0,
+      "grad_clip": 5.0,
+      "patience": 10,
+      "device": "mps",
+      "num_workers": 0,
+      "seed": 0,
+      "run_dir": "runs",
+      "run_name": "sgdiff",
+      "eval_every": 2,
+      "save_checkpoint": true,
+      "freeze_diffusion": false,
+      "finetune_mc_samples": 2
+    }
+  },
+  "torch": "2.15.0",
+  "platform": "macOS-15.7.3-arm64-arm-64bit",
+  "threads": 4,
+  "source_commit": "bde4aac9e19776dc300314fc8518b99216348104"
+}

@@ -87,7 +87,7 @@ prompting rather than through a dataset-independent structural prior.
 | work | id / date | idea | in this repo |
 |------|-----------|------|--------------|
 | **PENCIL: Plain Transformers are Surprisingly Powerful Link Predictors** | 2602.01553, ICML 2026 | encoder-only Transformer over the sampled sub-graph, no hand-crafted heuristics, no node-ID embeddings | **implemented** (`models/baselines/pencil.py`) |
-| **SP4LP** | 2025-07 (rev. 2026-11) | GNN encoder + sequence model over the **shortest path** between the endpoints | planned |
+| **SP4LP** | 2025-07 (rev. 2026-11) | GNN encoder + sequence model over the **shortest path** between the endpoints | integrated: `sp4lp`, `sp4lp_endpoints`, `sp4lp_featureless` ([guide](course_sp4lp.md)) |
 | **EO-GNN / Edge-Level Automorphism** | 2026-09-28 | edge orbits + EAR metric, automorphism-aware dropout and orbit-biased sub-graph aggregation | planned: directly re-tests SGDiff's automorphic-node argument (C4) |
 | **AtlasULP** | 2026-11-05 | relation-atlas (global + local) descriptors for universal link prediction with domain-guided prompting | planned: competitor to C1 |
 | **S3GRL / ELPH / BUDDY** | 2023 | simplified sub-graph message passing, sub-graph sketching, precomputed structure features | S3GRL-style speed reference only |

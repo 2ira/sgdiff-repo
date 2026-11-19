@@ -53,7 +53,7 @@ from .factory import build_model, load_split, prepare_datasets, training_pairs
 from .trainer import Trainer
 
 METRICS = ("auc", "ap", "hit@100")
-KINDS = ("node_pair", "subgraph", "sgdiff", "robust_node_pair")
+KINDS = ("node_pair", "subgraph", "sgdiff", "robust_node_pair", "course")
 
 # Budgets shared by scripts/run_benchmark.py and scripts/run_ablation.py; they
 # mirror the profiles of scripts/run_experiments.py so that every table in
@@ -194,6 +194,28 @@ def build_registry(cfg: ExperimentConfig, feature_dim: Optional[int] = None) -> 
             note="the paper's sub-graph diffusion model",
         ),
     }
+    from .course_baselines import CLASSICAL, PATH_MODELS, build_course_model
+    course_notes = {
+        "cn": "common-neighbour score on the observed graph",
+        "aa": "Adamic-Adar degree-weighted common neighbours",
+        "pa": "preferential attachment (endpoint degree product)",
+        "feature_dot": "raw node-attribute dot product",
+        "feature_cosine": "raw node-attribute cosine similarity",
+        "fusion_lr": "logistic fusion of structural and attribute scores",
+        "katz_h2": "Katz ablation: walks up to length 2 (scaled common neighbours)",
+        "katz_h3": "Katz ablation: walks up to length 3",
+        "katz": "five-hop attenuated all-walk similarity",
+        "katz_decay50": "Katz ablation: five hops with stronger length attenuation",
+        "spectral": "32-dimensional normalised-Laplacian embedding",
+        "deepwalk": "uniform-walk skip-gram embedding",
+        "node2vec": "second-order-walk skip-gram embedding (p=1, q=2)",
+        "sp4lp": "author-code SP4LP adapted to the shared protocol",
+        "sp4lp_endpoints": "SP4LP endpoint-only ablation",
+        "sp4lp_featureless": "SP4LP featureless ablation",
+    }
+    for name in CLASSICAL + PATH_MODELS:
+        registry[name] = ModelSpec(name, "course", lambda fd, c, n=name: build_course_model(n, fd),
+            note=course_notes[name])
     if feature_dim is not None:  # early validation of the shared feature width
         for spec in registry.values():
             spec.builder(feature_dim, cfg)
@@ -291,6 +313,9 @@ def fit_model(
     this function and then re-scores the frozen model on perturbed graphs, so the
     attack comparison reuses the exact training protocol of the benchmark.
     """
+    if spec.kind == "course":
+        from .course_baselines import fit_course_model
+        return fit_course_model(spec, cfg, graph, datasets, seed, node_pair_epochs, device)
     if spec.kind == "node_pair":
         features = node_feature_matrix(graph)
         model = spec.builder(features.shape[1], cfg)

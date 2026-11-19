@@ -431,3 +431,7 @@ their original licences (see `data/README.md`).
 ## GCN ablation integration
 
 The [GCN input ablations and cross-dataset transfer experiments](experiments/gcn_ablation/README.md) reuse this repository's GCN encoder and pair decoder while preserving their original experimental protocol. See the [overlap and protocol review](docs/gcn_ablation_integration.md) before comparing their archived results with the existing benchmark.
+
+## Course baselines, SP4LP and observation missingness
+
+Additional methods and commands: [course/SP4LP integration](docs/course_sp4lp.md). This extension preserves SGDiff v2 and the existing RF/DICE/EA harness. Historical local results are isolated from current v2 comparisons.
