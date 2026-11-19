@@ -1,0 +1,12 @@
+{
+  "python": "3.10.19",
+  "torch": "2.5.1+cu121",
+  "cuda_runtime": "12.1",
+  "cuda_available": true,
+  "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU",
+  "numpy": "1.26.0",
+  "scipy": "1.15.3",
+  "torch_geometric": "2.7.0",
+  "result_device": "cuda",
+  "scope": "local CUDA rerun; team reference used RTX PRO 5000 with torch 2.7.0+cu128"
+}

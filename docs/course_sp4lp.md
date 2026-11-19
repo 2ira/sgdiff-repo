@@ -34,9 +34,10 @@ The dispatch supports the existing EA and purifier entry points as well. RF/DICE
 ## Aligned Part 2 study
 
 The completed SP4LP/Katz component and robustness study is documented in
-[`part2_sp4lp_katz_aligned.md`](part2_sp4lp_katz_aligned.md). Its four native
-CPU result grids and generated analysis tables live under
-`results/part2-aligned/cpu/`. Run `python scripts/analyze_part2_aligned.py` to
+[`part2_sp4lp_katz_aligned.md`](part2_sp4lp_katz_aligned.md). Its four final
+CUDA result grids and generated analysis tables live under
+`results/part2-aligned/cuda-local/`; preliminary CPU grids are retained only
+for provenance. Run `python scripts/analyze_part2_aligned.py` to
 revalidate all 840 model/seed/condition cells and regenerate the report.
 
 ## Separate observation-missingness entry point

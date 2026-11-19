@@ -11,12 +11,16 @@ from __future__ import annotations
 import csv
 import json
 import math
+import platform
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RESULT_ROOT = ROOT / "results" / "part2-aligned" / "cpu"
+RESULT_ROOT = ROOT / "results" / "part2-aligned" / "cuda-local"
+CPU_RESULT_ROOT = ROOT / "results" / "part2-aligned" / "cpu"
 REPORT_PATH = ROOT / "docs" / "part2_sp4lp_katz_aligned.md"
+RESULT_SUFFIX = "cuda"
+EXPECTED_DEVICE = "cuda"
 DATASETS = ("cora", "citeseer")
 SETTINGS = {"observed": 0.0, "missing40": 0.4}
 MODELS = (
@@ -47,7 +51,7 @@ def load_results() -> dict[tuple[str, str], dict]:
     data = {}
     for dataset in DATASETS:
         for setting in SETTINGS:
-            path = RESULT_ROOT / f"robustness_{dataset}_{setting}_cpu.json"
+            path = RESULT_ROOT / f"robustness_{dataset}_{setting}_{RESULT_SUFFIX}.json"
             with path.open(encoding="utf-8") as handle:
                 data[(dataset, setting)] = json.load(handle)
     return data
@@ -71,7 +75,7 @@ def validate(data: dict[tuple[str, str], dict]) -> list[str]:
         assert tuple(result["seeds"]) == (0, 1, 2)
         assert tuple(result["variants"]) == VARIANTS
         assert not result["skipped"]
-        assert result["protocol"]["device"] == "cpu"
+        assert result["protocol"]["device"] == EXPECTED_DEVICE
         assert result["protocol"]["num_pos"] == 500
         assert result["protocol"]["num_neg"] == 500
         assert math.isclose(
@@ -91,11 +95,18 @@ def validate(data: dict[tuple[str, str], dict]) -> list[str]:
         observed = run_map(data[(dataset, "observed")])
         missing = run_map(data[(dataset, "missing40")])
         assert data[(dataset, "observed")]["attack_stats"] == data[(dataset, "missing40")]["attack_stats"]
+        featureless_deltas = []
         for key in expected_keys:
-            if key[0].startswith("katz") or key[0] == "sp4lp_featureless":
+            if key[0].startswith("katz"):
                 assert observed[key]["metrics"] == missing[key]["metrics"]
+            elif key[0] == "sp4lp_featureless":
+                featureless_deltas.append(
+                    abs(observed[key]["metrics"]["auc"] - missing[key]["metrics"]["auc"])
+                )
+        assert max(featureless_deltas) < 0.01
         checks.append(
-            f"{dataset}: attack metadata shared; Katz and featureless are exactly feature-mask invariant"
+            f"{dataset}: attack metadata shared; Katz exactly feature-mask invariant; "
+            f"featureless CUDA repeat max |ΔAUC|={max(featureless_deltas):.4f}"
         )
     assert sum(len(result["runs"]) for result in data.values()) == 840
     checks.append("total: 840/840 distinct model/seed/condition cells")
@@ -191,9 +202,46 @@ def runtime_summary(result: dict, model: str) -> tuple[float, float]:
     return sum(values) / len(values), max(values)
 
 
+def cpu_cuda_max_deltas(data: dict[tuple[str, str], dict]) -> dict[str, float]:
+    grouped: dict[str, list[float]] = {name: [] for name in ("clean", "rf", "dice", "ea")}
+    for dataset in DATASETS:
+        for setting in SETTINGS:
+            path = CPU_RESULT_ROOT / f"robustness_{dataset}_{setting}_cpu.json"
+            with path.open(encoding="utf-8") as handle:
+                cpu = run_map(json.load(handle))
+            cuda = run_map(data[(dataset, setting)])
+            for key, cpu_row in cpu.items():
+                attack = "clean" if key[2] == "clean" else key[2].split("@", 1)[0]
+                grouped[attack].append(
+                    abs(float(cpu_row["metrics"]["auc"]) - float(cuda[key]["metrics"]["auc"]))
+                )
+    return {name: max(values) for name, values in grouped.items()}
+
+
 def write_report(data: dict[tuple[str, str], dict], checks: list[str]) -> None:
+    import numpy
+    import scipy
+    import torch
+    import torch_geometric
+
+    environment = {
+        "python": platform.python_version(),
+        "torch": torch.__version__,
+        "cuda_runtime": torch.version.cuda,
+        "cuda_available": bool(torch.cuda.is_available()),
+        "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+        "numpy": numpy.__version__,
+        "scipy": scipy.__version__,
+        "torch_geometric": torch_geometric.__version__,
+        "result_device": EXPECTED_DEVICE,
+        "scope": "local CUDA rerun; team reference used RTX PRO 5000 with torch 2.7.0+cu128",
+    }
+    backend_deltas = cpu_cuda_max_deltas(data)
+    (RESULT_ROOT / "environment.json").write_text(
+        json.dumps(environment, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     sections: list[str] = []
-    sections.append("# Part 2：SP4LP 与 Katz 对齐鲁棒性实验\n")
+    sections.append("# Part 2：SP4LP 与 Katz CUDA 对齐鲁棒性实验\n")
     sections.append(
         "本研究在团队 Line C 的统一 benchmark 上重做两个互补模型：可训练的局部最短路径模型 "
         "SP4LP，以及免训练的全局衰减路径计数 Katz。四套主实验已经完成：Cora/Citeseer × 完整属性/固定 "
@@ -207,8 +255,9 @@ def write_report(data: dict[tuple[str, str], dict], checks: list[str]) -> None:
         "最短路径。RF/DICE/EA 均使用 10%/25%/50% edge-flip budget。\n"
         "- SP4LP 最多训练 300 epoch，学习率 0.001，以 clean validation AUROC 每 5 epoch 检查、patience=6。"
         "Katz 不训练。\n"
-        "- 本机无 CUDA，本结果使用同一个 `cpu` budget profile 但实际在 CPU 执行；团队 Line C 数字在 CUDA "
-        "执行。因此可比较协议和趋势，但不能把两批数无标记地合并成同硬件显著性结论。\n"
+        "- 本结果使用团队相同的 `cpu` budget profile，并实际在 CUDA 上训练和生成 EA 攻击。本地环境为 "
+        f"{environment['gpu']}、PyTorch {environment['torch']}、CUDA runtime {environment['cuda_runtime']}；团队 Line C "
+        "环境为 RTX PRO 5000 72GB、PyTorch 2.7.0+cu128。两者均为 CUDA 后端，但硬件/版本差异仍需在总表标注。\n"
         "- SP4LP 是宽度 64 的仓库适配版，不是论文 Cora 宽度 256 + HeaRT negatives 的完整复现；EA 是仓库"
         "的 embedding-surrogate 近似攻击，不是外部库的原版攻击。"
     )
@@ -292,10 +341,14 @@ def write_report(data: dict[tuple[str, str], dict], checks: list[str]) -> None:
     sections.append("\n## 6. 与团队 benchmark 的关系\n")
     sections.append(
         "本分支从 Line C benchmark commit 派生，复用了相同数据拆分、缺失掩码规则、攻击生成、候选 pair、预算和 JSON "
-        "schema，因此实验设计已经对齐。团队 CUDA 表中 Cora/Citeseer 完整属性的 SEAL clean AUC 为 0.866/0.861；"
-        "本次 CPU SP4LP 为 0.919/0.913，Katz H5 为 0.851/0.776。强攻击下 SP4LP 的绝对 AUC 也普遍较高。"
-        "不过 SP4LP 与团队学习模型不在同一设备上训练，因此这些数字只作为同协议上下文；正式总表应增加 hardware/provenance "
-        "列，或让团队在同一 CUDA 环境重跑本分支后再做严格排序。"
+        "schema，并已切换为 CUDA 执行，因此数据、协议、预算和计算后端均对齐。团队 CUDA 表中 Cora/Citeseer 完整属性的 "
+        "SEAL clean AUC 为 0.866/0.861；本次 CUDA SP4LP 为 0.918/0.912，Katz H5 为 0.851/0.776。强攻击下 "
+        "SP4LP 的绝对 AUC 也普遍较高。正式总表仍应记录 GPU/PyTorch provenance；若需要逐硬件复现，可在团队 "
+        "RTX PRO 5000 环境直接执行同一命令，无需改代码。\n\n"
+        "本次重跑不是形式变化：CPU→CUDA 时，逐单元 AUC 的最大绝对变化在 clean/RF/DICE 分别为 "
+        f"{backend_deltas['clean']:.3f}/{backend_deltas['rf']:.3f}/{backend_deltas['dice']:.3f}，而 EA 达到 "
+        f"{backend_deltas['ea']:.3f}。原因是 EA surrogate 本身在指定 device 上优化，所以 CUDA 会改变攻击图；"
+        "这也是最终表必须使用 CUDA 原生结果的直接证据。"
     )
 
     sections.append("\n## 7. 整体发现与下一步\n")
@@ -308,16 +361,18 @@ def write_report(data: dict[tuple[str, str], dict], checks: list[str]) -> None:
         "但简单零填充的残缺属性会伤害 clean 表现。\n"
         "4. **成本上**：Katz 每 seed 约 0.1–0.2 秒；完整 SP4LP 单 seed 的训练均值/最大值约为 "
         f"Cora {cora_runtime[0]:.1f}/{cora_runtime[1]:.1f} 秒、Citeseer {cite_runtime[0]:.1f}/{cite_runtime[1]:.1f} 秒。"
-        "本次是正常训练并受 early stopping 控制，不是论文级宽度和完整负采样预算，所以不应与“跑一天”的 full-paper run 等同。\n"
-        "5. **若要继续强化**：优先在团队 CUDA 环境原样重跑 3 个 SP4LP 配置（full/endpoints/featureless，必要时另加宽度 256），"
+        "本次是正常 CUDA 训练并受 early stopping 控制，不是论文级宽度和完整负采样预算，所以不应与“跑一天”的 full-paper run 等同。\n"
+        "5. **若要继续强化**：在团队 RTX PRO 5000 环境原样重跑 3 个 SP4LP 配置（full/endpoints/featureless，必要时另加宽度 256），"
         "并增加多重 missingness 比例或更合理的 feature imputation；不要再无目的重复 Katz。"
     )
 
     sections.append("\n## 8. 可复现产物\n")
     sections.append(
-        "- 原始结果：`results/part2-aligned/cpu/robustness_{dataset}_{observed|missing40}_cpu.{json,md}`\n"
-        "- 全条件 tidy 表：`results/part2-aligned/cpu/part2_aligned_auc.csv`\n"
-        "- 配对消融表：`results/part2-aligned/cpu/part2_aligned_ablations.csv`\n"
+        "- CUDA 原始结果：`results/part2-aligned/cuda-local/robustness_{dataset}_{observed|missing40}_cuda.{json,md}`\n"
+        "- CUDA 环境：`results/part2-aligned/cuda-local/environment.json`\n"
+        "- 全条件 tidy 表：`results/part2-aligned/cuda-local/part2_aligned_auc.csv`\n"
+        "- 配对消融表：`results/part2-aligned/cuda-local/part2_aligned_ablations.csv`\n"
+        "- 早期 CPU 预跑保留在 `results/part2-aligned/cpu/`，不作为最终对齐表。\n"
         "- 重新生成本报告：`python scripts/analyze_part2_aligned.py`"
     )
     REPORT_PATH.write_text("\n".join(sections).rstrip() + "\n", encoding="utf-8")
