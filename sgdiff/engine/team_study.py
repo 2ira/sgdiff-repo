@@ -48,6 +48,8 @@ def settings(dataset, seed, profile, data_root, device):
     cfg.data.root = str(data_root)
     cfg.data.seed = cfg.train.seed = seed
     cfg.train.device = device
+    if profile == "paper-rq3":
+        return cfg
     if profile == "reference":
         return cfg.apply_overrides(BUDGET_PROFILES["cpu"])
     if profile not in {"team", "local"}:
@@ -66,7 +68,7 @@ def settings(dataset, seed, profile, data_root, device):
 
 def study_datasets(graph, split, cfg, profile):
     datasets = prepare_datasets(graph, split, cfg)
-    if profile == "reference":
+    if profile in {"reference", "paper-rq3"}:
         # Prior SP4LP and Line C tables cap validation by total, test per class.
         pos, neg = _cap_pairs(split, 500)
         datasets["test"] = PairSubgraphDataset(
@@ -79,7 +81,7 @@ def study_datasets(graph, split, cfg, profile):
 def fit_all(cfg, graph, split, datasets, profile, device, run_root):
     registry = build_registry(cfg)
     models = {}
-    node_epochs = {"local": 30, "team": 200, "reference": 300}[profile]
+    node_epochs = {"local": 30, "team": 200, "reference": 300, "paper-rq3": 300}[profile]
     for name in FIT_NAMES:
         seed = cfg.data.seed
         set_seed(seed)
@@ -99,7 +101,25 @@ def fit_all(cfg, graph, split, datasets, profile, device, run_root):
 
 
 @torch.no_grad()
-def predict_all(models, cfg, graph, pairs, features, observed, device):
+def sgdiff_streams(sg, extractor, cohorts, batch_size, device, seed):
+    """Score both ablations from the same MC draws as their full prediction."""
+    parts = {key: [] for key in ("sgdiff", *COMPONENTS["sgdiff"])}
+    for pairs in cohorts:
+        ds = PairSubgraphDataset(pairs, np.zeros(len(pairs), dtype=np.int64), extractor)
+        # Native RQ3 resets the scoring RNG once per cohort (score_pairs).
+        with _evaluation_context(sg, seed):
+            for batch in _loader(ds, batch_size):
+                out = sg(batch.to(device))
+                feat, struct = out["feature_scores"], out["structure_scores"]
+                logits = (out["logits"], sg.fusion(torch.zeros_like(feat), struct),
+                          sg.fusion(feat, torch.zeros_like(struct)))
+                for key, value in zip(parts, logits):
+                    parts[key].append((value[:, 1] - value[:, 0]).cpu().numpy())
+    return {key: np.concatenate(values) for key, values in parts.items()}
+
+
+@torch.no_grad()
+def predict_all(models, cfg, graph, pairs, features, observed, device, cohort_boundary=None):
     scores = {}
     ei = _edge_index(graph, device)
     x = torch.as_tensor(features, device=device)
@@ -116,18 +136,8 @@ def predict_all(models, cfg, graph, pairs, features, observed, device):
     extractor = build_extractor(graph, cfg, seed=cfg.data.seed + 1)
     bs = cfg.train.eval_batch_size
     scores["pencil"] = score_pairs(models["pencil"], extractor, pairs, bs, device, seed=cfg.data.seed)
-    ds = PairSubgraphDataset(pairs, np.zeros(len(pairs), dtype=np.int64), extractor)
-    sg = models["sgdiff"]
-    parts = {key: [] for key in ("sgdiff", *COMPONENTS["sgdiff"])}
-    with _evaluation_context(sg, cfg.data.seed):
-        for batch in _loader(ds, bs):
-            out = sg(batch.to(device))
-            feat, struct = out["feature_scores"], out["structure_scores"]
-            logits = (out["logits"], sg.fusion(torch.zeros_like(feat), struct),
-                      sg.fusion(feat, torch.zeros_like(struct)))
-            for key, value in zip(parts, logits):
-                parts[key].append((value[:, 1] - value[:, 0]).cpu().numpy())
-    scores.update({key: np.concatenate(values) for key, values in parts.items()})
+    cohorts = (pairs,) if cohort_boundary is None else (pairs[:cohort_boundary], pairs[cohort_boundary:])
+    scores.update(sgdiff_streams(models["sgdiff"], extractor, cohorts, bs, device, cfg.data.seed))
     for name in FIT_NAMES:
         if name not in scores:
             scores[name] = score_course_model(models[name], graph, pairs, features, device)
@@ -159,6 +169,7 @@ def run_seed(dataset, seed, profile, data_root, output, device):
                     n_queries={k: len(d) for k, d in ds.items()}, conditions={})
     arrays = {f"{k}_{field}": getattr(d, field) for k, d in ds.items() for field in ("pairs", "labels")}
     rows = []
+    cohort_boundary = int(test.labels.sum()) if profile == "paper-rq3" else None
     for condition in study_plan():
         g, info = degrade(clean, condition, seed, forbidden)
         if test_set.intersection(g.edge_set()) or info["deleted"] + info["inserted"] != info["budget"]:
@@ -167,7 +178,7 @@ def run_seed(dataset, seed, profile, data_root, output, device):
         observed[masked_node_ids(g.num_nodes, condition.feature_ratio, seed)] = False
         features = base_x.copy()
         features[~observed] = 0
-        predictions = predict_all(models, cfg, g, test.pairs, features, observed, device)
+        predictions = predict_all(models, cfg, g, test.pairs, features, observed, device, cohort_boundary)
         deg = g.degrees()
         info["isolated_fraction"] = float((deg == 0).mean())
         info["query_with_isolate_fraction"] = float((deg[test.pairs].min(1) == 0).mean())

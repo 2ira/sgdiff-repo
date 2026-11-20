@@ -54,3 +54,29 @@ def test_reference_budget_and_candidate_sets_match_existing_team_benchmark():
     for label, pairs in [(1, split.test_pos), (0, split.test_neg)]:
         np.testing.assert_array_equal(ds["test"].pairs[ds["test"].labels == label], pairs[:500])
     assert len(ds["test"]) == 1000
+
+
+def test_paper_rq3_configuration_and_native_cohort_scores():
+    import torch
+    from sgdiff.config import load_config
+    from sgdiff.data.splits import make_link_split
+    from sgdiff.engine.evaluator import score_pairs
+    from sgdiff.engine.factory import build_model
+    from sgdiff.engine.team_study import settings, sgdiff_streams, study_datasets
+
+    cfg = settings("cora", 0, "paper-rq3", "data", "cpu")
+    original = load_config("configs/sgdiff_cora.yaml")
+    original.train.device = "cpu"
+    assert cfg.to_dict() == original.to_dict()
+    # Exercise the native positive/negative RNG boundaries with an uneven batch.
+    graph = make_synthetic(num_nodes=80, num_features=8)
+    split = make_link_split(graph, seed=0)
+    ds = study_datasets(graph, split, cfg, "paper-rq3")
+    cohorts = (split.test_pos[:5], split.test_neg[:5])
+    cfg.structure.num_mc_samples = cfg.feature.num_mc_samples = 2
+    torch.manual_seed(7)
+    model = build_model(cfg, ds["train"].feature_dim).eval()
+    view = ds["test"].extractor
+    expected = np.concatenate([score_pairs(model, view, p, 3, "cpu", seed=11) for p in cohorts])
+    scores = sgdiff_streams(model, view, cohorts, 3, "cpu", 11)
+    np.testing.assert_array_equal(expected, scores["sgdiff"])
