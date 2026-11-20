@@ -38,3 +38,7 @@ checkpoints/*.pt
 # Course observation-study weights stay local; compact predictions/receipts may
 # be shared explicitly when a completed investigation is ready for review.
 results/observation_robustness_v2/**/*.pt
+
+# Working files. Publish compact result tables and verified per-seed archives.
+results/paired-reproduction/cora/
+results/paired-reproduction/citeseer/

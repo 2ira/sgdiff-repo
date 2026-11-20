@@ -149,7 +149,37 @@ class TransformerStructureDenoiser(nn.Module):
     def condition(self, t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return self.condition_in(torch.cat([self.time_mlp(self.time_emb(t)), self.class_emb(y)], dim=-1))
 
+    # Runtime layout only; matrices, parameters, losses and optimiser batches
+    # are unchanged. The original dense route remains the default.
+    max_padded_pairs: int | None = None
+
     def forward(self, x_t, labels, mask, cond) -> tuple[torch.Tensor, torch.Tensor]:
+        b, n = labels.shape
+        limit = self.max_padded_pairs
+        if limit is None or b == 1 or b * n * n <= limit:
+            return self._dense_forward(x_t, labels, mask, cond)
+
+        lengths = mask.sum(1).tolist()
+        order = sorted(range(b), key=lengths.__getitem__)
+        chunks_n, chunks_e = [], []
+        start = 0
+        while start < b:
+            stop = start + 1
+            while stop < b and (stop + 1 - start) * lengths[order[stop]] ** 2 <= limit:
+                stop += 1
+            members = order[start:stop]
+            width = lengths[members[-1]]
+            index = torch.tensor(members, device=labels.device)
+            node, edge = self._dense_forward(
+                x_t[:, :width, :width][index], labels[:, :width][index],
+                mask[:, :width][index], cond[index])
+            chunks_n.append(F.pad(node, (0, 0, 0, n - width)))
+            chunks_e.append(F.pad(edge, (0, n - width, 0, n - width)))
+            start = stop
+        inverse = torch.tensor(sorted(range(b), key=order.__getitem__), device=labels.device)
+        return torch.cat(chunks_n)[inverse], torch.cat(chunks_e)[inverse]
+
+    def _dense_forward(self, x_t, labels, mask, cond) -> tuple[torch.Tensor, torch.Tensor]:
         b, n = labels.shape
         mask = mask.bool()
         labels = labels.masked_fill(~mask, 0)

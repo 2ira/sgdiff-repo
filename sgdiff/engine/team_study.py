@@ -8,14 +8,12 @@ import torch
 
 from ..config import load_config
 from ..data.observation import Condition, degrade, graph_fingerprint, masked_node_ids
-from ..models.baselines.fsd import propagate_features
 from ..utils.io import save_json
 from ..utils.metrics import summarize_scores
 from ..utils.seed import resolve_device, set_seed
-from .baseline_trainer import _edge_index, node_feature_matrix, train_node_pair_baseline
+from .baseline_trainer import node_feature_matrix, train_node_pair_baseline
 from .benchmark import BUDGET_PROFILES, build_registry, capped_train_split, fit_model, pairs_fingerprint, split_fingerprint
-from .course_baselines import score_course_model
-from .evaluator import _evaluation_context, _loader, score_pairs
+from .model_scores import frozen_scores, sgdiff_streams
 from .factory import build_extractor, load_split, prepare_datasets
 from .batch import PairSubgraphDataset
 from .robustness import _cap_pairs
@@ -100,47 +98,13 @@ def fit_all(cfg, graph, split, datasets, profile, device, run_root):
     return models
 
 
-@torch.no_grad()
-def sgdiff_streams(sg, extractor, cohorts, batch_size, device, seed):
-    """Score both ablations from the same MC draws as their full prediction."""
-    parts = {key: [] for key in ("sgdiff", *COMPONENTS["sgdiff"])}
-    for pairs in cohorts:
-        ds = PairSubgraphDataset(pairs, np.zeros(len(pairs), dtype=np.int64), extractor)
-        # Native RQ3 resets the scoring RNG once per cohort (score_pairs).
-        with _evaluation_context(sg, seed):
-            for batch in _loader(ds, batch_size):
-                out = sg(batch.to(device))
-                feat, struct = out["feature_scores"], out["structure_scores"]
-                logits = (out["logits"], sg.fusion(torch.zeros_like(feat), struct),
-                          sg.fusion(feat, torch.zeros_like(struct)))
-                for key, value in zip(parts, logits):
-                    parts[key].append((value[:, 1] - value[:, 0]).cpu().numpy())
-    return {key: np.concatenate(values) for key, values in parts.items()}
-
-
-@torch.no_grad()
 def predict_all(models, cfg, graph, pairs, features, observed, device, cohort_boundary=None):
     scores = {}
-    ei = _edge_index(graph, device)
-    x = torch.as_tensor(features, device=device)
-    ids = torch.as_tensor(pairs, device=device)
-    gae = models["gae"]
-    scores["gae"] = gae.score_pairs(gae.encoder(x, ei, len(x)), ids).cpu().numpy()
-    if observed.all():
-        scores["fsd"] = scores["gae"].copy()
-    else:
-        filled = propagate_features(features, ei.cpu().numpy(), observed, method="fsd", gamma=1.2)
-        z = gae.encoder(torch.as_tensor(filled, device=device), ei, len(x))
-        scores["fsd"] = gae.score_pairs(z, ids).cpu().numpy()
-
-    extractor = build_extractor(graph, cfg, seed=cfg.data.seed + 1)
-    bs = cfg.train.eval_batch_size
-    scores["pencil"] = score_pairs(models["pencil"], extractor, pairs, bs, device, seed=cfg.data.seed)
-    cohorts = (pairs,) if cohort_boundary is None else (pairs[:cohort_boundary], pairs[cohort_boundary:])
-    scores.update(sgdiff_streams(models["sgdiff"], extractor, cohorts, bs, device, cfg.data.seed))
-    for name in FIT_NAMES:
-        if name not in scores:
-            scores[name] = score_course_model(models[name], graph, pairs, features, device)
+    for name, model in models.items():
+        scores.update(frozen_scores(name, model, cfg, graph, pairs, features, observed,
+                                    device, cfg.data.seed, cohort_boundary))
+    scores.update(frozen_scores("fsd", models["gae"], cfg, graph, pairs, features, observed,
+                                device, cfg.data.seed))
     return scores
 
 

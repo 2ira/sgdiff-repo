@@ -1,5 +1,7 @@
 # SGDiff 复现仓库（中文说明）
 
+本次八种方法的正式评测、SGDiff/SP4LP/Katz 三组消融、历史训练预算与实际产物见[统一实验协议](docs/paired_reproduction.zh-CN.md)。
+
 论文：**Sub-graph Based Diffusion Model for Link Prediction**（Li et al., LoG 2024）。
 
 论文引用的官方仓库 <https://github.com/hzlihang99/SGDiff> 目前只有两行 README、没有任何代码，
