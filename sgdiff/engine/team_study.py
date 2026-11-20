@@ -13,11 +13,12 @@ from ..utils.io import save_json
 from ..utils.metrics import summarize_scores
 from ..utils.seed import resolve_device, set_seed
 from .baseline_trainer import _edge_index, node_feature_matrix, train_node_pair_baseline
-from .benchmark import build_registry, capped_train_split, fit_model, pairs_fingerprint, split_fingerprint
+from .benchmark import BUDGET_PROFILES, build_registry, capped_train_split, fit_model, pairs_fingerprint, split_fingerprint
 from .course_baselines import score_course_model
 from .evaluator import _evaluation_context, _loader, score_pairs
 from .factory import build_extractor, load_split, prepare_datasets
 from .batch import PairSubgraphDataset
+from .robustness import _cap_pairs
 
 PRIMARY = ("cn", "feature_cosine", "katz", "gae", "fsd", "pencil", "sp4lp", "sgdiff")
 COMPONENTS = {
@@ -47,6 +48,10 @@ def settings(dataset, seed, profile, data_root, device):
     cfg.data.root = str(data_root)
     cfg.data.seed = cfg.train.seed = seed
     cfg.train.device = device
+    if profile == "reference":
+        return cfg.apply_overrides(BUDGET_PROFILES["cpu"])
+    if profile not in {"team", "local"}:
+        raise ValueError(f"unknown study profile: {profile}")
     local = profile == "local"
     cfg.data.max_train_pairs = 256 if local else 2000
     cfg.data.max_eval_pairs = 128 if local else 1000
@@ -59,10 +64,22 @@ def settings(dataset, seed, profile, data_root, device):
     return cfg
 
 
+def study_datasets(graph, split, cfg, profile):
+    datasets = prepare_datasets(graph, split, cfg)
+    if profile == "reference":
+        # Prior SP4LP and Line C tables cap validation by total, test per class.
+        pos, neg = _cap_pairs(split, 500)
+        datasets["test"] = PairSubgraphDataset(
+            np.vstack((pos, neg)), np.repeat([1, 0], [len(pos), len(neg)]),
+            datasets["test"].extractor,
+        )
+    return datasets
+
+
 def fit_all(cfg, graph, split, datasets, profile, device, run_root):
     registry = build_registry(cfg)
     models = {}
-    node_epochs = 30 if profile == "local" else 200
+    node_epochs = {"local": 30, "team": 200, "reference": 300}[profile]
     for name in FIT_NAMES:
         seed = cfg.data.seed
         set_seed(seed)
@@ -124,7 +141,7 @@ def run_seed(dataset, seed, profile, data_root, output, device):
     device = str(resolve_device(device))
     cfg = settings(dataset, seed, profile, data_root, device)
     graph, split = load_split(cfg)
-    ds = prepare_datasets(graph, split, cfg)
+    ds = study_datasets(graph, split, cfg, profile)
     test = ds["test"]
     clean = test.extractor.graph
     forbidden = np.vstack((split.test_pos, split.test_neg, split.val_neg))

@@ -38,6 +38,8 @@
 - `local` 每个数据集/种子使用 256 条训练、128 条验证、128 条测试查询，各一半正例。SGDiff 使用数据集配置的扩散步数和网络宽度，子图最多 16 节点、两路 MC=2，扩散训练 4 轮加冻结扩散的融合训练 4 轮。PENCIL-style 最多 10 轮；GAE、SP4LP 最多 30 轮。干净验证集用于选权重，各模型沿用其训练器的选择规则。这个预算能完成整套配对实验，无法判定模型的充分训练上限。
 - `team` 档供扩大样本的同协议复跑：训练总上限 2,000，验证和测试各总上限 1,000（各类最多 500，受原始划分限制），子图最多 40 节点、MC=4、SGDiff 8+8 轮、PENCIL-style 最多 40 轮、GAE/SP4LP 最多 200 轮。两档分别汇总。
 
+正式比较默认使用 `reference`。它复用组内 SP4LP / Line C 的训练配置和干净查询：训练 2,000 对，验证两类合计最多 500 对，测试取原始划分的前 500 正和 500 负。SGDiff 使用 8 轮扩散训练、最多 20 轮融合训练、MC=4、子图最多 40 节点；SP4LP 与 GAE 最多 300 轮。扰动阶段继续保护全部测试目标。SGDiff 统一给整批候选打分，旧攻击脚本会在正、负两组间重置评分随机数。旧 `local` 表仅供诊断，各预算单独汇总。[实测预算敏感性](../results/team-study/budget-audit/README.md)
+
 ## 三组消融应该怎样读
 
 | 完整方法 | 两个对照 | 能回答的问题 |
@@ -54,8 +56,8 @@
 
 ```bash
 python -m pip install -e '.[investigation,dev]'
-python scripts/run_team_study.py --datasets cora citeseer --seeds 0 1 2 --profile local --device cpu --output runs/team-replay
-python scripts/summarize_team_study.py runs/team-replay/local
+python scripts/run_team_study.py --datasets cora citeseer --seeds 0 1 2 --profile reference --device cpu --output runs/team-replay
+python scripts/summarize_team_study.py runs/team-replay/reference
 python scripts/summarize_team_study.py results/team-study/local
 ```
 

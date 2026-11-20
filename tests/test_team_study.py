@@ -25,3 +25,32 @@ def test_study_shared_budget_and_mask():
                 np.testing.assert_array_equal(joint.x[idx], 0)
                 kept = np.delete(np.arange(clean.num_nodes), idx)
                 np.testing.assert_array_equal(joint.x[kept], clean.x[kept])
+
+
+def test_reference_budget_and_candidate_sets_match_existing_team_benchmark():
+    import json
+    from pathlib import Path
+
+    from sgdiff.data.splits import make_link_split
+    from sgdiff.engine.factory import prepare_datasets
+    from sgdiff.engine.team_study import settings, study_datasets
+
+    root = Path(__file__).resolve().parents[1]
+    cfg = settings("cora", 0, "reference", "data", "cpu")
+    for folder in ("line-c-fsd/cuda", "part2-aligned/cuda-local"):
+        archived = root / "results" / folder / "robustness_cora_observed_cuda.json"
+        protocol = json.loads(archived.read_text())["protocol"]
+        actual = cfg.to_dict()
+        actual["train"]["device"] = protocol["resolved_config"]["train"]["device"]
+        assert actual == protocol["resolved_config"]
+
+    graph = make_synthetic(num_nodes=600)
+    split = make_link_split(graph, seed=0)
+    ds = study_datasets(graph, split, cfg, "reference")
+    original = prepare_datasets(graph, split, cfg)
+    for part in ("train", "val"):
+        np.testing.assert_array_equal(ds[part].pairs, original[part].pairs)
+        np.testing.assert_array_equal(ds[part].labels, original[part].labels)
+    for label, pairs in [(1, split.test_pos), (0, split.test_neg)]:
+        np.testing.assert_array_equal(ds["test"].pairs[ds["test"].labels == label], pairs[:500])
+    assert len(ds["test"]) == 1000

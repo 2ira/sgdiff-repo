@@ -1,0 +1,149 @@
+[
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "n_train": 256,
+    "mc": 2,
+    "auc": 0.52294921875
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "n_train": 256,
+    "mc": 4,
+    "auc": 0.536376953125
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "n_train": 256,
+    "mc": "all",
+    "auc": 0.623046875
+  },
+  {
+    "dataset": "cora",
+    "seed": 1,
+    "n_train": 256,
+    "mc": 2,
+    "auc": 0.545166015625
+  },
+  {
+    "dataset": "cora",
+    "seed": 1,
+    "n_train": 256,
+    "mc": 4,
+    "auc": 0.6134033203125
+  },
+  {
+    "dataset": "cora",
+    "seed": 1,
+    "n_train": 256,
+    "mc": "all",
+    "auc": 0.694580078125
+  },
+  {
+    "dataset": "cora",
+    "seed": 2,
+    "n_train": 256,
+    "mc": 2,
+    "auc": 0.4764404296875
+  },
+  {
+    "dataset": "cora",
+    "seed": 2,
+    "n_train": 256,
+    "mc": 4,
+    "auc": 0.489501953125
+  },
+  {
+    "dataset": "cora",
+    "seed": 2,
+    "n_train": 256,
+    "mc": "all",
+    "auc": 0.6920166015625
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "n_train": 256,
+    "mc": 2,
+    "auc": 0.5313720703125
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "n_train": 256,
+    "mc": 4,
+    "auc": 0.5841064453125
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "n_train": 256,
+    "mc": "all",
+    "auc": 0.6505126953125
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 1,
+    "n_train": 256,
+    "mc": 2,
+    "auc": 0.579833984375
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 1,
+    "n_train": 256,
+    "mc": 4,
+    "auc": 0.5550537109375
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 1,
+    "n_train": 256,
+    "mc": "all",
+    "auc": 0.794189453125
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 2,
+    "n_train": 256,
+    "mc": 2,
+    "auc": 0.5462646484375
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 2,
+    "n_train": 256,
+    "mc": 4,
+    "auc": 0.5721435546875
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 2,
+    "n_train": 256,
+    "mc": "all",
+    "auc": 0.6949462890625
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "n_train": 2000,
+    "mc": 2,
+    "auc": 0.71923828125
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "n_train": 2000,
+    "mc": 4,
+    "auc": 0.75439453125
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "n_train": 2000,
+    "mc": "all",
+    "auc": 0.728759765625
+  }
+]

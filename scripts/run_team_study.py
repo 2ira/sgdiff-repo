@@ -13,7 +13,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--datasets", nargs="+", choices=["cora", "citeseer", "pubmed"], default=["cora", "citeseer"])
     parser.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
-    parser.add_argument("--profile", choices=["local", "team"], default="local")
+    parser.add_argument("--profile", choices=["local", "team", "reference"], default="reference",
+                        help="reference follows the prior clean benchmark budget; local is a diagnostic")
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--threads", type=int, default=3)
     parser.add_argument("--data-root", default="data")
