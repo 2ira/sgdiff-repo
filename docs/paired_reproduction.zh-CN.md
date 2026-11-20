@@ -54,3 +54,12 @@ python scripts/report_reproduction.py --out results/paired-reproduction/tables
 读表时先看 clean 绝对 AUROC/AP，再看同一种子 clean 减受扰值，最后看相同图上完整方法减去变体的配对差。正值表示完整方法较高。三种子报告样本标准差和差值为正的种子数。图诊断分正、负查询输出共同邻居数、较小端点度、端点孤立或无法连通的比例。约 0.8582 是[历史 Cora SGDiff RQ3](../results/sgdiff-paper-v2/robustness_cora__v2_seed0.json)三个种子的平均 AUROC，不能用作新的评分记录。此前 256 对小样本实验仅用于接口检查。[历史预算核对](../results/team-study/budget-audit/README.md) · [本次重训与原始预测](../results/paired-reproduction/README.md)
 
 端点度分组可用 `python scripts/report_degree_groups.py --models sp4lp katz --out degree.csv` 复算，SGDiff 权重评分齐备后可在同一入口加入 sgdiff。分组固定使用干净训练图中两端较小的度，界限为 0–1、2–3、4+，同时报告每组正负样本数。旧攻击中进入可见图的测试负对数可在 graph_diagnostics.csv 查到。
+
+历史 v2 RQ3 实际跑了多少轮可以从训练日志逐种子数出来。下表按“扩散预训练 + 融合校准”记；同一预算在不同种子上触发早停的时刻不同。这些是团队复现日志中的轮次。
+
+| 数据集 | 种子 0 | 种子 1 | 种子 2 |
+|---|---:|---:|---:|
+| Cora | 42 + 18 | 45 + 18 | 26 + 20 |
+| CiteSeer | 26 + 18 | 50 + 20 | 30 + 20 |
+
+[Cora 种子 0](../results/sgdiff-paper-v2/logs/robustness_cora_s0.log) · [Cora 种子 1](../results/sgdiff-paper-v2/logs/robustness_cora_s1.log) · [Cora 种子 2](../results/sgdiff-paper-v2/logs/robustness_cora_s2.log) · [CiteSeer 三个种子](../results/sgdiff-paper-v2/logs/robust_citeseer.log)
