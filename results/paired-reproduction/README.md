@@ -30,3 +30,7 @@ Cora 的完整 SP4LP 在干净图上超过仅端点版本；随机删掉一半�
 [各条件的 AUROC/AP、标准差与相对干净降幅](seven-methods/tables/summary.csv) · [逐种子值及历史差值](seven-methods/tables/per_seed.csv) · [完整模型减去组件变体](seven-methods/tables/components.csv) · [六份可离线复验的归档与校验值](seven-methods/archives)
 
 SGDiff v2 的历史 Cora 三种子 clean AUROC 为 0.8582。本组的 SGDiff 结果待完整训练、融合校准和独立回算评分后列入本目录。
+
+## 同样删掉一半边，谁更受影响？
+
+按每个查询在**干净训练图**中较小的端点度固定分为 0–1、2–3、4+ 三组。在 Cora，完整 SP4LP 的整体 AUROC 在低度删边和随机删边下接近（0.833、0.831）。但只看端点度 0–1 组，低度删边为 0.773，随机删边为 0.793，干净为 0.877；4+ 组则依次为 0.888、0.872、0.922。整体均值掩盖了两个组相反的排序。各分组独立计算 AUROC，组内值的均值不能还原整体 AUROC。每组的正负查询数及逐种子指标随表提供。[端点分组结果](seven-methods/tables/endpoint_degree.csv)

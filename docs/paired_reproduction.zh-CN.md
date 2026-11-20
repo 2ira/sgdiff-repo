@@ -52,3 +52,5 @@ python scripts/report_reproduction.py --out results/paired-reproduction/tables
 默认数据集为 cora 和 citeseer，种子为 0/1/2。每个命令支持指定数据集和种子，训练/评测入口支持单独选择方法，三个指定家族各自自动带上两个消融。若使用相邻仓库的数据，可追加 `--data-root ../sgdiff-repo/data` 到运行和 audit 命令。每个训练配置记录权重指纹，每个评分文件关联图指纹；评测可从已完成条件继续，SGDiff 从最近完整轮次的 last.pt 继续训练。汇总遇到缺失的请求单元直接报错。
 
 读表时先看 clean 绝对 AUROC/AP，再看同一种子 clean 减受扰值，最后看相同图上完整方法减去变体的配对差。正值表示完整方法较高。三种子报告样本标准差和差值为正的种子数。图诊断分正、负查询输出共同邻居数、较小端点度、端点孤立或无法连通的比例。约 0.8582 是[历史 Cora SGDiff RQ3](../results/sgdiff-paper-v2/robustness_cora__v2_seed0.json)三个种子的平均 AUROC，不能用作新的评分记录。此前 256 对小样本实验仅用于接口检查。[历史预算核对](../results/team-study/budget-audit/README.md) · [本次重训与原始预测](../results/paired-reproduction/README.md)
+
+端点度分组可用 `python scripts/report_degree_groups.py --models sp4lp katz --out degree.csv` 复算，SGDiff 权重评分齐备后可在同一入口加入 sgdiff。分组固定使用干净训练图中两端较小的度，界限为 0–1、2–3、4+，同时报告每组正负样本数。旧攻击中进入可见图的测试负对数可在 graph_diagnostics.csv 查到。
