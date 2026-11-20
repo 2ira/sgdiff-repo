@@ -35,6 +35,10 @@ def conditions():
     return out
 
 
+def masked_node_ids(num_nodes, ratio, seed):
+    return np.random.default_rng(seed + 100003).permutation(num_nodes)[:round(ratio * num_nodes)]
+
+
 def degrade(graph, condition, seed, forbidden_pairs=()):
     """Delete exactly round(r*E) edges, or flip that many unique edge states.
 
@@ -87,8 +91,7 @@ def degrade(graph, condition, seed, forbidden_pairs=()):
     if added:
         out = out.add_edges(np.asarray(added))
     x = None if graph.x is None else graph.x.copy()
-    masked = np.random.default_rng(seed + 100003).permutation(graph.num_nodes)[
-        :int(round(condition.feature_ratio * graph.num_nodes))]
+    masked = masked_node_ids(graph.num_nodes, condition.feature_ratio, seed)
     nonzero_before = 0
     if len(masked):
         if x is None:

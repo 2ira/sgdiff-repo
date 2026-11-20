@@ -57,8 +57,9 @@ def train_node_pair_baseline(
     kl_weight: float = 0.001,  # the raw ELBO KL term collapses the latent code
     patience: int = 30,
     seed: int = 0,
+    evaluation_pairs: Optional[dict] = None,
 ) -> dict:
-    """Train a full-graph encoder with a link-prediction decoder."""
+    """Train a full-graph encoder; optional evaluation pairs only limit scoring."""
     device = resolve_device(device)
     torch.manual_seed(seed)
     model.to(device)
@@ -80,6 +81,9 @@ def train_node_pair_baseline(
     train_labels_t = torch.as_tensor(train_labels, device=device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    evaluation_pairs = evaluation_pairs or {}
+    val_pos, val_neg = evaluation_pairs.get("val", (split.val_pos, split.val_neg))
+    test_pos, test_neg = evaluation_pairs.get("test", (split.test_pos, split.test_neg))
     best_state, best_auc, bad = None, -np.inf, 0
 
     for epoch in range(epochs):
@@ -96,9 +100,9 @@ def train_node_pair_baseline(
         loss.backward()
         optimizer.step()
 
-        if (epoch + 1) % 10 == 0 and len(split.val_pos):
+        if (epoch + 1) % 10 == 0 and len(val_pos):
             metrics = evaluate_node_pair_baseline(
-                model, x_train, ei_train, train_graph.num_nodes, split.val_pos, split.val_neg, device
+                model, x_train, ei_train, train_graph.num_nodes, val_pos, val_neg, device
             )
             if metrics["auc"] > best_auc:
                 best_auc, bad = metrics["auc"], 0
@@ -111,7 +115,7 @@ def train_node_pair_baseline(
     if best_state is not None:
         model.load_state_dict(best_state)
     test = evaluate_node_pair_baseline(
-        model, x_eval, ei_eval, eval_graph.num_nodes, split.test_pos, split.test_neg, device
+        model, x_eval, ei_eval, eval_graph.num_nodes, test_pos, test_neg, device
     )
     test["best_val_auc"] = float(best_auc)
     test["epochs_run"] = epoch + 1

@@ -1,0 +1,1682 @@
+[
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "clean",
+    "auc": 0.74658203125,
+    "ap": 0.7341304698713116
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "clean",
+    "auc": 0.74658203125,
+    "ap": 0.7341304698713116
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "clean",
+    "auc": 0.83935546875,
+    "ap": 0.8718036138503924
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "clean",
+    "auc": 0.52294921875,
+    "ap": 0.559117248879024
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "clean",
+    "auc": 0.3924560546875,
+    "ap": 0.4740687190897553
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "clean",
+    "auc": 0.5355224609375,
+    "ap": 0.5635373801532791
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "clean",
+    "auc": 0.799072265625,
+    "ap": 0.82502418717236
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "clean",
+    "auc": 0.885498046875,
+    "ap": 0.9038533111350218
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "clean",
+    "auc": 0.89453125,
+    "ap": 0.8984812656980986
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "clean",
+    "auc": 0.6568603515625,
+    "ap": 0.6526988636363636
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "clean",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "clean",
+    "auc": 0.8431396484375,
+    "ap": 0.8388381569089011
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "clean",
+    "auc": 0.6568603515625,
+    "ap": 0.6526988636363636
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "clean",
+    "auc": 0.7861328125,
+    "ap": 0.7750121084317756
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "random_delete_25",
+    "auc": 0.739013671875,
+    "ap": 0.7132535071097328
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "random_delete_25",
+    "auc": 0.739013671875,
+    "ap": 0.7132535071097328
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "random_delete_25",
+    "auc": 0.758544921875,
+    "ap": 0.8281876969238531
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "random_delete_25",
+    "auc": 0.540771484375,
+    "ap": 0.544024336902402
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "random_delete_25",
+    "auc": 0.488037109375,
+    "ap": 0.5649527510364003
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "random_delete_25",
+    "auc": 0.53369140625,
+    "ap": 0.5380820519550122
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "random_delete_25",
+    "auc": 0.70849609375,
+    "ap": 0.7559491043064431
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "random_delete_25",
+    "auc": 0.873779296875,
+    "ap": 0.887983770398198
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "random_delete_25",
+    "auc": 0.8260498046875,
+    "ap": 0.8578188753984749
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "random_delete_25",
+    "auc": 0.609375,
+    "ap": 0.609375
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "random_delete_25",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "random_delete_25",
+    "auc": 0.7679443359375,
+    "ap": 0.7779688078031166
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "random_delete_25",
+    "auc": 0.609375,
+    "ap": 0.609375
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "random_delete_25",
+    "auc": 0.6973876953125,
+    "ap": 0.6979166666666666
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "degree_delete_25",
+    "auc": 0.716552734375,
+    "ap": 0.6998147431475406
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "degree_delete_25",
+    "auc": 0.716552734375,
+    "ap": 0.6998147431475406
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "degree_delete_25",
+    "auc": 0.739990234375,
+    "ap": 0.801017647872494
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "degree_delete_25",
+    "auc": 0.49560546875,
+    "ap": 0.5134955567872915
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "degree_delete_25",
+    "auc": 0.5067138671875,
+    "ap": 0.5348817483168804
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "degree_delete_25",
+    "auc": 0.49755859375,
+    "ap": 0.5205150480664609
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "degree_delete_25",
+    "auc": 0.7705078125,
+    "ap": 0.783744926787135
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "degree_delete_25",
+    "auc": 0.88427734375,
+    "ap": 0.8972184894351534
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "degree_delete_25",
+    "auc": 0.85546875,
+    "ap": 0.8608043818063835
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "degree_delete_25",
+    "auc": 0.6019287109375,
+    "ap": 0.5979166666666667
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "degree_delete_25",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "degree_delete_25",
+    "auc": 0.783447265625,
+    "ap": 0.7716324228506841
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "degree_delete_25",
+    "auc": 0.6019287109375,
+    "ap": 0.5979166666666667
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "degree_delete_25",
+    "auc": 0.6932373046875,
+    "ap": 0.6803740530303031
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "random_flip_25",
+    "auc": 0.723388671875,
+    "ap": 0.7156725574402648
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "random_flip_25",
+    "auc": 0.723388671875,
+    "ap": 0.7156725574402648
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "random_flip_25",
+    "auc": 0.75830078125,
+    "ap": 0.813967737657868
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "random_flip_25",
+    "auc": 0.477783203125,
+    "ap": 0.5105606845034713
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "random_flip_25",
+    "auc": 0.4840087890625,
+    "ap": 0.548948129216091
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "random_flip_25",
+    "auc": 0.477294921875,
+    "ap": 0.5090781528112207
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "random_flip_25",
+    "auc": 0.775146484375,
+    "ap": 0.7972076911170023
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "random_flip_25",
+    "auc": 0.8349609375,
+    "ap": 0.8574179355580633
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "random_flip_25",
+    "auc": 0.8565673828125,
+    "ap": 0.8647887316289378
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "random_flip_25",
+    "auc": 0.617431640625,
+    "ap": 0.6121323529411764
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "random_flip_25",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "random_flip_25",
+    "auc": 0.8055419921875,
+    "ap": 0.8031989185601409
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "random_flip_25",
+    "auc": 0.617431640625,
+    "ap": 0.6121323529411764
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "random_flip_25",
+    "auc": 0.7320556640625,
+    "ap": 0.71986403374398
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "dice_25",
+    "auc": 0.708740234375,
+    "ap": 0.6993280960912592
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "dice_25",
+    "auc": 0.708740234375,
+    "ap": 0.6993280960912592
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "dice_25",
+    "auc": 0.8173828125,
+    "ap": 0.8519027635973238
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "dice_25",
+    "auc": 0.4776611328125,
+    "ap": 0.49454268834633275
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "dice_25",
+    "auc": 0.41455078125,
+    "ap": 0.50802441062784
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "dice_25",
+    "auc": 0.481689453125,
+    "ap": 0.49879697579030124
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "dice_25",
+    "auc": 0.8076171875,
+    "ap": 0.8370322109936075
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "dice_25",
+    "auc": 0.865234375,
+    "ap": 0.8919835159526911
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "dice_25",
+    "auc": 0.85302734375,
+    "ap": 0.8753059326850685
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "dice_25",
+    "auc": 0.640625,
+    "ap": 0.640625
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "dice_25",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "dice_25",
+    "auc": 0.7908935546875,
+    "ap": 0.8133207361226685
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "dice_25",
+    "auc": 0.640625,
+    "ap": 0.640625
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "dice_25",
+    "auc": 0.740234375,
+    "ap": 0.7426470588235294
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "feature_mask_25",
+    "auc": 0.701416015625,
+    "ap": 0.691258130355241
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "feature_mask_25",
+    "auc": 0.7041015625,
+    "ap": 0.7047357433446133
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "feature_mask_25",
+    "auc": 0.852294921875,
+    "ap": 0.8773254173054291
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "feature_mask_25",
+    "auc": 0.5361328125,
+    "ap": 0.5775884297572049
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "feature_mask_25",
+    "auc": 0.3924560546875,
+    "ap": 0.4740687190897553
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "feature_mask_25",
+    "auc": 0.546875,
+    "ap": 0.578559371144436
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "feature_mask_25",
+    "auc": 0.781005859375,
+    "ap": 0.8033183758688061
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "feature_mask_25",
+    "auc": 0.877685546875,
+    "ap": 0.9047206343426242
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "feature_mask_25",
+    "auc": 0.89453125,
+    "ap": 0.8984812656980986
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "feature_mask_25",
+    "auc": 0.6568603515625,
+    "ap": 0.6526988636363636
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "feature_mask_25",
+    "auc": 0.640380859375,
+    "ap": 0.6904004700344062
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "feature_mask_25",
+    "auc": 0.8431396484375,
+    "ap": 0.8388381569089011
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "feature_mask_25",
+    "auc": 0.6568603515625,
+    "ap": 0.6526988636363636
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "feature_mask_25",
+    "auc": 0.7861328125,
+    "ap": 0.7750121084317756
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "joint_random_delete_25",
+    "auc": 0.6875,
+    "ap": 0.6772561179438803
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "joint_random_delete_25",
+    "auc": 0.691162109375,
+    "ap": 0.6960162295996811
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "joint_random_delete_25",
+    "auc": 0.785400390625,
+    "ap": 0.8394655602516468
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "joint_random_delete_25",
+    "auc": 0.5313720703125,
+    "ap": 0.5262761143755704
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "joint_random_delete_25",
+    "auc": 0.488037109375,
+    "ap": 0.5649527510364003
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "joint_random_delete_25",
+    "auc": 0.5250244140625,
+    "ap": 0.5319135476635747
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "joint_random_delete_25",
+    "auc": 0.708740234375,
+    "ap": 0.7403180523422068
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "joint_random_delete_25",
+    "auc": 0.8623046875,
+    "ap": 0.8887051155657948
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "joint_random_delete_25",
+    "auc": 0.8260498046875,
+    "ap": 0.8578188753984749
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "joint_random_delete_25",
+    "auc": 0.609375,
+    "ap": 0.609375
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "joint_random_delete_25",
+    "auc": 0.640380859375,
+    "ap": 0.6904004700344062
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "joint_random_delete_25",
+    "auc": 0.7679443359375,
+    "ap": 0.7779688078031166
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "joint_random_delete_25",
+    "auc": 0.609375,
+    "ap": 0.609375
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "joint_random_delete_25",
+    "auc": 0.6973876953125,
+    "ap": 0.6979166666666666
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.658935546875,
+    "ap": 0.652039510585606
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.664306640625,
+    "ap": 0.6812691499039563
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.7568359375,
+    "ap": 0.8072400807646876
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.4976806640625,
+    "ap": 0.5104921604104611
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.5067138671875,
+    "ap": 0.5348817483168804
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.5030517578125,
+    "ap": 0.5181907951574662
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.718017578125,
+    "ap": 0.7235744740504191
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.833740234375,
+    "ap": 0.868642158234245
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.85546875,
+    "ap": 0.8608043818063835
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.6019287109375,
+    "ap": 0.5979166666666667
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.640380859375,
+    "ap": 0.6904004700344062
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.783447265625,
+    "ap": 0.7716324228506841
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.6019287109375,
+    "ap": 0.5979166666666667
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.6932373046875,
+    "ap": 0.6803740530303031
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "random_delete_50",
+    "auc": 0.720458984375,
+    "ap": 0.6985191067755074
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "random_delete_50",
+    "auc": 0.720458984375,
+    "ap": 0.6985191067755074
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "random_delete_50",
+    "auc": 0.602294921875,
+    "ap": 0.6665723587390773
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "random_delete_50",
+    "auc": 0.464111328125,
+    "ap": 0.5340035935496734
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "random_delete_50",
+    "auc": 0.6243896484375,
+    "ap": 0.6804610427032086
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "random_delete_50",
+    "auc": 0.461669921875,
+    "ap": 0.5310467138674781
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "random_delete_50",
+    "auc": 0.62109375,
+    "ap": 0.6819788314645193
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "random_delete_50",
+    "auc": 0.859375,
+    "ap": 0.8861289004082384
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "random_delete_50",
+    "auc": 0.611083984375,
+    "ap": 0.6832681616645873
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "random_delete_50",
+    "auc": 0.53125,
+    "ap": 0.53125
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "random_delete_50",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "random_delete_50",
+    "auc": 0.6094970703125,
+    "ap": 0.6086663987054612
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "random_delete_50",
+    "auc": 0.53125,
+    "ap": 0.53125
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "random_delete_50",
+    "auc": 0.57080078125,
+    "ap": 0.5696022727272727
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "degree_delete_50",
+    "auc": 0.682373046875,
+    "ap": 0.6658103301063387
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "degree_delete_50",
+    "auc": 0.682373046875,
+    "ap": 0.6658103301063387
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "degree_delete_50",
+    "auc": 0.60205078125,
+    "ap": 0.6468672540349373
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "degree_delete_50",
+    "auc": 0.5560302734375,
+    "ap": 0.5591563136236662
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "degree_delete_50",
+    "auc": 0.490234375,
+    "ap": 0.5655681361368408
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "degree_delete_50",
+    "auc": 0.564208984375,
+    "ap": 0.5746102804094022
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "degree_delete_50",
+    "auc": 0.64794921875,
+    "ap": 0.6346672469922204
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "degree_delete_50",
+    "auc": 0.854248046875,
+    "ap": 0.8643948769106269
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "degree_delete_50",
+    "auc": 0.695556640625,
+    "ap": 0.7271635372740268
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "degree_delete_50",
+    "auc": 0.5390625,
+    "ap": 0.5334821428571428
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "degree_delete_50",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "degree_delete_50",
+    "auc": 0.6259765625,
+    "ap": 0.6103459940364933
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "degree_delete_50",
+    "auc": 0.5390625,
+    "ap": 0.5334821428571428
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "degree_delete_50",
+    "auc": 0.5848388671875,
+    "ap": 0.5716503548534799
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "random_flip_50",
+    "auc": 0.692626953125,
+    "ap": 0.6897614105997762
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "random_flip_50",
+    "auc": 0.692626953125,
+    "ap": 0.6897614105997762
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "random_flip_50",
+    "auc": 0.738525390625,
+    "ap": 0.8070652329322723
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "random_flip_50",
+    "auc": 0.526123046875,
+    "ap": 0.5473413979987737
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "random_flip_50",
+    "auc": 0.47998046875,
+    "ap": 0.5299239145730442
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "random_flip_50",
+    "auc": 0.529052734375,
+    "ap": 0.5517054931027351
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "random_flip_50",
+    "auc": 0.74072265625,
+    "ap": 0.7804287790260015
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "random_flip_50",
+    "auc": 0.82373046875,
+    "ap": 0.8524617016079286
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "random_flip_50",
+    "auc": 0.8419189453125,
+    "ap": 0.8575213128341503
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "random_flip_50",
+    "auc": 0.609375,
+    "ap": 0.609375
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "random_flip_50",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "random_flip_50",
+    "auc": 0.77099609375,
+    "ap": 0.791935860765979
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "random_flip_50",
+    "auc": 0.609375,
+    "ap": 0.609375
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "random_flip_50",
+    "auc": 0.6973876953125,
+    "ap": 0.6979166666666666
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "dice_50",
+    "auc": 0.6845703125,
+    "ap": 0.6726341776607438
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "dice_50",
+    "auc": 0.6845703125,
+    "ap": 0.6726341776607438
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "dice_50",
+    "auc": 0.730712890625,
+    "ap": 0.7857675345619938
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "dice_50",
+    "auc": 0.528564453125,
+    "ap": 0.4999371151927484
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "dice_50",
+    "auc": 0.480712890625,
+    "ap": 0.5383772394045458
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "dice_50",
+    "auc": 0.5347900390625,
+    "ap": 0.5017445405966489
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "dice_50",
+    "auc": 0.74267578125,
+    "ap": 0.7996878597660823
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "dice_50",
+    "auc": 0.8720703125,
+    "ap": 0.8887441897579381
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "dice_50",
+    "auc": 0.755126953125,
+    "ap": 0.8064803472265604
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "dice_50",
+    "auc": 0.609375,
+    "ap": 0.609375
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "dice_50",
+    "auc": 0.86181640625,
+    "ap": 0.8738136654063643
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "dice_50",
+    "auc": 0.7476806640625,
+    "ap": 0.7707233219456495
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "dice_50",
+    "auc": 0.609375,
+    "ap": 0.609375
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "dice_50",
+    "auc": 0.668212890625,
+    "ap": 0.6721874999999999
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "feature_mask_50",
+    "auc": 0.700439453125,
+    "ap": 0.6589503506324937
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "feature_mask_50",
+    "auc": 0.731689453125,
+    "ap": 0.7097190597031271
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "feature_mask_50",
+    "auc": 0.8447265625,
+    "ap": 0.873906783780786
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "feature_mask_50",
+    "auc": 0.541015625,
+    "ap": 0.5704009866880229
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "feature_mask_50",
+    "auc": 0.3924560546875,
+    "ap": 0.4740687190897553
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "feature_mask_50",
+    "auc": 0.5592041015625,
+    "ap": 0.5797125663146796
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "feature_mask_50",
+    "auc": 0.7518310546875,
+    "ap": 0.7518703678742304
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "feature_mask_50",
+    "auc": 0.787109375,
+    "ap": 0.8080153685927931
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "feature_mask_50",
+    "auc": 0.89453125,
+    "ap": 0.8984812656980986
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "feature_mask_50",
+    "auc": 0.6568603515625,
+    "ap": 0.6526988636363636
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "feature_mask_50",
+    "auc": 0.52880859375,
+    "ap": 0.5647321428571429
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "feature_mask_50",
+    "auc": 0.8431396484375,
+    "ap": 0.8388381569089011
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "feature_mask_50",
+    "auc": 0.6568603515625,
+    "ap": 0.6526988636363636
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "feature_mask_50",
+    "auc": 0.7861328125,
+    "ap": 0.7750121084317756
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "joint_random_delete_50",
+    "auc": 0.65478515625,
+    "ap": 0.6126436027055154
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "joint_random_delete_50",
+    "auc": 0.674560546875,
+    "ap": 0.6674812169969024
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "joint_random_delete_50",
+    "auc": 0.6038818359375,
+    "ap": 0.6679088323792419
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "joint_random_delete_50",
+    "auc": 0.4996337890625,
+    "ap": 0.5649969380267177
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "joint_random_delete_50",
+    "auc": 0.6243896484375,
+    "ap": 0.6804610427032086
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "joint_random_delete_50",
+    "auc": 0.49267578125,
+    "ap": 0.5598431718903045
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "joint_random_delete_50",
+    "auc": 0.5902099609375,
+    "ap": 0.623166437499663
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "joint_random_delete_50",
+    "auc": 0.7373046875,
+    "ap": 0.7663754994892013
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "joint_random_delete_50",
+    "auc": 0.611083984375,
+    "ap": 0.6832681616645873
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "joint_random_delete_50",
+    "auc": 0.53125,
+    "ap": 0.53125
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "joint_random_delete_50",
+    "auc": 0.52880859375,
+    "ap": 0.5647321428571429
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "joint_random_delete_50",
+    "auc": 0.6094970703125,
+    "ap": 0.6086663987054612
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "joint_random_delete_50",
+    "auc": 0.53125,
+    "ap": 0.53125
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "joint_random_delete_50",
+    "auc": 0.57080078125,
+    "ap": 0.5696022727272727
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "gae",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.5843505859375,
+    "ap": 0.5561216685206819
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.613037109375,
+    "ap": 0.6231924146309085
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.5892333984375,
+    "ap": 0.642164733495032
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.52783203125,
+    "ap": 0.5249392743861209
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.490234375,
+    "ap": 0.5655681361368408
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.541015625,
+    "ap": 0.5380781682571136
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.629638671875,
+    "ap": 0.6067557735192017
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.65625,
+    "ap": 0.6841068747535601
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.695556640625,
+    "ap": 0.7271635372740268
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "cn",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.5390625,
+    "ap": 0.5334821428571428
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.52880859375,
+    "ap": 0.5647321428571429
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.6259765625,
+    "ap": 0.6103459940364933
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.5390625,
+    "ap": 0.5334821428571428
+  },
+  {
+    "dataset": "cora",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.5848388671875,
+    "ap": 0.5716503548534799
+  }
+]

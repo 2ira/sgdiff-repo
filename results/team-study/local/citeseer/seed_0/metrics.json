@@ -1,0 +1,1682 @@
+[
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "clean",
+    "auc": 0.74072265625,
+    "ap": 0.7586524194383704
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "clean",
+    "auc": 0.74072265625,
+    "ap": 0.7586524194383704
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "clean",
+    "auc": 0.83544921875,
+    "ap": 0.8228665904771935
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "clean",
+    "auc": 0.5313720703125,
+    "ap": 0.5235348979635439
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "clean",
+    "auc": 0.612548828125,
+    "ap": 0.6821396387598927
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "clean",
+    "auc": 0.5325927734375,
+    "ap": 0.5471065189091784
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "clean",
+    "auc": 0.916015625,
+    "ap": 0.9158564949883319
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "clean",
+    "auc": 0.910888671875,
+    "ap": 0.9166634481579787
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "clean",
+    "auc": 0.88037109375,
+    "ap": 0.8970151652334569
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "clean",
+    "auc": 0.634033203125,
+    "ap": 0.6276041666666666
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "clean",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "clean",
+    "auc": 0.77880859375,
+    "ap": 0.77054416051113
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "clean",
+    "auc": 0.634033203125,
+    "ap": 0.6276041666666666
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "clean",
+    "auc": 0.7557373046875,
+    "ap": 0.7457611242801461
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "random_delete_25",
+    "auc": 0.72509765625,
+    "ap": 0.7432021850094024
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "random_delete_25",
+    "auc": 0.72509765625,
+    "ap": 0.7432021850094024
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "random_delete_25",
+    "auc": 0.734375,
+    "ap": 0.7712962029492341
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "random_delete_25",
+    "auc": 0.49560546875,
+    "ap": 0.5331207275437904
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "random_delete_25",
+    "auc": 0.5728759765625,
+    "ap": 0.6552093840324376
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "random_delete_25",
+    "auc": 0.4930419921875,
+    "ap": 0.5230067165989988
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "random_delete_25",
+    "auc": 0.899658203125,
+    "ap": 0.9005144890685894
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "random_delete_25",
+    "auc": 0.89111328125,
+    "ap": 0.8984132541903076
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "random_delete_25",
+    "auc": 0.7357177734375,
+    "ap": 0.7756787351040726
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "random_delete_25",
+    "auc": 0.53955078125,
+    "ap": 0.5373263888888888
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "random_delete_25",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "random_delete_25",
+    "auc": 0.6409912109375,
+    "ap": 0.6334603362914606
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "random_delete_25",
+    "auc": 0.53955078125,
+    "ap": 0.5373263888888888
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "random_delete_25",
+    "auc": 0.623779296875,
+    "ap": 0.6149801587301588
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "degree_delete_25",
+    "auc": 0.7353515625,
+    "ap": 0.7624091055138897
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "degree_delete_25",
+    "auc": 0.7353515625,
+    "ap": 0.7624091055138897
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "degree_delete_25",
+    "auc": 0.770751953125,
+    "ap": 0.8218837760331944
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "degree_delete_25",
+    "auc": 0.5272216796875,
+    "ap": 0.5142598117575258
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "degree_delete_25",
+    "auc": 0.615234375,
+    "ap": 0.691510550530102
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "degree_delete_25",
+    "auc": 0.5247802734375,
+    "ap": 0.5120609988041372
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "degree_delete_25",
+    "auc": 0.897216796875,
+    "ap": 0.8968750526423663
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "degree_delete_25",
+    "auc": 0.8740234375,
+    "ap": 0.8927801805167688
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "degree_delete_25",
+    "auc": 0.7425537109375,
+    "ap": 0.7835413386759165
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "degree_delete_25",
+    "auc": 0.5941162109375,
+    "ap": 0.5904017857142857
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "degree_delete_25",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "degree_delete_25",
+    "auc": 0.6815185546875,
+    "ap": 0.6798191122129352
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "degree_delete_25",
+    "auc": 0.5941162109375,
+    "ap": 0.5904017857142857
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "degree_delete_25",
+    "auc": 0.6483154296875,
+    "ap": 0.6454437859424073
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "random_flip_25",
+    "auc": 0.751953125,
+    "ap": 0.7576538206070389
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "random_flip_25",
+    "auc": 0.751953125,
+    "ap": 0.7576538206070389
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "random_flip_25",
+    "auc": 0.7783203125,
+    "ap": 0.8225238081818504
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "random_flip_25",
+    "auc": 0.55859375,
+    "ap": 0.5702865356262558
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "random_flip_25",
+    "auc": 0.6141357421875,
+    "ap": 0.6955817833164532
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "random_flip_25",
+    "auc": 0.5604248046875,
+    "ap": 0.5635400081850506
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "random_flip_25",
+    "auc": 0.899658203125,
+    "ap": 0.8990519522496352
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "random_flip_25",
+    "auc": 0.900634765625,
+    "ap": 0.905915694190948
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "random_flip_25",
+    "auc": 0.7916259765625,
+    "ap": 0.8337557940506204
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "random_flip_25",
+    "auc": 0.586669921875,
+    "ap": 0.5807291666666667
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "random_flip_25",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "random_flip_25",
+    "auc": 0.72216796875,
+    "ap": 0.7140383542240336
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "random_flip_25",
+    "auc": 0.586669921875,
+    "ap": 0.5807291666666667
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "random_flip_25",
+    "auc": 0.693603515625,
+    "ap": 0.68359871012397
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "dice_25",
+    "auc": 0.7275390625,
+    "ap": 0.7574506986087988
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "dice_25",
+    "auc": 0.7275390625,
+    "ap": 0.7574506986087988
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "dice_25",
+    "auc": 0.806884765625,
+    "ap": 0.8424856621143627
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "dice_25",
+    "auc": 0.5228271484375,
+    "ap": 0.5468307777479947
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "dice_25",
+    "auc": 0.6298828125,
+    "ap": 0.7160585221629772
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "dice_25",
+    "auc": 0.517578125,
+    "ap": 0.5412829221753113
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "dice_25",
+    "auc": 0.89697265625,
+    "ap": 0.898747693189371
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "dice_25",
+    "auc": 0.873046875,
+    "ap": 0.8833399854562456
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "dice_25",
+    "auc": 0.8175048828125,
+    "ap": 0.8423543412554839
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "dice_25",
+    "auc": 0.5947265625,
+    "ap": 0.58984375
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "dice_25",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "dice_25",
+    "auc": 0.73046875,
+    "ap": 0.723860674762784
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "dice_25",
+    "auc": 0.5947265625,
+    "ap": 0.58984375
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "dice_25",
+    "auc": 0.70947265625,
+    "ap": 0.7005610921758839
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "feature_mask_25",
+    "auc": 0.72705078125,
+    "ap": 0.7425011258739317
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "feature_mask_25",
+    "auc": 0.72265625,
+    "ap": 0.7424435539373511
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "feature_mask_25",
+    "auc": 0.830078125,
+    "ap": 0.8266316738143857
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "feature_mask_25",
+    "auc": 0.5206298828125,
+    "ap": 0.520298362373679
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "feature_mask_25",
+    "auc": 0.612548828125,
+    "ap": 0.6821396387598927
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "feature_mask_25",
+    "auc": 0.5203857421875,
+    "ap": 0.5428526043556485
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "feature_mask_25",
+    "auc": 0.897216796875,
+    "ap": 0.8952356890035282
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "feature_mask_25",
+    "auc": 0.863525390625,
+    "ap": 0.8713672903995389
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "feature_mask_25",
+    "auc": 0.88037109375,
+    "ap": 0.8970151652334569
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "feature_mask_25",
+    "auc": 0.634033203125,
+    "ap": 0.6276041666666666
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "feature_mask_25",
+    "auc": 0.6650390625,
+    "ap": 0.7509569474290247
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "feature_mask_25",
+    "auc": 0.77880859375,
+    "ap": 0.77054416051113
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "feature_mask_25",
+    "auc": 0.634033203125,
+    "ap": 0.6276041666666666
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "feature_mask_25",
+    "auc": 0.7557373046875,
+    "ap": 0.7457611242801461
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "joint_random_delete_25",
+    "auc": 0.7060546875,
+    "ap": 0.7149657731464112
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "joint_random_delete_25",
+    "auc": 0.700927734375,
+    "ap": 0.7279182342000818
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "joint_random_delete_25",
+    "auc": 0.71923828125,
+    "ap": 0.7724246394540761
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "joint_random_delete_25",
+    "auc": 0.494873046875,
+    "ap": 0.5363679179509334
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "joint_random_delete_25",
+    "auc": 0.5728759765625,
+    "ap": 0.6552093840324376
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "joint_random_delete_25",
+    "auc": 0.492431640625,
+    "ap": 0.5238822827246139
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "joint_random_delete_25",
+    "auc": 0.8837890625,
+    "ap": 0.8779953396381522
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "joint_random_delete_25",
+    "auc": 0.83154296875,
+    "ap": 0.8410326720141892
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "joint_random_delete_25",
+    "auc": 0.7357177734375,
+    "ap": 0.7756787351040726
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "joint_random_delete_25",
+    "auc": 0.53955078125,
+    "ap": 0.5373263888888888
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "joint_random_delete_25",
+    "auc": 0.6650390625,
+    "ap": 0.7509569474290247
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "joint_random_delete_25",
+    "auc": 0.6409912109375,
+    "ap": 0.6334603362914606
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "joint_random_delete_25",
+    "auc": 0.53955078125,
+    "ap": 0.5373263888888888
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "joint_random_delete_25",
+    "auc": 0.623779296875,
+    "ap": 0.6149801587301588
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.7159423828125,
+    "ap": 0.7280995535301296
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.7239990234375,
+    "ap": 0.7550627153480144
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.760009765625,
+    "ap": 0.812114864126021
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.5316162109375,
+    "ap": 0.5195373402748737
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.615234375,
+    "ap": 0.691510550530102
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.5269775390625,
+    "ap": 0.5161593660039896
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.8875732421875,
+    "ap": 0.8785886548431738
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.8228759765625,
+    "ap": 0.8363316134782869
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.7425537109375,
+    "ap": 0.7835413386759165
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.5941162109375,
+    "ap": 0.5904017857142857
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.6650390625,
+    "ap": 0.7509569474290247
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.6815185546875,
+    "ap": 0.6798191122129352
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.5941162109375,
+    "ap": 0.5904017857142857
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "joint_degree_delete_25",
+    "auc": 0.6483154296875,
+    "ap": 0.6454437859424073
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "random_delete_50",
+    "auc": 0.719970703125,
+    "ap": 0.7373867119385074
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "random_delete_50",
+    "auc": 0.719970703125,
+    "ap": 0.7373867119385074
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "random_delete_50",
+    "auc": 0.57177734375,
+    "ap": 0.6135587365728741
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "random_delete_50",
+    "auc": 0.4761962890625,
+    "ap": 0.552052544904271
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "random_delete_50",
+    "auc": 0.5823974609375,
+    "ap": 0.6355921431939233
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "random_delete_50",
+    "auc": 0.48095703125,
+    "ap": 0.5550439084805939
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "random_delete_50",
+    "auc": 0.900146484375,
+    "ap": 0.8972708795545157
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "random_delete_50",
+    "auc": 0.875244140625,
+    "ap": 0.8849305729262936
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "random_delete_50",
+    "auc": 0.691162109375,
+    "ap": 0.7019476623205213
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "random_delete_50",
+    "auc": 0.5078125,
+    "ap": 0.5052083333333334
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "random_delete_50",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "random_delete_50",
+    "auc": 0.5616455078125,
+    "ap": 0.5479848710317461
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "random_delete_50",
+    "auc": 0.5078125,
+    "ap": 0.5052083333333334
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "random_delete_50",
+    "auc": 0.531005859375,
+    "ap": 0.52421875
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "degree_delete_50",
+    "auc": 0.732421875,
+    "ap": 0.7580351604471138
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "degree_delete_50",
+    "auc": 0.732421875,
+    "ap": 0.7580351604471138
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "degree_delete_50",
+    "auc": 0.66845703125,
+    "ap": 0.6994472902296195
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "degree_delete_50",
+    "auc": 0.4207763671875,
+    "ap": 0.4507853771620604
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "degree_delete_50",
+    "auc": 0.5338134765625,
+    "ap": 0.621902877089033
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "degree_delete_50",
+    "auc": 0.4322509765625,
+    "ap": 0.4662462921294281
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "degree_delete_50",
+    "auc": 0.887939453125,
+    "ap": 0.8899518544035814
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "degree_delete_50",
+    "auc": 0.88134765625,
+    "ap": 0.8960249296167692
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "degree_delete_50",
+    "auc": 0.67919921875,
+    "ap": 0.7137243086939887
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "degree_delete_50",
+    "auc": 0.531494140625,
+    "ap": 0.53125
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "degree_delete_50",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "degree_delete_50",
+    "auc": 0.6087646484375,
+    "ap": 0.6027307111291487
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "degree_delete_50",
+    "auc": 0.531494140625,
+    "ap": 0.53125
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "degree_delete_50",
+    "auc": 0.5780029296875,
+    "ap": 0.576109871031746
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "random_flip_50",
+    "auc": 0.73486328125,
+    "ap": 0.748479304780159
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "random_flip_50",
+    "auc": 0.73486328125,
+    "ap": 0.748479304780159
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "random_flip_50",
+    "auc": 0.71337890625,
+    "ap": 0.7553191479244344
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "random_flip_50",
+    "auc": 0.4683837890625,
+    "ap": 0.4877427158728589
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "random_flip_50",
+    "auc": 0.5240478515625,
+    "ap": 0.6251706953553389
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "random_flip_50",
+    "auc": 0.48046875,
+    "ap": 0.4993281288005797
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "random_flip_50",
+    "auc": 0.866455078125,
+    "ap": 0.8698257686299414
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "random_flip_50",
+    "auc": 0.8525390625,
+    "ap": 0.8711075857084393
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "random_flip_50",
+    "auc": 0.6861572265625,
+    "ap": 0.7387903714857763
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "random_flip_50",
+    "auc": 0.53955078125,
+    "ap": 0.5373263888888888
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "random_flip_50",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "random_flip_50",
+    "auc": 0.636962890625,
+    "ap": 0.6365845928973748
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "random_flip_50",
+    "auc": 0.53955078125,
+    "ap": 0.5373263888888888
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "random_flip_50",
+    "auc": 0.623779296875,
+    "ap": 0.6149801587301588
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "dice_50",
+    "auc": 0.72802734375,
+    "ap": 0.7383407329787668
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "dice_50",
+    "auc": 0.72802734375,
+    "ap": 0.7383407329787668
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "dice_50",
+    "auc": 0.767578125,
+    "ap": 0.8243118053000309
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "dice_50",
+    "auc": 0.5074462890625,
+    "ap": 0.5174919605576347
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "dice_50",
+    "auc": 0.5712890625,
+    "ap": 0.6636645676540559
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "dice_50",
+    "auc": 0.4949951171875,
+    "ap": 0.5177691571758525
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "dice_50",
+    "auc": 0.88525390625,
+    "ap": 0.8905588062710534
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "dice_50",
+    "auc": 0.868896484375,
+    "ap": 0.8759193631400695
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "dice_50",
+    "auc": 0.757568359375,
+    "ap": 0.8124892623324805
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "dice_50",
+    "auc": 0.5548095703125,
+    "ap": 0.5503472222222222
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "dice_50",
+    "auc": 0.878173828125,
+    "ap": 0.8962481814899057
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "dice_50",
+    "auc": 0.678955078125,
+    "ap": 0.6774607038389018
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "dice_50",
+    "auc": 0.5548095703125,
+    "ap": 0.5503472222222222
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "dice_50",
+    "auc": 0.6854248046875,
+    "ap": 0.6744123931623931
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "feature_mask_50",
+    "auc": 0.706298828125,
+    "ap": 0.7091317372801211
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "feature_mask_50",
+    "auc": 0.743408203125,
+    "ap": 0.7472443322901072
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "feature_mask_50",
+    "auc": 0.826171875,
+    "ap": 0.8296703944578464
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "feature_mask_50",
+    "auc": 0.5150146484375,
+    "ap": 0.5198757627114927
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "feature_mask_50",
+    "auc": 0.612548828125,
+    "ap": 0.6821396387598927
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "feature_mask_50",
+    "auc": 0.5164794921875,
+    "ap": 0.5495845060525408
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "feature_mask_50",
+    "auc": 0.8314208984375,
+    "ap": 0.8473365183195002
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "feature_mask_50",
+    "auc": 0.7960205078125,
+    "ap": 0.804555666131038
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "feature_mask_50",
+    "auc": 0.88037109375,
+    "ap": 0.8970151652334569
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "feature_mask_50",
+    "auc": 0.634033203125,
+    "ap": 0.6276041666666666
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "feature_mask_50",
+    "auc": 0.4871826171875,
+    "ap": 0.5734299337814963
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "feature_mask_50",
+    "auc": 0.77880859375,
+    "ap": 0.77054416051113
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "feature_mask_50",
+    "auc": 0.634033203125,
+    "ap": 0.6276041666666666
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "feature_mask_50",
+    "auc": 0.7557373046875,
+    "ap": 0.7457611242801461
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "joint_random_delete_50",
+    "auc": 0.6922607421875,
+    "ap": 0.6642210735530394
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "joint_random_delete_50",
+    "auc": 0.6922607421875,
+    "ap": 0.6817761647286988
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "joint_random_delete_50",
+    "auc": 0.51904296875,
+    "ap": 0.5608954284425036
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "joint_random_delete_50",
+    "auc": 0.4644775390625,
+    "ap": 0.5321005010107371
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "joint_random_delete_50",
+    "auc": 0.5823974609375,
+    "ap": 0.6355921431939233
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "joint_random_delete_50",
+    "auc": 0.4686279296875,
+    "ap": 0.5335035809787746
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "joint_random_delete_50",
+    "auc": 0.8109130859375,
+    "ap": 0.813480627345716
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "joint_random_delete_50",
+    "auc": 0.7437744140625,
+    "ap": 0.7515520061130576
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "joint_random_delete_50",
+    "auc": 0.691162109375,
+    "ap": 0.7019476623205213
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "joint_random_delete_50",
+    "auc": 0.5078125,
+    "ap": 0.5052083333333334
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "joint_random_delete_50",
+    "auc": 0.4871826171875,
+    "ap": 0.5734299337814963
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "joint_random_delete_50",
+    "auc": 0.5616455078125,
+    "ap": 0.5479848710317461
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "joint_random_delete_50",
+    "auc": 0.5078125,
+    "ap": 0.5052083333333334
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "joint_random_delete_50",
+    "auc": 0.531005859375,
+    "ap": 0.52421875
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "gae",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.6427001953125,
+    "ap": 0.6673180093548196
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "fsd",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.683837890625,
+    "ap": 0.711333994143716
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "pencil",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.636474609375,
+    "ap": 0.674434980661079
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.4371337890625,
+    "ap": 0.46006138719064515
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_structure",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.5338134765625,
+    "ap": 0.621902877089033
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sgdiff_feature",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.4486083984375,
+    "ap": 0.4842175991208083
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.78515625,
+    "ap": 0.7981927486212312
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_endpoints",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.7437744140625,
+    "ap": 0.7754841267777293
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "sp4lp_featureless",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.67919921875,
+    "ap": 0.7137243086939887
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "cn",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.531494140625,
+    "ap": 0.53125
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "feature_cosine",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.4871826171875,
+    "ap": 0.5734299337814963
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.6087646484375,
+    "ap": 0.6027307111291487
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h2",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.531494140625,
+    "ap": 0.53125
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 0,
+    "model": "katz_h3",
+    "condition": "joint_degree_delete_50",
+    "auc": 0.5780029296875,
+    "ap": 0.576109871031746
+  }
+]
