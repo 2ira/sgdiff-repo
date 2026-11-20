@@ -21,6 +21,13 @@
 
 **一个讲解例子。** 假设 A、B 都引用 C，另有 A–D–E–B；A、B 的关键词都包括“图学习”。隐藏 A–B 后，CN 得 1，Katz 除了 A–C–B 还看得到三步游走。删去 A–C，CN 变 0，Katz 仍有三步证据，SP4LP 的最短路径会从两步变三步。词向量没变，属性余弦原分不动。如果同时把 A 的属性遮掉，余弦也变成 0；FSD 能否补回有用的方向，取决于尚可见的邻居。SGDiff 和 PENCIL 还要在新的局部子图上重新计算角色标记。这个例子说明输入机制，实际升降见结果表。
 
+## 分工后的代码阅读顺序
+
+- **Jiawei** 先看共同邻居的交集如何计算，再跟踪 Katz 循环中的向量：每乘一次邻接矩阵，就多走一步。用两跳输出与 CN 的逐查询排序做自检。[CN 评分](../sgdiff/engine/course_baselines.py) · [Katz 游走累加](../sgdiff/models/baselines/spectral_walk.py)
+- **Jiatong** 从两篇没有共同邻居但词汇相似的论文出发，依次跟踪 `set_context` 抽路径、`encode` 聚合属性、`score_pairs` 融合打分。对照仅端点版本还保留了哪些参数。仓库适配的隐藏宽度为 64，路径序列最多保留 32 个位置；平衡随机负例与作者 HeaRT 评测的难度也不同。[SP4LP 适配器](../sgdiff/models/baselines/sp4lp.py) · [作者代码与版本说明](../sgdiff/vendor/sp4lp/PROVENANCE.md)
+- **Junxiong** 先用 GAE 的内积写出两个端点的分数，再跟踪某个被遮蔽节点的一行属性如何由 FSD 填补。关注邻居也没有可用属性的情况，以及已有观测行在传播后如何恢复。两者共享完全相同的预测器，适合一起讲。[GCN 与内积](../sgdiff/models/baselines/node_pair.py) · [FSD 补全](../sgdiff/models/baselines/fsd.py)
+- **第四位** 取同一对端点的一跳子图，画出该子图中各节点相对两端的位置。先看 PENCIL-style 怎样把这些输入直接映射为类别分数，再看 SGDiff 怎样在两个类别假设下打分及融合。最后读训练日志里两个阶段的验证损失，比较“分支给了多少信息”与“模型目前是否学好”这两个问题。[PENCIL-style](../sgdiff/models/baselines/pencil.py) · [SGDiff 两路打分](../sgdiff/models/sgdiff.py) · [融合](../sgdiff/models/fusion.py) · [训练与选权重](../sgdiff/engine/trainer.py)
+
 ## 统一协议
 
 - 比较 Cora、CiteSeer 的无向链接。沿用近期同学共同用过的两张图。随机种子 0、1、2，各自重新分出正边 80/5/15，负例从全图非边固定抽取，三份互斥。训练、验证的可见边来自训练集，推断图可见训练及验证正边。固定同一份平衡查询子集。所有测试正负候选和验证负例均禁止被插入。节点类别仅供 DICE 构造扰动。
