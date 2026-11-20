@@ -9,6 +9,17 @@ from .evaluator import _evaluation_context, _loader, score_pairs
 from .factory import build_extractor
 from ..models.baselines.fsd import propagate_features
 
+
+def fusion_readouts(fusion, feat, struct, full_logits=None):
+    """Rank the same class-conditional evidence with both or either stream."""
+    logits = {
+        "sgdiff": fusion(feat, struct) if full_logits is None else full_logits,
+        "sgdiff_structure": fusion(torch.zeros_like(feat), struct),
+        "sgdiff_feature": fusion(feat, torch.zeros_like(struct)),
+    }
+    return {name: value[:, 1] - value[:, 0] for name, value in logits.items()}
+
+
 @torch.no_grad()
 def sgdiff_streams(sg, extractor, cohorts, batch_size, device, seed):
     """Score both ablations from the same MC draws as their full prediction."""
@@ -20,10 +31,8 @@ def sgdiff_streams(sg, extractor, cohorts, batch_size, device, seed):
             for batch in _loader(ds, batch_size):
                 out = sg(batch.to(device))
                 feat, struct = out["feature_scores"], out["structure_scores"]
-                logits = (out["logits"], sg.fusion(torch.zeros_like(feat), struct),
-                          sg.fusion(feat, torch.zeros_like(struct)))
-                for key, value in zip(parts, logits):
-                    parts[key].append((value[:, 1] - value[:, 0]).cpu().numpy())
+                for key, value in fusion_readouts(sg.fusion, feat, struct, out["logits"]).items():
+                    parts[key].append(value.cpu().numpy())
     return {key: np.concatenate(values) for key, values in parts.items()}
 
 

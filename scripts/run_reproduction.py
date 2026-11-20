@@ -5,7 +5,7 @@ import sys
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from sgdiff.engine.reproduction import experiment, OWNED, PRIMARY
+from sgdiff.engine.reproduction import conditions, experiment, OWNED, PRIMARY
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
@@ -13,6 +13,8 @@ if __name__ == "__main__":
     p.add_argument("--datasets", nargs="+", choices=["cora", "citeseer"], default=["cora", "citeseer"])
     p.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     p.add_argument("--models", nargs="+", choices=PRIMARY, default=list(OWNED))
+    p.add_argument("--conditions", nargs="+", choices=[c.name for c in conditions()],
+                   help="Score a subset of the common graph bank (default: all conditions)")
     p.add_argument("--weights", type=Path, default=Path("runs/pair"))
     p.add_argument("--output", type=Path, default=Path("results/paired-reproduction"))
     p.add_argument("--data-root", default="data")
@@ -26,4 +28,4 @@ if __name__ == "__main__":
     for d in a.datasets:
         for s in a.seeds:
             experiment(d, s, a.models, a.data_root, a.weights, a.output, a.device,
-                       a.action, a.max_padded_pairs or None)
+                       a.action, a.max_padded_pairs or None, a.conditions)

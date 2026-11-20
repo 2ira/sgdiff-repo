@@ -1,0 +1,10 @@
+condition,model,auc,ap
+clean,sgdiff,0.867766,0.8819660610675146
+clean,sgdiff_structure,0.82966,0.8728079988827038
+clean,sgdiff_feature,0.75669,0.7438343525253456
+random_delete_25,sgdiff,0.79023,0.8260848640730228
+random_delete_25,sgdiff_structure,0.752056,0.8090186004850408
+random_delete_25,sgdiff_feature,0.725908,0.7303172311914863
+degree_delete_25,sgdiff,0.769772,0.8031451921869542
+degree_delete_25,sgdiff_structure,0.715516,0.7775446779978001
+degree_delete_25,sgdiff_feature,0.720942,0.7199195065241089

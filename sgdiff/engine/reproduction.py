@@ -176,7 +176,8 @@ def restore(name, cfg, graph, ckpt, device, padded_limit):
     return model.eval()
 
 
-def experiment(dataset, seed, names, data_root, weights, output, device, action, padded_limit):
+def experiment(dataset, seed, names, data_root, weights, output, device, action, padded_limit,
+               condition_names=None):
     ref = settings(dataset, seed, "reference", data_root, device)
     paper = settings(dataset, seed, "paper-rq3", data_root, device)
     if action in ("train", "run"):
@@ -218,6 +219,8 @@ def experiment(dataset, seed, names, data_root, weights, output, device, action,
             raise ValueError(f"changed model or input; select a fresh output: {dest}")
         json_file(receipt, recipe)
         for cond, info in manifest["conditions"].items():
+            if condition_names is not None and cond not in condition_names:
+                continue
             src, target = graphs / f"{cond}.npz", dest / f"{cond}.npz"
             if digest(src) != info["file_sha256"]:
                 raise ValueError(f"corrupt observation: {src}")
