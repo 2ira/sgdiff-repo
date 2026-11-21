@@ -16,3 +16,5 @@ python scripts/run_reproduction.py evaluate --models sgdiff --datasets cora --se
 ```
 
 [精确指标](metrics.csv) · [模型与分支证据](cora_seed0_fusion_epoch1.zip) · [下载校验值](SHA256SUMS)
+
+该检查点已通过共享评测入口测完全部 **21 个条件 × 3 种读出**。最初三个条件直接从融合前证据计算的九组 AUROC/AP 与端到端复算均一致（容差 1e-10）。[全部 63 行](conditions/per_seed.csv) · [完整模型与单分支的配对差值](conditions/components.csv) · [每对节点的分数、图与测试集校验信息](cora_seed0_fusion_epoch1_scores.zip)
