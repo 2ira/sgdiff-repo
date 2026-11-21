@@ -1,8 +1,10 @@
 # DATA8002 链接预测的统一评测与三组组件消融
 
-**共同问题**　给定同一对论文，均匀删边与优先删去低度节点的连边，会让模型损失多少预测能力？属性能补回多少？框架可以给八种方法提供相同的受损输入。本组负责 GAE、SP4LP、Katz 三种方法的完整实验，另外五种只验证接口，由相应负责人分析。每组组件实验都覆盖干净条件和全部扰动条件。
+当前分工为 **Katz（建议八模型中的主模型）和 SP4LP（扩展）**，横向比较采用 Lin Junxiong 的 14 条件评测。普通 GAE 已归档。[团队建议名单、评测对齐与新结果](../results/peer-protocol/README.md)。
 
-## 八种方法和分工边界
+**共同问题**　给定同一对论文，均匀删边与优先删去低度节点的连边，会让模型损失多少预测能力？属性能补回多少？框架可以给八种方法提供相同的受损输入。本页记录旧版八个接口及当时的实验分工。每组组件实验都覆盖干净条件和全部扰动条件。
+
+## 旧观测缺失框架中的八个接口
 
 | 类型 | 命令名 | 用什么证据预测两篇论文相连 | 本组组件实验 |
 |---|---|---|---|
@@ -40,10 +42,10 @@ SP4LP 和其两个变体沿用 Part 2 的最多 2,000 个平衡训练对、最�
 
 ## 怎样重跑并核对结论
 
-从仓库根目录进入可用的 Python/PyTorch 环境，依赖见项目安装说明。已训练好的权重解压到 runs/pair 后可将 run 改为 evaluate。本组的 GAE、SP4LP、Katz 均可在 CPU 上复现。
+从仓库根目录进入可用的 Python/PyTorch 环境，依赖见项目安装说明。已训练好的权重解压到 runs/pair 后可将 run 改为 evaluate。历史 GAE 与当前两个方法均可在 CPU 上复现。
 
 ```bash
-python scripts/run_reproduction.py run --models gae sp4lp katz --device cpu
+python scripts/run_reproduction.py run --models sp4lp katz --device cpu
 python scripts/audit_reproduction.py --out results/paired-reproduction/graph_diagnostics.csv
 python scripts/report_reproduction.py --out results/paired-reproduction/owned-tables
 ```
@@ -56,7 +58,7 @@ python scripts/run_reproduction.py evaluate --models cn feature_cosine fsd penci
 
 SGDiff 的同批查询验证使用已归档的首轮校准权重，[独立命令见检查点说明](../results/paired-reproduction/sgdiff-milestone/README.md)。
 
-默认数据集为 cora 和 citeseer，种子为 0/1/2。每个命令支持指定数据集和种子，训练/评测入口支持单独选择方法，三个指定家族各自自动带上两个消融。若使用相邻仓库的数据，可追加 `--data-root ../sgdiff-repo/data` 到运行和 audit 命令。每个训练配置记录权重指纹，每个评分文件关联图指纹；评测可从已完成条件继续，SGDiff 从最近完整轮次的 last.pt 继续训练。汇总遇到缺失的请求单元直接报错。
+默认数据集为 cora 和 citeseer，种子为 0/1/2。每个命令支持指定数据集和种子，训练/评测入口支持单独选择方法，SP4LP 和 Katz 各自自动带上两个消融。若使用相邻仓库的数据，可追加 `--data-root ../sgdiff-repo/data` 到运行和 audit 命令。每个训练配置记录权重指纹，每个评分文件关联图指纹；评测可从已完成条件继续，SGDiff 从最近完整轮次的 last.pt 继续训练。汇总遇到缺失的请求单元直接报错。
 
 读表时先看 clean 绝对 AUROC/AP，再看同一种子 clean 减受扰值，最后看相同图上完整方法减去变体的配对差。正值表示完整方法较高。三种子报告样本标准差和差值为正的种子数。图诊断分正、负查询输出共同邻居数、较小端点度、端点孤立或无法连通的比例。约 0.8582 是[历史 Cora SGDiff RQ3](../results/sgdiff-paper-v2/robustness_cora__v2_seed0.json)三个种子的平均 AUROC，不能用作新的评分记录。此前 256 对小样本实验仅用于接口检查。[历史预算核对](../results/team-study/budget-audit/README.md) · [本次重训与原始预测](../results/paired-reproduction/README.md)
 

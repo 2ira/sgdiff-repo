@@ -23,7 +23,7 @@ from ..models.baselines.node_pair import AblatedGAE, GAE_ABLATIONS
 from .team_study import COMPONENTS as HISTORICAL_COMPONENTS, PRIMARY, settings, study_datasets, study_plan
 from .trainer import Trainer, load_checkpoint
 
-OWNED = ("gae", "sp4lp", "katz")
+OWNED = ("sp4lp", "katz")
 COMPONENTS = {**HISTORICAL_COMPONENTS, "gae": GAE_ABLATIONS}
 HEURISTICS = {"cn", "feature_cosine", "katz", *COMPONENTS["katz"]}
 PROTOCOL = "paired-citation-v1"

@@ -8,7 +8,7 @@ from sgdiff.models.transformer_denoiser import TransformerStructureDenoiser
 
 
 def test_owned_components_and_target_list():
-    assert set(OWNED) == {"katz", "sp4lp", "gae"}
+    assert set(OWNED) == {"katz", "sp4lp"}
     assert list(expanded(["gae"])) == ["gae", "gae_no_neighbors", "gae_no_attributes"]
     assert set(OWNED) <= set(COMPONENTS)
     assert len({c.name for c in conditions()}) == 21

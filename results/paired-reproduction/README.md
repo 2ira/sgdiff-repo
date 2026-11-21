@@ -1,4 +1,6 @@
-# 本组正式实验：GAE、SP4LP、Katz
+# 历史归档：GAE、SP4LP、Katz 的 21 条件评测
+
+当前分工为 **Katz（建议八模型中的主模型）和 SP4LP（扩展）**，横向比较采用 Lin Junxiong 的 14 条件评测。普通 GAE 已归档。[团队建议名单、评测对齐与新结果](../peer-protocol/README.md)。
 
 [统一协议与三组消融](../../docs/paired_reproduction.zh-CN.md)。本目录只收录从新训练权重或无参数方法得到的结果。历史值在表中使用 archived 字段。
 
@@ -8,7 +10,7 @@
 
 ## GAE 的鲁棒性与组件消融
 
-本组正式汇总共 1,134 组：3 个方法，每个方法 1 个完整版和 2 个消融版，2 张图、3 个种子、21 个条件。每组对同一批 1,000 个候选链接打分。[三种方法全部 AUROC/AP 及标准差](owned-tables/summary.csv) · [逐种子指标](owned-tables/per_seed.csv) · [配对组件差值](owned-tables/components.csv) · [按端点度分组](owned-tables/endpoint_degree.csv)
+归档汇总共 1,134 组：3 个方法，每个方法 1 个完整版和 2 个消融版，2 张图、3 个种子、21 个条件。每组对同一批 1,000 个候选链接打分。[三种方法全部 AUROC/AP 及标准差](owned-tables/summary.csv) · [逐种子指标](owned-tables/per_seed.csv) · [配对组件差值](owned-tables/components.csv) · [按端点度分组](owned-tables/endpoint_degree.csv)
 
 GAE 使用已保存的六套完整版权重。本次另外训练了十二套权重：去聚合版本只看端点自己的词向量；去属性版本给每个节点同一个常数，再通过邻居传播得到表示。三个版本都用内积打分并在相同的干净验证集上选权重。[六份 GAE 归档，含全部权重与逐对预测](gae-archives)
 
