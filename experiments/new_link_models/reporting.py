@@ -125,6 +125,32 @@ def figure_section(root):
             '源表和图片指纹见 [figure_audit.json](figure_audit.json)。CSV 保留 0–1 单位，绘图乘以 100。', '']
 
 
+def repository_section(root):
+    audit_path = root / 'repository_protocol/audit.json'
+    if not audit_path.exists():
+        return []
+    audit = json.loads(audit_path.read_text())
+    if not audit.get('passed'):
+        return []
+    return ['## main 协议补实验（含 PubMed）', '',
+            f'新增 **{audit["training_configurations"]} 组从头训练、{audit["evaluations"]} 次评估**，'
+            '覆盖 Cora、Citeseer、PubMed，三个种子及所有组件变体。'
+            '下图是本轮结果；后面的“图形总览”和原表仍属于上一轮候选保护协议，二者分别保留。', '',
+            '本轮直接调用固定 main 的数据加载、特征标准化、攻击实现、每类前500测试点对和指标函数。'
+            '验证复现 main 节点对基线的 train+val 上下文；保留各作者架构与优化配方，最多100 epoch。'
+            'PubMed 按 main 的4000节点上限跳过 EA。缓存为本次新生成，不能声称与历史攻击图逐边相同。', '',
+            '![main协议下三个数据集的完整模型AUC和AP](repository_protocol/full_models.png)', '',
+            '![main协议下三个数据集的攻击预算曲线](repository_protocol/attack_curves.png)', '',
+            '![main协议下三个数据集的组件消融](repository_protocol/component_effects.png)', '',
+            '热图为三种子均值，曲线误差棒为样本标准差；PubMed EA 的 N/A 表示按原规则跳过。'
+            '组件热图是完整模型减变体的配对 AUC 差值。', '',
+            '[本轮完整报告：全部指标、729行逐种子结果、PubMed及main要求、实际预算与训练记录]'
+            '(repository_protocol/report.md)。'
+            '[本轮攻击图与划分](repository_protocol/)；'
+            '[协议与复现命令](../REPOSITORY_PROTOCOL.zh-CN.md)。', '',
+            '旧协议与新协议同时改变了特征、验证上下文、测试点对和攻击，因此不能把两次结果差异仅归因于 EA。', '']
+
+
 def render_report(root):
     root = Path(root)
     summary, seeds = read_csv(root, 'summary.csv'), read_csv(root, 'per_seed.csv')
@@ -133,21 +159,24 @@ def render_report(root):
     datasets = [d for d in DATASETS if any(r['dataset'] == d for r in summary)]
     models = [m for m in MODELS if any(r['model'] == m for r in summary)]
     seed_ids = sorted({int(r['seed']) for r in seeds})
+    supplement = repository_section(root)
     lines = ['# NCNC、LPFormer、Refined-GAE：完整复现、鲁棒性与组件消融实验报告', '',
-             f'本报告收录 **{n_configs} 组训练、{len(seeds)} 次评估、{len(summary)} 行跨种子汇总**。'
+             f'{"原候选保护协议归档" if supplement else "本报告收录"} **{n_configs} 组训练、{len(seeds)} 次评估、{len(summary)} 行跨种子汇总**。'
              f'随机种子：{", ".join(map(str, seed_ids))}。所有图表由已保存的 CSV/JSON 自动生成，'
              '未用新训练替代已有结果。指标和汇总在生成前逐项核对。', '',
-             '结果位于 `feat/ncnc-lpformer-refined-gae` 分支。仓库历史 SGDiff 报告此前未接入这组独立实验；'
-             '旧版三模型报告只展示部分汇总，把删边放在英文“mechanism probes”一节，'
-             '且遗漏了 10% 攻击及消融模型的完整扰动表。本版将这些结果集中呈现。', '',
-             '**EA 可比性说明**：本轮使用独立的候选保护协议，没有直接调用原仓库的 EA。'
+             '结果位于 `feat/ncnc-lpformer-refined-gae` 分支。候选保护协议与 main 输入/攻击协议分别归档，'
+             '不混用图、测试点对或模型权重。本页保留原候选保护实验的全部表格；'
+             'main 补实验完成后在前部提供图形与完整报告入口。', '',
+             '**原候选保护协议的 EA 可比性说明**：下面原实验使用独立的候选保护协议，没有直接调用原仓库的 EA。'
              '攻击输入、预算分母、代理采样和删边/插边配额均有差异；本轮 18 张 EA 图实际全部为插边。'
-             '因此本页 EA 结果不能与原仓库历史 EA 表直接合并排名，原协议下的三模型对照尚未完成。'
+             '因此这些旧 EA 结果不能与原仓库历史 EA 表直接合并排名。'
+             + ('main 输入与攻击协议的补实验已完成，见下方新增章节。' if supplement else '原协议下的三模型对照尚未完成。') +
              '要联合比较，需统一数据划分、测试候选和攻击缓存；若训练划分不同，还需重新训练。', '',
              *(['[下载实际使用的18张EA图、干净基图与原始划分，并查看协议逐项对照]'
                 '(ea_graphs/README.zh-CN.md)。文件是原缓存副本，包含 SHA-256 和独立核验脚本。', '']
                if (root / 'ea_graphs/manifest.json').exists() else []),
              '## 阅读索引', '',
+             *(['- [main协议补实验（含PubMed）](#main-协议补实验含-pubmed)'] if supplement else []),
              *(['- [图形总览](#图形总览)'] if figure_section(root) else []),
              '- [实验范围与协议](#实验范围与协议)',
              '- [完整模型：干净图、删边与插边概览](#完整模型干净图删边与插边概览)',
@@ -158,6 +187,7 @@ def render_report(root):
              '- [训练记录](#训练记录)',
              '- [逐种子完整结果](#逐种子完整结果)',
              '- [结论、审计与尚未运行的设置](#结论审计与尚未运行的设置)', '',
+             *supplement,
              *figure_section(root),
              '## 实验范围与协议', '',
              '本轮是统一协议下的作者架构复现，调用固定版本的作者模型；'
