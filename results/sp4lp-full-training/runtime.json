@@ -1,0 +1,43 @@
+{
+  "torch": "2.7.0a0+ecf3bae40a.nv25.02",
+  "cuda": "12.8",
+  "python": "3.12.3 (main, Jan 17 2025, 18:03:48) [GCC 13.3.0]",
+  "gpu": "NVIDIA H200",
+  "initial_sources": {
+    "scripts/train_sp4lp_full.py": "f620634d120249934d49d08b2a1f271ff652866845d18a4bb11f685303dd0685",
+    "scripts/package_sp4lp_full.py": "7b0a90e711e98fd3d573dacb36d74bede7f0e688d9878a4a5310ae004483a6f1",
+    "scripts/run_sp4lp_full_study.py": "7163a91c7b6cac05b52c28534ab03b45d51dd8bb2db19e493ff2a9de8d81c19f",
+    "scripts/evaluate_sp4lp_full.py": "046e32a32b872c492c945fc2ae742ca5006a68757301651c771aac01d6e8b1af",
+    "experiments/sp4lp_full/__init__.py": "cb0558e3b4a7fda42542405d8c0fac8aed918efc4a7868596826e2d5acd92854",
+    "experiments/sp4lp_full/model.py": "2879b54f11b581e4f9dc7e5d3dccb15fd44fb092420031cd0a87295f227319e1"
+  },
+  "sources": {
+    "scripts/train_sp4lp_full.py": "248ddc4c62eae7c17b498a002e43316a6791500a21860500ae5e74f16f95ecf5",
+    "scripts/package_sp4lp_full.py": "8ce363418b2a104ce2143485deeb7206e3ee36c9fbd59fe09d8efff3ea8314c1",
+    "scripts/run_sp4lp_full_study.py": "a1ddc075767c449c43888f49a58209769ba5fcbd29990be7703a69d66b8999c2",
+    "scripts/evaluate_sp4lp_full.py": "b94783e83e9cf3c403e27971a691076bb9f480c2d2a93fbf699d1642ed8668ec",
+    "experiments/sp4lp_full/__init__.py": "cb0558e3b4a7fda42542405d8c0fac8aed918efc4a7868596826e2d5acd92854",
+    "experiments/sp4lp_full/model.py": "2879b54f11b581e4f9dc7e5d3dccb15fd44fb092420031cd0a87295f227319e1",
+    "sgdiff/vendor/sp4lp/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sgdiff/vendor/sp4lp/batching.py": "ac5f1773a6c6db762ba198b20ae93ed57d04b7095955dba0007393cf842a8fe4",
+    "sgdiff/vendor/sp4lp/paths.py": "fd3e296dbe310ef405b97d2bee8e7929139a8ca9317f3e646a6d5934534afe10",
+    "sgdiff/vendor/sp4lp/models.py": "68e8897fce9bf0a83b2b4f37fd6965512389181b71fa08c294a722c760464077"
+  },
+  "peer_revision": "95083da808e500c02da458e205f4b861ceb80871",
+  "reference_revision": "1b664cbb91eb0b88f7c99dca20754664f92632d0",
+  "tf32": false,
+  "execution_changes": [
+    "Added file locking to exact path cache for parallel formal fits; same path inputs and outputs.",
+    "Reordered independent formal fits into a shared three-worker queue.",
+    "Added evaluation configuration/feature assertions and runtime packaging.",
+    "Added repeated-clean versus shuffled-input numerical control for featureless CUDA inference."
+  ],
+  "packages": {
+    "numpy": "1.26.4",
+    "scipy": "1.12.0",
+    "scikit-learn": "1.5.2",
+    "torch-geometric": "2.5.3",
+    "pandas": "2.2.3",
+    "PyYAML": "6.0.2"
+  }
+}

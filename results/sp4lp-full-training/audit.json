@@ -1,0 +1,14 @@
+{
+  "native_evaluator_cells": 378,
+  "selected_independent_fits": 27,
+  "matched_old_graphs_and_queries": true,
+  "original_cora_citeseer_ea_files_byte_identical": 18,
+  "featureless_shuffle_max_abs_error": 3.822147846221924e-06,
+  "repeated_clean_max_abs_error": 3.285706043243408e-06,
+  "metric_recomputation_max_abs_error": 2.220446049250313e-16,
+  "metric_recomputation_absolute_tolerance": 1e-12,
+  "checksums_valid": true,
+  "selected_using": "seed 0 full validation AUROC, six configurations per dataset",
+  "epochs_selected_by_validation": true,
+  "test_used_for_selection": false
+}

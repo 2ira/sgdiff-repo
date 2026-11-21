@@ -437,3 +437,5 @@ The [GCN input ablations and cross-dataset transfer experiments](experiments/gcn
 ## Course baselines, SP4LP and observation missingness
 
 Additional methods and commands: [course/SP4LP integration](docs/course_sp4lp.md). This extension preserves SGDiff v2 and the existing RF/DICE/EA harness. Historical local results are isolated from current v2 comparisons.
+
+The [SP4LP full-supervision study](results/sp4lp-full-training/README.md) adds 42 validation-selected training runs, 27 formal checkpoints, and 378 robustness evaluations across Cora, CiteSeer and PubMed. It directly calls Junxiong's pinned first-report evaluator on the original cached attack graphs. Trained weights, learning curves, predictions, numerical controls and reproduction commands are included. [Katz and the shared protocol](results/peer-protocol/README.md) remain available alongside the historical SP4LP results.

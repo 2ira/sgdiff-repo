@@ -1,5 +1,7 @@
 # 五模型在 Junxiong 第一版 EA 原图上的比较
 
+**更新**：[SP4LP 全量训练后的五模型比较](../../sp4lp-full-training/README.md#五模型在相同输入上的比较)已完成。新旧测试对、攻击图和原生评测入口保持一致，下表保留旧版 SP4LP 训练的历史分数。新版包含全部正式检查点、训练曲线及两项独立重训消融，仍需结合训练预算差异解释跨模型排名。
+
 Cora、CiteSeer 各三个种子，每个种子评 EA 10%、25%、50%。本次用原图重新计算了 Katz、SP4LP 及四个消融的 108 组预测，沿用干净条件的冻结权重。NCNC、LPFormer、Refined-GAE 的成绩取自 Junxiong 第一版逐种子表。两组使用相同的测试对、受扰动的图及指标函数，各模型的训练配方和预算沿用原实验。[第一版评测记录](https://github.com/2ira/sgdiff-repo/blob/95083da808e500c02da458e205f4b861ceb80871/experiments/new_link_models/benchmarks/per_seed.csv) · [发布的原图、划分和清单](https://github.com/2ira/sgdiff-repo/tree/5d8242701e2325b2dec8461a16d3b4963876b892/experiments/new_link_models/benchmarks/ea_graphs)
 
 ## 训练配置对排名的影响

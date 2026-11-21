@@ -1,0 +1,272 @@
+{
+  "cora": {
+    "profile": "release256",
+    "selection_metric": "seed0 validation AUROC",
+    "candidates": [
+      {
+        "run": "cora_full64_full_s0",
+        "best_epoch": 10,
+        "best_validation": {
+          "auc": 0.9074121900826446,
+          "ap": 0.9292517009411682,
+          "hits100": 0.9053030303030303,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 85,
+        "updates": 765,
+        "checkpoint_sha256": "1620330c647dd447fea38ad3699dc87576a109d85c3f9fc3999885629e77aa09"
+      },
+      {
+        "run": "cora_paper128_full_s0",
+        "best_epoch": 5,
+        "best_validation": {
+          "auc": 0.9125200872359963,
+          "ap": 0.931046711318914,
+          "hits100": 0.9128787878787878,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 80,
+        "updates": 720,
+        "checkpoint_sha256": "f799a782bd831257a8635010dad77e5711c51760f29cf95daf478751b1071dde"
+      },
+      {
+        "run": "cora_release256_full_s0",
+        "best_epoch": 75,
+        "best_validation": {
+          "auc": 0.9390926308539945,
+          "ap": 0.9446100702299745,
+          "hits100": 0.9696969696969697,
+          "precision100": 0.99,
+          "hits100_trivial": false
+        },
+        "epochs_run": 150,
+        "updates": 1350,
+        "checkpoint_sha256": "8e5e470c3fcabdf28e942f88d8063c379670c76e955e4a5033b4ad4db51950d4"
+      },
+      {
+        "run": "cora_full64_std_full_s0",
+        "best_epoch": 5,
+        "best_validation": {
+          "auc": 0.9244432966023876,
+          "ap": 0.9424924175819424,
+          "hits100": 0.9431818181818182,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 80,
+        "updates": 720,
+        "checkpoint_sha256": "c0e119b3a006c072f91dadeb0b31f56279170a68acc99c5b6345889982129902"
+      },
+      {
+        "run": "cora_paper128_std_full_s0",
+        "best_epoch": 50,
+        "best_validation": {
+          "auc": 0.9326073232323233,
+          "ap": 0.9500261842915406,
+          "hits100": 0.9431818181818182,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 125,
+        "updates": 1125,
+        "checkpoint_sha256": "c44cf37253cee523f66cf7310e8b3ee22bde093616da0b78a1335a4d05b1d7b4"
+      },
+      {
+        "run": "cora_release256_std_full_s0",
+        "best_epoch": 300,
+        "best_validation": {
+          "auc": 0.9266959366391184,
+          "ap": 0.9494240663455084,
+          "hits100": 0.9204545454545454,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 300,
+        "updates": 2700,
+        "checkpoint_sha256": "0808bb704d248a374f9ee956562dbbd5525d426c8a55507d6c596ba8aeb1197e"
+      }
+    ]
+  },
+  "citeseer": {
+    "profile": "paper128_std",
+    "selection_metric": "seed0 validation AUROC",
+    "candidates": [
+      {
+        "run": "citeseer_full64_full_s0",
+        "best_epoch": 230,
+        "best_validation": {
+          "auc": 0.8829639889196677,
+          "ap": 0.9007436342549711,
+          "hits100": 0.9122807017543859,
+          "precision100": 0.99,
+          "hits100_trivial": false
+        },
+        "epochs_run": 300,
+        "updates": 2400,
+        "checkpoint_sha256": "ce072ff05233f45e822c7614901cbd28867aa95bf1c03d428ae3ba9b79867123"
+      },
+      {
+        "run": "citeseer_paper128_full_s0",
+        "best_epoch": 15,
+        "best_validation": {
+          "auc": 0.946387349953832,
+          "ap": 0.9496415618950698,
+          "hits100": 0.9868421052631579,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 90,
+        "updates": 720,
+        "checkpoint_sha256": "89054accda9332c8e1dc5d0e9b551f34ede2f5ddeecc9eefad7c39e62d885544"
+      },
+      {
+        "run": "citeseer_release256_full_s0",
+        "best_epoch": 165,
+        "best_validation": {
+          "auc": 0.9130116959064328,
+          "ap": 0.9296173520172488,
+          "hits100": 0.9210526315789473,
+          "precision100": 0.99,
+          "hits100_trivial": false
+        },
+        "epochs_run": 240,
+        "updates": 1920,
+        "checkpoint_sha256": "4cacca1115a551c71edf00e8b92a3a37c0caa6c91118ecc347377c96baabcd97"
+      },
+      {
+        "run": "citeseer_full64_std_full_s0",
+        "best_epoch": 5,
+        "best_validation": {
+          "auc": 0.933287165281625,
+          "ap": 0.9448127572588311,
+          "hits100": 0.9605263157894737,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 80,
+        "updates": 640,
+        "checkpoint_sha256": "731d3b6bf9978edc89a74465b36432bd147975be3abfd0d63047c62b252ab772"
+      },
+      {
+        "run": "citeseer_paper128_std_full_s0",
+        "best_epoch": 65,
+        "best_validation": {
+          "auc": 0.948291782086796,
+          "ap": 0.9590431528758498,
+          "hits100": 0.9780701754385965,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 140,
+        "updates": 1120,
+        "checkpoint_sha256": "cd1e0d187e7eadd2e7377909e99253a7047b6a9e450cdb9bf445760556eb1e01"
+      },
+      {
+        "run": "citeseer_release256_std_full_s0",
+        "best_epoch": 280,
+        "best_validation": {
+          "auc": 0.9392120652508466,
+          "ap": 0.9549188732441729,
+          "hits100": 0.956140350877193,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 300,
+        "updates": 2400,
+        "checkpoint_sha256": "d98e1c103ccf556507ebaa270f0ea8a5e4b8f05f1deb99f68e5df42b9dea3bd7"
+      }
+    ]
+  },
+  "pubmed": {
+    "profile": "paper128_std",
+    "selection_metric": "seed0 validation AUROC",
+    "candidates": [
+      {
+        "run": "pubmed_full64_full_s0",
+        "best_epoch": 20,
+        "best_validation": {
+          "auc": 0.9821288642495015,
+          "ap": 0.9793318741108077,
+          "hits100": 0.9111010830324909,
+          "precision100": 0.99,
+          "hits100_trivial": false
+        },
+        "epochs_run": 95,
+        "updates": 6650,
+        "checkpoint_sha256": "7c3db2c98f942f5025e36bc5379e505322ac0c3369d63717d0ebe2dff531b36c"
+      },
+      {
+        "run": "pubmed_paper128_full_s0",
+        "best_epoch": 10,
+        "best_validation": {
+          "auc": 0.9781456897001134,
+          "ap": 0.9765840295901663,
+          "hits100": 0.8786101083032491,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 85,
+        "updates": 5950,
+        "checkpoint_sha256": "4ee280055096cb600a6465b150096cfc877f04d1e15cca14b685a311d6b29f8c"
+      },
+      {
+        "run": "pubmed_release256_full_s0",
+        "best_epoch": 10,
+        "best_validation": {
+          "auc": 0.9836091145459994,
+          "ap": 0.9824543122877828,
+          "hits100": 0.9160649819494585,
+          "precision100": 0.99,
+          "hits100_trivial": false
+        },
+        "epochs_run": 85,
+        "updates": 5950,
+        "checkpoint_sha256": "457de5d244bdef46e5a1cfe1e8a8a0e10fef4ac3567da35dd3a9e68d8ad92d9b"
+      },
+      {
+        "run": "pubmed_full64_std_full_s0",
+        "best_epoch": 5,
+        "best_validation": {
+          "auc": 0.981355036883056,
+          "ap": 0.9817012837456919,
+          "hits100": 0.9120036101083032,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 80,
+        "updates": 5600,
+        "checkpoint_sha256": "b164e9e808b0a94faabed09d706c0bb01c41ef41826dca1493d5e176bcb15c2a"
+      },
+      {
+        "run": "pubmed_paper128_std_full_s0",
+        "best_epoch": 5,
+        "best_validation": {
+          "auc": 0.9860061466329549,
+          "ap": 0.9852837018572446,
+          "hits100": 0.9178700361010831,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 80,
+        "updates": 5600,
+        "checkpoint_sha256": "2ae9f92337f0e651587adddbe1f9fa25326441dbe9aae02d67fc5f7bae540459"
+      },
+      {
+        "run": "pubmed_release256_std_full_s0",
+        "best_epoch": 5,
+        "best_validation": {
+          "auc": 0.9761488078171225,
+          "ap": 0.9775397481873865,
+          "hits100": 0.9070397111913358,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "epochs_run": 80,
+        "updates": 5600,
+        "checkpoint_sha256": "dcf69b141d752eb638cc5be891960412fea03ee39c1c8f5246e4504484922b6a"
+      }
+    ]
+  }
+}

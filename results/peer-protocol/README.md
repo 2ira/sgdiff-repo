@@ -1,5 +1,7 @@
 # Katz 与 SP4LP 两个主模型：按 Lin Junxiong 的协议重新评测
 
+**SP4LP 全量训练更新**：[新版报告、检查点及 378 组评测](../sp4lp-full-training/README.md)已补做完整训练正负对、六候选配置验证集选择、三种子与两项独立重训消融。新版继续直接调用本文固定的 Junxiong 评测器并复用相同图与查询。本文以下 SP4LP 表格保留为旧训练历史，Katz 结果继续适用。
+
 **正式评测入口**　三个数据集均直接调用 Junxiong 的 [`experiments.new_link_models.run.evaluate`](https://github.com/2ira/sgdiff-repo/blob/95083da808e500c02da458e205f4b861ceb80871/experiments/new_link_models/run.py#L123-L169)。[本分支入口](../../scripts/evaluate_peer_protocol.py)在运行时核对评测器和协议文件与固定提交的内容一致。框架负责生成或读取攻击图、拼接固定正负查询、分批预测及计算四项指标。本组提供权重、图数据与模型打分接口。[三数据集的框架与历史分数核验](pubmed/native_evaluator_audit.json)。
 
 ## 八模型建议与已确定分工
