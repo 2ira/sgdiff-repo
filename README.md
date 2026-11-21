@@ -64,6 +64,9 @@ retrained component ablations under a documented shared protocol.
 Read the [complete measured report (Chinese)](experiments/new_link_models/benchmarks/report.md):
 all 14 conditions, component variants, metrics and 756 seed-level evaluations,
 including random deletion, degree-weighted deletion and insertion.
+The [main input/attack supplement, including PubMed](experiments/new_link_models/benchmarks/repository_protocol/report.md)
+adds **81 fresh trainings and 729 evaluations**, with exact shared graph/split
+snapshots and checkpoint replay. The protected-target study remains separately archived.
 
 ```
 sgdiff-repro/

@@ -5,6 +5,11 @@
 报告展开全部攻击预算、随机/按度删边、插边、特征打乱、组件消融和逐种子指标。
 该实验采用独立统一协议；下文为原有 SGDiff v2 实验记录。
 
+现另有 [main 输入与攻击协议补实验（含 PubMed）](../experiments/new_link_models/benchmarks/repository_protocol/report.md)：
+三个数据集、三个模型及全部组件变体，**81 组新训练、729 次评估**；
+原始共享图、划分和全部逐种子结果均已上传，81 个检查点独立重载复核通过。
+PubMed 的 EA 遵守 main 的节点数限制跳过；三个模型的其余规定条件已完成。
+
 > **本页只记录 `sgdiff-paper-v2`（修正实现）的实验。** 2026-11-13 审计确认
 > 早期实现不忠实（categorical diffusion/后验错误、feature denoiser 不符
 > Eq. 11、两类噪声独立、训练调度非论文默认），旧实现的全部产物已于

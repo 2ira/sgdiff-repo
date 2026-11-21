@@ -192,3 +192,9 @@ These are author-architecture comparisons under the documented shared protocol,
 which differs from the original authors' table protocols and from historical
 SGDiff attack runs. A direct SGDiff-vs-new-model table requires running SGDiff
 under the same protected-target protocol.
+
+A separate [main input/attack supplement including PubMed](../experiments/new_link_models/benchmarks/repository_protocol/report.md)
+now contains81 fresh author-model retrains and729 evaluations, with shared graph
+snapshots, test pairs and independent checkpoint replay. It preserves main's EA
+size limit (PubMed skipped), explicitly documents author training differences,
+and does not assume identity with historical H20 attack caches.

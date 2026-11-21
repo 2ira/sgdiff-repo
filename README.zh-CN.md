@@ -43,6 +43,10 @@
 54 组训练、756 次评估。报告包含随机删边、按度删边、插边、RF/DICE/EA 全部预算、
 特征打乱和组件消融，展开全部指标与逐种子结果；采用独立统一协议，不与历史 SGDiff 表直接排名。
 
+另已完成 [main 输入与攻击协议补实验（含 PubMed）](experiments/new_link_models/benchmarks/repository_protocol/report.md)：
+Cora/Citeseer/PubMed、三个模型及全部组件变体，共 **81 组新训练、729 次评估**，
+并上传实际共享图与划分。PubMed EA 按 main 的4000节点限制跳过；其余规定条件均已完成。
+
 ```
 sgdiff-repro/
 ├── sgdiff/                     # 可安装的库

@@ -1,0 +1,33 @@
+{
+  "planetoid_commit": "af6abf468a772cc055bec88c52e4d6f51b7c37e3",
+  "main_commit": "d4b150c121625001f52ead23abf15aead1a4b665",
+  "files": {
+    "raw/citeseer/ind.citeseer.allx": "2ac30345d95c9ec933a817ee0bdd6a5f077f8c184a20e696910192d534414668",
+    "raw/citeseer/ind.citeseer.ally": "f704b2d986dde6c2669934de1f3ae5696a6cf9455c0f6b2646a2d135ea0a1c95",
+    "raw/citeseer/ind.citeseer.graph": "d79a4ef9d3e7169aee8946145f6b7306e35bc79bffad26346cfb94e10e9912a7",
+    "raw/citeseer/ind.citeseer.test.index": "2af990671580b6b2df5d158d1038f8292e30c9cd821b5453f399659b25b723d4",
+    "raw/citeseer/ind.citeseer.tx": "539a8906a2da97628d212f2fdd668c109a8b3f0d36574b59e5d3fd5b5303da21",
+    "raw/citeseer/ind.citeseer.ty": "55e5bd1ba1e733a04598753ad1a8d57957f4b8f89e74519f41f4f4938767e4ce",
+    "raw/citeseer/ind.citeseer.x": "d20de19150741e555de0ed037195630fc194114ebc7fd72ced62810148aa22f6",
+    "raw/citeseer/ind.citeseer.y": "8ba87e515d8e3ee3cf52f6d2c5b86aa73f11ecad825a808455209ec26cd54924",
+    "raw/cora/ind.cora.allx": "9419ba2f26f5c35243db64aba110e0f35a04851609e0dc5433450676ca6b8543",
+    "raw/cora/ind.cora.ally": "2b998f5cc7fedc86e7f97ca2498f47a1ffc1462c29e2d578b23bf3f62b6e7d71",
+    "raw/cora/ind.cora.graph": "58f13302f39dde8852dad6fe6d15b89b077b6d7f837626bce671ef80344b383d",
+    "raw/cora/ind.cora.test.index": "297ce89af2b51a6a194181c7dbe1796c6a1cf9cd9349a88383b1b1e227867875",
+    "raw/cora/ind.cora.tx": "b9afbaa4a400df991f6f02ef677e1e44da55ffc04801fd02f9e673987829226a",
+    "raw/cora/ind.cora.ty": "41f5ac76596a1699cc33f53084a2419e92961c42bb75f36fc38e616d348532ad",
+    "raw/cora/ind.cora.x": "23cfa55d91c6f624233f5eb7b6e3f141f1bd2b2ae39608a63cf5d084bb27baab",
+    "raw/cora/ind.cora.y": "94465c14eb53e04ca262198dcbb2521ee8af60fb3f3d546cd6ca24a511b0e7d1",
+    "raw/pubmed/ind.pubmed.allx": "508e538e2abdccdd54c4d3e9f49d638b4af7107d85845f66ddea5a5152658b7e",
+    "raw/pubmed/ind.pubmed.ally": "0c37bbe3b5014ec365e9d393cf4791925e5ed94fb194305d74f064a8d7b50f0e",
+    "raw/pubmed/ind.pubmed.graph": "5b89f0036ca22909471f1e6558eb42fa06e0c730a577bde5b058b40638f81dc9",
+    "raw/pubmed/ind.pubmed.test.index": "b101d421688bbaecbd82e8a18f1e282378d6830f3a37666f28ebc47f844341b5",
+    "raw/pubmed/ind.pubmed.tx": "4eb5f5d0f30f26497eb0ac6ac9719d09c67e284f1ed0385c93f3ef27a671da3d",
+    "raw/pubmed/ind.pubmed.ty": "ee2e0d4819d9fbcc403689c3bf2e49face401b605932f093bc58ab6461130fdd",
+    "raw/pubmed/ind.pubmed.x": "fbe9cb5c47200d1b7769a26e579be3b7130b556831f9d850e77c4c74f2599b33",
+    "raw/pubmed/ind.pubmed.y": "e6c807633307a07ed659249006536a147c7999c797f11a2560752990181b41b3",
+    "processed/citeseer.npz": "dbd0580b7f2e85ae98f22b0c15d85e73518007fb50288a2aa4aa98158aafc061",
+    "processed/cora.npz": "84bfb0f84cacbd7bbf7a8f321409c52d876c6ab073dcce1ff820bf327f7151cf",
+    "processed/pubmed.npz": "84b3c9791113ec3386ef1d05632a2293cccf356b57c32e99a73d24a71afcf66d"
+  }
+}

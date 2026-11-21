@@ -8,6 +8,12 @@ RF/DICE/EA at 10%/25%/50%, feature shuffle, all component variants and all 756
 seed-level evaluations. These use a separately documented protected-target
 protocol and must not be directly ranked against the historical tables below.
 
+The [main input/attack supplement including PubMed](../experiments/new_link_models/benchmarks/repository_protocol/report.md)
+is now complete:81 fresh trainings,729 evaluations and81 independently reloaded
+checkpoints. It calls the pinned main dispatcher and shares graph/split snapshots.
+PubMed EA follows main's4000-node limit and is skipped. Graphs are newly generated;
+historical-cache identity is not assumed, and author optimization recipes remain explicit.
+
 `scripts/run_robustness.py` implements the paper's Sec. 4.4 question for **every**
 model of the zoo (SGDiff, SEAL, PENCIL, GCN, GAT, SAGE, VGAE) with the three
 attacks the paper uses — random flip (RF), DICE and embedding attack (EA) — all

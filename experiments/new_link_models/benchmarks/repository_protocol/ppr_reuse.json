@@ -1,0 +1,58 @@
+[
+  {
+    "dataset": "cora",
+    "seed": 1,
+    "context": "train",
+    "graph_sha256": "b546548e2ff3750dc1ea4b775e3af49b50d82c2a2b701e7e4f004e68a55bbdf7",
+    "file": "ppr_b546548e2ff3750dc1ea4b775e3af49b50d82c2a2b701e7e4f004e68a55bbdf7_a0.15_e1e-07.npz"
+  },
+  {
+    "dataset": "cora",
+    "seed": 1,
+    "context": "test",
+    "graph_sha256": "643ac1f89546b02ba1e983485e6c388a5b989f88899c684cbb80cbb0a3c9afd2",
+    "file": "ppr_643ac1f89546b02ba1e983485e6c388a5b989f88899c684cbb80cbb0a3c9afd2_a0.15_e1e-07.npz"
+  },
+  {
+    "dataset": "cora",
+    "seed": 2,
+    "context": "train",
+    "graph_sha256": "92d5154b04aca7e7723d85f204875f12c6d33f0447878bb5c644e2254f714b16",
+    "file": "ppr_92d5154b04aca7e7723d85f204875f12c6d33f0447878bb5c644e2254f714b16_a0.15_e1e-07.npz"
+  },
+  {
+    "dataset": "cora",
+    "seed": 2,
+    "context": "test",
+    "graph_sha256": "42196bb13eda46c2c5239b6e015dd25c1f015d6a77422abbad2d25ea8abf660c",
+    "file": "ppr_42196bb13eda46c2c5239b6e015dd25c1f015d6a77422abbad2d25ea8abf660c_a0.15_e1e-07.npz"
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 1,
+    "context": "train",
+    "graph_sha256": "756d165c5b2fafdc90da3796e2f8f50e9648a243d273aa4b26f834213fb1b494",
+    "file": "ppr_756d165c5b2fafdc90da3796e2f8f50e9648a243d273aa4b26f834213fb1b494_a0.15_e1e-07.npz"
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 1,
+    "context": "test",
+    "graph_sha256": "22d2d7972c45779c42bdac042042786e18fe9485ac0876c472132bee657507e8",
+    "file": "ppr_22d2d7972c45779c42bdac042042786e18fe9485ac0876c472132bee657507e8_a0.15_e1e-07.npz"
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 2,
+    "context": "train",
+    "graph_sha256": "08a1ef0b97363d8b0836691ae498dbf2238415e043eb3aeb0c3c761feba2aeea",
+    "file": "ppr_08a1ef0b97363d8b0836691ae498dbf2238415e043eb3aeb0c3c761feba2aeea_a0.15_e1e-07.npz"
+  },
+  {
+    "dataset": "citeseer",
+    "seed": 2,
+    "context": "test",
+    "graph_sha256": "3ae81dde4a1690a5e8e268885843000aa7babfe5d1cdd95da2d6f8a20122f4e0",
+    "file": "ppr_3ae81dde4a1690a5e8e268885843000aa7babfe5d1cdd95da2d6f8a20122f4e0_a0.15_e1e-07.npz"
+  }
+]

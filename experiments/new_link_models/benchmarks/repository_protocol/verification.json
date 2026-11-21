@@ -1,0 +1,40 @@
+{
+  "tests": {
+    "passed": 21,
+    "command": "NEW_LINK_SOURCE_ROOT=<pinned-authors> PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q tests/test_repository_protocol.py tests/test_new_link_reporting.py",
+    "scope": "Main dispatcher parity, PubMed EA limit, all9 PubMed author-variant forward/gradient checks, report coverage and figure traceability",
+    "gpu_tests_note": "Unit tests use CPU; formal training and independent replay use the recorded CUDA GPU"
+  },
+  "full_metric_audit": {
+    "evaluations": 729,
+    "summary_rows": 243,
+    "paired_summary_rows": 162,
+    "all_from_saved_predictions": true
+  },
+  "report_cell_verification": {
+    "aggregate_rows": 243,
+    "per_seed_rows": 729,
+    "original_measured_assets_unchanged": 65,
+    "local_links_valid": true
+  },
+  "independent_replay": {
+    "passed": true,
+    "checkpoints": 81,
+    "evaluations": 162,
+    "score_atol": 2e-05,
+    "score_rtol": 2e-05,
+    "max_absolute_score_error": 0.000244140625,
+    "max_auc_ap_error": 3.31674958609085e-07,
+    "max_legacy_precision100_error": 0.0
+  },
+  "training_implementation_commit": "37001ad",
+  "source_sha256": {
+    "tests/test_repository_protocol.py": "ccdbb966b322969cebde000dfd91b31f3c5736fc8378c3a7f81016429d6f7b48",
+    "tests/test_new_link_reporting.py": "03612741faadf5ab6e0fad0f2910dd7e13f3fda00f8a6409af4e3fb7a8c46b1a",
+    "experiments/new_link_models/repository_protocol.py": "bde4ae425379106d9190174e51b3b5809eaeb28d1a9da482f26069909b350e03",
+    "experiments/new_link_models/repository_pubmed.py": "97cb821b5490c724bd50d0308e5c1fdcdb486af3e70e9d9b861f7df6f2d99d45",
+    "experiments/new_link_models/repository_replay.py": "540483819500f0f1adfa764959ab13bd7ff9ef5682fb3f3b6637210a80fc5f61",
+    "experiments/new_link_models/repository_results.py": "20103aad9cd3adc9708ff8441f32e43586be76391f6a5be98cac7fe0c6390106",
+    "experiments/new_link_models/reporting.py": "c9903e2b1b6be99b56a705cff5f1c274f4648a8e28bf14bfac14fba581e54d8b"
+  }
+}

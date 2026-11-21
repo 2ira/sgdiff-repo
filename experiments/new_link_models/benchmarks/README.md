@@ -1,5 +1,11 @@
 # Measured experiment archive
 
+The newer [main input/attack supplement including PubMed](repository_protocol/report.md)
+contains **81 fresh trainings and729 evaluations**, shared graph/split snapshots,
+and81 independently reloaded checkpoints. Its figures and complete tables are
+also linked at the front of [the combined report entry](report.md).
+The original protected-target archive below remains a separate protocol.
+
 Completed on 2026-11-18: Cora/Citeseer × three author models × three components
 per model × seeds 0/1/2 = **54 training configurations and 756 evaluations**.
 Protocol: `new-link-models-evasion-v2-common-batch512`.

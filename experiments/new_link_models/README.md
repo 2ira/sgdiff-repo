@@ -9,8 +9,11 @@ reproductions of the original models' paper tables.
 denominator, surrogate sampling and deletion/insertion allocation relative to
 the existing repository implementation. All 18 measured new EA graphs contain
 insertions only. These are substantive protocol differences, not just random
-seeds, and the two EA result tables must not be directly combined. The original
-protocol comparison for the three new models has not been run.
+seeds, and the two EA result tables must not be directly combined. A separate
+[main input/attack supplement including PubMed](benchmarks/repository_protocol/report.md)
+is now complete:81 fresh trainings and729 evaluations, with shared graph/split
+snapshots and81 independently reloaded checkpoints. It retains explicit author
+optimization choices and does not assume identity with historical attack caches.
 [Download the exact 18 snapshots, six clean graphs and six original splits](benchmarks/ea_graphs/README.zh-CN.md),
 with a detailed comparison, file hashes and a NumPy-only verification script.
 
@@ -177,6 +180,13 @@ floating-point nondeterminism despite fixed seeds; seed counts are independent
 training trials, not bitwise-repeatability claims.
 
 ## Results
+
+The [main input/attack supplement](benchmarks/repository_protocol/report.md) covers
+Cora/Citeseer/PubMed and all component variants:81 new trainings,729 evaluations,
+81 shared graph snapshots and9 splits. PubMed EA follows main's4000-node limit
+and is skipped; clean/RF/DICE are measured. See the
+[protocol, author PubMed recipes and commands](REPOSITORY_PROTOCOL.zh-CN.md).
+The protected-target archive described below is preserved separately.
 
 The completed 54-configuration / 756-evaluation study is archived in
 [benchmarks/report.md](benchmarks/report.md), with a

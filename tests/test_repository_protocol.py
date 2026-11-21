@@ -34,6 +34,9 @@ def test_generated_cache_matches_main_dispatcher_before_and_after_test_removal(t
     torch.set_num_threads(2)
     graph = tiny()
     monkeypatch.setattr(rp, 'load_graph', lambda *a, **kw: graph)
+    # This unit checks dispatcher parity, not Git history availability (CI can
+    # use a shallow checkout). Production prepare still verifies every pin.
+    monkeypatch.setattr(rp, 'pinned_sources', lambda: {'fixture': 'main dispatcher in process'})
     args = argparse.Namespace(output=tmp_path, data_root=tmp_path, datasets=['cora'], seeds=[2], device='cpu')
     rp.prepare(args)
     split = make_link_split(graph, seed=2)

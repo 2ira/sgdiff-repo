@@ -13,7 +13,7 @@ from sgdiff.utils.metrics import summarize_scores
 from .adapters import VARIANTS
 from .protocol import digest, metrics as strict_metrics
 from .reporting import cell, condition, table
-from .repository_protocol import MAIN_COMMIT, PROTOCOL, load_inputs, plan, tag, edgeset
+from .repository_protocol import MAIN_COMMIT, PROTOCOL, load_inputs, plan, tag, edgeset, pinned_sources
 
 
 DATASETS = {'cora': 'Cora', 'citeseer': 'Citeseer', 'pubmed': 'PubMed'}
@@ -50,6 +50,7 @@ def collect(root, dest):
                 for component in VARIANTS[model] for seed in range(3)}
     actual, records, configs, trainings = set(), [], [], []
     manifest = json.loads((root / 'input_manifest.json').read_text())
+    assert manifest['main_source_sha256'] == pinned_sources()
     input_graphs = {(r['dataset'], r['seed'], r['attack'], r['ratio']): r for r in manifest['attacks']}
     from .run import source_hashes
     author_runtime = source_hashes()
@@ -114,10 +115,17 @@ def collect(root, dest):
         assert edgeset(visible) == edgeset(raw) - edgeset(split.test_pos)
         assert not edgeset(visible) & edgeset(split.test_pos)
         before, after = edgeset(graph.edges), edgeset(raw)
+        assert digest(graph.edges) == item['source_graph_sha256']
         assert len(before - after) == item['raw_deleted']
         assert len(after - before) == item['raw_inserted']
         assert item['requested_budget'] == round(item['ratio'] * graph.num_edges)
         assert len(before ^ after) == item['raw_effective_edits']
+        if item['attack'] == 'dice':
+            assert all(graph.y[u] == graph.y[v] for u, v in before - after)
+            assert all(graph.y[u] != graph.y[v] for u, v in after - before)
+        if item['attack'] == 'ea':
+            assert item['raw_deleted'] == item['requested_budget'] // 2
+            assert item['raw_inserted'] == item['requested_budget'] - item['requested_budget'] // 2
         graph_audit.append(item)
     dest.mkdir(parents=True, exist_ok=True)
     summary = aggregate(records, ['dataset', 'model', 'component', 'attack', 'ratio'], METRICS)
@@ -152,12 +160,14 @@ def collect(root, dest):
     audit = dict(passed=True, training_configurations=81, evaluations=729, aggregate_rows=len(summary),
                  paired_rows=len(paired_summary), shared_graphs=len(graph_audit), splits=9,
                  predictions_recomputed=True, validation_selection_checked=True,
+                 original_ea_allocation_and_dice_rules_checked=True,
                  main_commit=MAIN_COMMIT, feature_policy='main standardized attributes',
                  graph_provenance=manifest['graph_provenance'], skipped=manifest['skipped'])
     (dest / 'audit.json').write_text(json.dumps(audit, indent=2) + '\n')
     plot(dest, summary, paired_summary)
     report(dest, summary, paired_summary, records, trainings, graph_audit)
-    files = sorted(f for f in dest.rglob('*') if f.is_file() and f.name != 'checksums.sha256')
+    files = sorted(f for f in dest.rglob('*') if f.is_file() and f.name != 'checksums.sha256'
+                   and '__pycache__' not in f.parts)
     (dest / 'checksums.sha256').write_text(''.join(f'{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(dest)}\n' for f in files))
     return audit
 
@@ -195,6 +205,9 @@ def plot(dest, summary, paired):
     colors = {'ncnc': '#0072B2', 'lpformer': '#D55E00', 'refined_gae': '#009E73'}
     fig, axes = plt.subplots(3, 3, figsize=(13, 10), layout='constrained')
     for i, ds in enumerate(DATASETS):
+        available = [r for r in summary if r['dataset'] == ds and r['component'] == 'full']
+        low = float(np.floor(min(100*(r['auc_mean']-r['auc_std']) for r in available))) - .5
+        high = float(np.ceil(max(100*(r['auc_mean']+r['auc_std']) for r in available))) + .5
         for j, attack in enumerate(['rf', 'dice', 'ea']):
             ax = axes[i, j]
             if ds == 'pubmed' and attack == 'ea':
@@ -206,7 +219,8 @@ def plot(dest, summary, paired):
                 ax.errorbar([0, 10, 25, 50], [100*r['auc_mean'] for r in values],
                             yerr=[100*r['auc_std'] for r in values], color=colors[model],
                             marker='o', capsize=3, label=MODELS[model])
-            ax.set(title=f'{DATASETS[ds]} | {attack.upper()}', xlabel='Budget (% of full graph edges)', ylabel='AUC (%)', xticks=[0, 10, 25, 50])
+            ax.set(title=f'{DATASETS[ds]} | {attack.upper()}', xlabel='Budget (% of full graph edges)',
+                   ylabel='AUC (%)', xticks=[0, 10, 25, 50], ylim=(low, high))
             ax.grid(alpha=.2)
     axes[0, 0].legend(fontsize=8)
     fig.suptitle('Attack response | means +/- sample SD across three seeds', fontsize=14)
@@ -223,7 +237,8 @@ def plot(dest, summary, paired):
         image = ax.imshow(values, cmap=cmap, aspect='auto', norm=TwoSlopeNorm(0., -maximum, maximum))
         for y, x in np.ndindex(values.shape):
             value = values[y, x]
-            ax.text(x, y, 'N/A' if np.isnan(value) else f'{value:+.1f}', ha='center', va='center', fontsize=9,
+            label = 'N/A' if np.isnan(value) else '0.0' if abs(value) < .05 else f'{value:+.1f}'
+            ax.text(x, y, label, ha='center', va='center', fontsize=9,
                     color='white' if not np.isnan(value) and abs(value) > .6*maximum else '#17212b')
         ax.set(title=DATASETS[ds], xticks=range(10), xticklabels=labels, yticks=range(6),
                yticklabels=[f'{MODELS[m]} / {v}' for m, v in variants])
@@ -279,7 +294,33 @@ def report(dest, summary, paired, records, trainings, graphs):
     table(lines, ['数据集', '模型', '干净 AUC', 'RF50 AUC', 'DICE50 AUC', 'EA50 AUC'],
           ([DATASETS[ds], MODELS[m]] + [cell(lookup.get((ds, m, 'full', a, r))) if (ds, m, 'full', a, r) in lookup else '跳过：节点限制'
            for a, r in [('clean', 0.), ('rf', .5), ('dice', .5), ('ea', .5)]] for ds in DATASETS for m in MODELS))
-    lines += ['## 全部组件与条件', '']
+    pair_lookup = {(r['dataset'], r['model'], r['component'], r['attack'], r['ratio']): r for r in paired}
+    def effect(ds, model, component, attack='clean', ratio=0.):
+        return cell(pair_lookup[(ds, model, component, attack, ratio)], 'full_minus_variant_auc')
+    lines += ['## 主要观察与组件贡献', '',
+              '以下差值均为同一种子内“完整模型−变体”的 AUC，单位为百分点；'
+              '变体独立重训，因此测量的是组件与其训练共同产生的效果，不是冻结编码器后只换一个打分函数。', '',
+              'NCNC 关闭补全的干净图配对差为 '
+              + '；'.join(f'{DATASETS[ds]} {effect(ds, "ncnc", "no_completion")}' for ds in DATASETS)
+              + '。本轮补全的边际贡献较小且随设置变化，不能据此将其攻击后表现直接归因于补全。', '',
+              'LPFormer 在 PubMed 上，完整−均匀注意力的干净配对差为 '
+              f'{effect("pubmed", "lpformer", "uniform_attention")}，'
+              '完整−去位置编码为 '
+              f'{effect("pubmed", "lpformer", "no_ppr_encoding")}；'
+              'DICE50 下完整−去位置编码为 '
+              f'{effect("pubmed", "lpformer", "no_ppr_encoding", "dice", .5)}。'
+              '这些均值不支持把位置编码或学习注意力的提升视作所有数据集上的普遍规律；保留的 PPR 候选筛选仍含结构信息。', '',
+              'Refined-GAE 在 PubMed 上，完整−点积解码器的干净配对差为 '
+              f'{effect("pubmed", "refined_gae", "dot_decoder")}，DICE50 下为 '
+              f'{effect("pubmed", "refined_gae", "dot_decoder", "dice", .5)}。'
+              '本轮结果支持解码器选择在该设置下有较大影响；完整配对标准差与其他数据集见后表。', '',
+              '三种子只支持初步比较，误差棒不是置信区间，也未进行显著性检验。'
+              '旧协议与本轮同时改变特征、验证上下文、测试点对和攻击，不能把两轮差异仅归因于 EA。', '']
+    lines += ['## 全部组件与条件', '',
+              '- NCNC：`no_completion` 关闭补全（depth=0）；`no_cn` 使用端点预测器，仍保留 GCN(A,X)，不是特征-only。',
+              '- LPFormer：`uniform_attention` 固定均匀注意力；`no_ppr_encoding` 仅将位置编码置零，保留 PPR 候选筛选和计数。',
+              '- Refined-GAE：`no_norm` 只移除模型内 LayerNorm，保留 dropout、输入标准化和邻接度归一化；'
+              '`dot_decoder` 保留编码器并换为作者点积预测器。PubMed 的完整编码器和变体均为两层传播。', '']
     for ds in DATASETS:
         for model in MODELS:
             for component in VARIANTS[model]:
@@ -308,10 +349,21 @@ def report(dest, summary, paired, records, trainings, graphs):
     table(lines, ['数据集', '种子', '条件', '要求预算', '完整图删除', '完整图插入', '完整图实际编辑', '可见图实际编辑', '插入测试负边'],
           ([DATASETS[r['dataset']], r['seed'], condition(r)] + [r[k] for k in
             ['requested_budget', 'raw_deleted', 'raw_inserted', 'raw_effective_edits', 'visible_effective_edits', 'inserted_scored_negatives']] for r in graphs))
-    lines += ['## 训练与复核', '']
+    lines += ['## 训练与复核', '',
+              '训练计时在初始训练/验证上下文准备完成后开始，不含初始图/PPR预处理；'
+              '包含后续批次传播图构造与检查点保存。显存是单进程 PyTorch 峰值已分配量，不代表整卡占用。', '']
     table(lines, ['数据集', '模型', '组件', '种子', '最佳epoch', '停止epoch', '验证AUC', '训练秒数', '峰值分配GiB'],
           ([DATASETS[r['dataset']], MODELS[r['model']], r['component'], r['seed'], r['best_epoch'],
             r['stopped_epoch'], f'{100*r["best_val_auc"]:.2f}', f'{r["seconds"]:.2f}', f'{r["peak_cuda_bytes"]/2**30:.3f}'] for r in trainings))
+    replay = json.loads((dest / 'replay_audit.json').read_text())
+    lines += ['81 个检查点独立重载，每个检查 clean 和 EA50（Cora/Citeseer）或 DICE50（PubMed），'
+              '共162次。原始分数使用 `atol=2e-5, rtol=2e-5` 的组合容差；'
+              f'最大绝对分数差为 {replay["max_absolute_score_error"]:.3g}，'
+              f'最大 AUC/AP 差为 {replay["max_auc_ap_error"]:.3g}（0–1单位），'
+              f'main 原 Precision@100 最大差为 {100*replay["max_legacy_precision100_error"]:.3g} 个百分点。', '']
+    if replay['max_legacy_precision100_error'] > 0:
+        lines += ['观察到 main 旧 Precision@100 的切点排序差异；本报告该列以保存的预测重算值为准，'
+                  '不把原始分数在容差内一致描述成所有离散排名逐项一致。', '']
     lines += ['[审计](audit.json)、[输入与图指纹](input_manifest.json)、[全部运行配置](run_manifest.json)、'
               '[逐种子CSV](per_seed.csv)、[汇总CSV](summary.csv)、[配对差值](paired_components_summary.csv)。', '',
               '所有攻击图在 `attacks/`，包含原攻击后的完整图 `raw_edges` 和移除测试正边后的推理图 `edges`；'
