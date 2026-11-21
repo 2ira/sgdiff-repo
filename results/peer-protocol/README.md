@@ -2,15 +2,19 @@
 
 ## 八模型建议与已确定分工
 
-| 席位 | 方法 | 状态 |
-|---|---|---|
-| 1–3 | NCNC、LPFormer、Refined-GAE | Lin Junxiong 已完成三种方法的鲁棒性与组件消融 |
-| 4–5 | Katz、SP4LP | 本组负责的两种主模型，各有完整模型和两个组件对照 |
-| 6 | SGDiff | 建议由其他成员负责。作为主论文模型，可用结构分数、属性分数及融合分数研究两类证据如何变化；算力需求最高。 |
-| 7 | 属性余弦（Feature Cosine） | 建议由其他成员负责。它只用两端的词向量，固定测试对后删边不会改变分数，特征打乱则改变分数。无需训练；如需组件对照，可去掉范数归一化，比较原始点积。 |
-| 8 | SEAL-style | 建议由其他成员负责。在和 SGDiff 相近的包围子图上做判别式预测，可重训去 DRNL 角色标签、去节点属性两个版本，与路径模型及扩散模型形成对照。 |
+| 分工 | 课程基线 | 研究模型 | 状态 |
+|---|---|---|---|
+| Lin Junxiong | — | NCNC、LPFormer、Refined-GAE | 三个模型已有鲁棒性和组件消融报告 |
+| 本组 | Katz | SP4LP | 两个主模型各有完整模型和两个组件对照 |
+| 建议其他成员认领 | 共同邻居（CN）、GCN | SGDiff | 三个建议席位，待组内确认 |
 
-后三席是推荐选项，尚待组内认领。本次实验范围仅 Katz 和 SP4LP。普通 GAE 的既有结果保存在[观测缺失实验归档](../paired-reproduction/README.md)。仓库已有[SEAL-style 实现](../../sgdiff/models/baselines/seal.py)和[属性基线实现](../../sgdiff/engine/course_baselines.py)。
+共八席，**三种课程基线、五种研究模型**。三种课程基线的依据如下。
+
+- **共同邻居（CN）**：第 6 讲第 11–12 页用共同邻居说明缺失边。CN 直接数两端共同邻居，适合与 NCNC 成对分析：同样删边后，学习式共同邻居聚合和补全是否比直接计数保留更多预测能力？当测试候选边均已隐藏时，两步 Katz 恰好等于 CN 乘以同一个正常数，因此二者的 AUROC 和 AP 应一致。已在 PubMed 种子 0 的干净图与高度优先删边图上逐对核对，每图 13,298 对。主表的完整 Katz 则累计到五步。[计数实现](../../sgdiff/engine/course_baselines.py)
+- **Katz**：第 6 讲第 13 页介绍按长度加权累加路径的相似度，举例为 Leicht 等人的方法。本仓库实现同一思想的截断 Katz，完整配置累计到五步游走。[课程方法实现说明](../../docs/course_sp4lp.md)
+- **GCN**：第 10 讲第 13–14 页介绍多轮邻居聚合。仓库用 GCN 编码节点、用点积预测连接，可以观察删边或打乱节点属性对标准消息传递的影响。[GCN 与点积实现](../../sgdiff/models/baselines/node_pair.py)
+
+SGDiff 保留主论文的直接比较对象。研究模型覆盖 2024 年的 [NCNC](https://openreview.net/forum?id=sNFLN3itAd)、[LPFormer](https://github.com/HarryShomer/LPFormer)，以及 [Refined-GAE（CIKM 2025）](https://github.com/GraphPKU/Refined-GAE)、[SP4LP（2025 年预印本）](https://arxiv.org/abs/2507.07138) 和 [SGDiff（2025 年论文集）](https://proceedings.mlr.press/v269/li25a.html)。普通 GAE 的早期结果保存在[观测缺失实验归档](../paired-reproduction/README.md)。
 
 ## Cora 与 CiteSeer 的横向比较
 
@@ -32,6 +36,10 @@ SP4LP 复用本组在各自干净训练划分上训练的 18 套权重（训练�
 Katz 在两张图上都对高度优先删边更敏感。CiteSeer 上 SP4LP 对两类删边的平均分相近，而打乱论文和词向量的对应关系会明显降低表现。本组旧版 21 条件实验采用低度优先删边、属性置零与联合缺失，回答的是另一种观测机制下的问题。
 
 [逐种子指标和边指纹](per_seed.csv) · [均值、样本标准差、降幅与配对组件差](summary.csv) · [划分、特征和权重指纹](provenance.json)
+
+## PubMed 扩展
+
+本组另在 PubMed 完成 Katz 和 SP4LP 的完整配置与四种组件对照，共 198 组已核验结果。三个种子的平均干净 AUROC 分别为 0.8256、0.9666；高度优先删边 50% 后为 0.7046、0.9210。PubMed 采用 11 个非 EA 条件，未运行的三个 EA 预算及资源估算见[扩展报告、权重与预测](pubmed/README.md)。
 
 ## 同学报告的消融是否充分
 
