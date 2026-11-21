@@ -1,0 +1,18 @@
+{
+  "peer_commit": "95083da808e500c02da458e205f4b861ceb80871",
+  "entry_point": "experiments.new_link_models.run.evaluate",
+  "run_py_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4",
+  "conditions_per_dataset": 14,
+  "datasets": [
+    "cora",
+    "citeseer",
+    "pubmed"
+  ],
+  "seed_count": 3,
+  "model_configurations": 6,
+  "native_evaluation_cells": 756,
+  "cora_citeseer_unchanged_cells": 504,
+  "previous_pubmed_cells_with_identical_predictions_and_metrics": 198,
+  "exact_previous_pubmed_candidate_scores_checked": 2633004,
+  "new_pubmed_ea_cells": 54
+}

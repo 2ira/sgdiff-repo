@@ -1,5 +1,7 @@
 # SGDiff 复现仓库（中文说明）
 
+**课程项目交付入口**　[Katz 与 SP4LP 鲁棒性、组件消融、攻击图及复算说明](results/peer-protocol/README.md)。Cora、CiteSeer 和 PubMed 统一调用 Lin Junxiong 的原生评测器。下文保留早期 SGDiff 复现记录。
+
 本组负责 **Katz 和 SP4LP 两个主模型**，横向比较采用 Lin Junxiong 的 14 条件评测。普通 GAE 已归档。[团队建议名单、评测对齐与新结果](results/peer-protocol/README.md)。
 
 旧版观测缺失实验、既有接口及归档结果见[统一实验协议](docs/paired_reproduction.zh-CN.md)。

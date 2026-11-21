@@ -1,5 +1,7 @@
 # Katz 与 SP4LP 两个主模型：按 Lin Junxiong 的协议重新评测
 
+**正式评测入口**　三个数据集均直接调用 Junxiong 的 [`experiments.new_link_models.run.evaluate`](https://github.com/2ira/sgdiff-repo/blob/95083da808e500c02da458e205f4b861ceb80871/experiments/new_link_models/run.py#L123-L169)。[本分支入口](../../scripts/evaluate_peer_protocol.py)在运行时核对评测器和协议文件与固定提交的内容一致。框架负责生成或读取攻击图、拼接固定正负查询、分批预测及计算四项指标。本组提供权重、图数据与模型打分接口。[三数据集的框架与历史分数核验](pubmed/native_evaluator_audit.json)。
+
 ## 八模型建议与已确定分工
 
 | 分工 | 课程基线 | 研究模型 | 状态 |
@@ -39,7 +41,7 @@ Katz 在两张图上都对高度优先删边更敏感。CiteSeer 上 SP4LP 对�
 
 ## PubMed 扩展
 
-本组另在 PubMed 完成 Katz 和 SP4LP 的完整配置与四种组件对照，共 198 组已核验结果。三个种子的平均干净 AUROC 分别为 0.8256、0.9666；高度优先删边 50% 后为 0.7046、0.9210。PubMed 采用 11 个非 EA 条件，未运行的三个 EA 预算及资源估算见[扩展报告、权重与预测](pubmed/README.md)。
+本组另在 PubMed 完成 Katz 和 SP4LP 的完整配置与四种组件对照，共 252 组已核验结果。三个种子的平均干净 AUROC 分别为 0.8256、0.9666；高度优先删边 50% 后为 0.7046、0.9210。PubMed 的 14 个条件包含 H200 生成的 EA 10%、25%、50%。[九张可复用 EA 图及固定测试划分](pubmed/pubmed_ea_graphs.zip) · [PubMed 扩展报告、权重与预测](pubmed/README.md)。
 
 ## 同学报告的消融是否充分
 
@@ -55,13 +57,19 @@ Katz 在两张图上都对高度优先删边更敏感。CiteSeer 上 SP4LP 对�
 
 ## 复算
 
-需要本仓库的实验依赖、已解压的 [SP4LP 权重归档](../paired-reproduction/seven-methods/archives)、本组的数据目录，以及同学的固定提交。以下示例从本分支根目录执行。
+从本分支根目录执行。使用已安装本仓库依赖的 Python 环境，PubMed 原始数据位于项目的数据根目录。先解压本组各数据集已有的权重，再运行同一个入口。三个数据集都由 Junxiong 的原生 `evaluate` 驱动，训练配方仍保留各方法原有设置。
 
 ```bash
+git fetch origin feat/ncnc-lpformer-refined-gae
 git worktree add --detach ../lin-eval 95083da808e500c02da458e205f4b861ceb80871
 (cd ../lin-eval && python -m experiments.new_link_models.prepare --root ../lin-peer-data)
-python scripts/evaluate_peer_protocol.py --peer ../lin-eval --peer-data ../lin-peer-data --data-root data --output runs/lin-eval --tables results/peer-protocol
-python scripts/summarize_peer_protocol.py results/peer-protocol
+for archive in results/paired-reproduction/seven-methods/archives/*_seed*.zip results/peer-protocol/pubmed/pubmed_seed*.zip; do
+    unzip -oq "$archive" 'runs/pair/*' -d .
+done
+unzip -oq results/peer-protocol/pubmed/pubmed_ea_graphs.zip -d runs/pubmed-cache
+unzip -oq results/peer-protocol/predictions-and-graphs.zip 'attacks/*' -d runs/lin-eval
+python scripts/evaluate_peer_protocol.py --peer ../lin-eval --peer-data ../lin-peer-data --data-root data --output runs/lin-eval --tables runs/peer-tables --pubmed-ea-cache runs/pubmed-cache/attacks
+python scripts/verify_pubmed_extension.py --peer ../lin-eval --output runs/lin-eval/pubmed --tables runs/peer-tables/pubmed --ea-cache runs/pubmed-cache/attacks
 ```
 
-[504 组逐对预测、测试划分和实际使用的攻击图](predictions-and-graphs.zip)。解压到上述命令的 output 目录可复用已核验的 CPU 攻击图。
+[Cora 与 CiteSeer 的逐对预测、测试划分和实际使用的攻击图](predictions-and-graphs.zip) · [PubMed 归档与复用说明](pubmed/README.md)。

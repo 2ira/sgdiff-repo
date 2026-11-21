@@ -1,5 +1,7 @@
 # SGDiff — Sub-graph Based Diffusion Model for Link Prediction
 
+**Course project delivery:** [Katz and SP4LP robustness results, attack graphs, and reproducible evaluation](results/peer-protocol/README.md). This branch uses Lin Junxiong’s pinned native evaluator for Cora, CiteSeer, and PubMed. The SGDiff reproduction below retains its historical protocol.
+
 An independent, self-contained reproduction of
 
 > **Sub-graph Based Diffusion Model for Link Prediction**

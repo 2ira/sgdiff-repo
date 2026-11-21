@@ -10,7 +10,7 @@ def summarize(table):
     key = ["dataset", "model", "condition", "seed"]
     datasets = set(df.dataset)
     is_extension = datasets == {"pubmed"}
-    expected_cells = 198 if is_extension else 504
+    expected_cells = 252 if is_extension else 504
     if not is_extension and datasets != {"cora", "citeseer"}:
         raise ValueError("unexpected data sets")
     if (len(df) != expected_cells or df.duplicated(key).any()

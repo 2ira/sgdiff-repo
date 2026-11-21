@@ -9,7 +9,9 @@
     "positive": "2ab3ae26f17bdeb1b1f3fe993ea8f2e7fd24eb3027b8699c46c0afe381786179",
     "negative": "96d402420ae07107320dc5300fd431f21ec495055faab522992a76b9a67445e9",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -21,7 +23,9 @@
     "positive": "2ab3ae26f17bdeb1b1f3fe993ea8f2e7fd24eb3027b8699c46c0afe381786179",
     "negative": "96d402420ae07107320dc5300fd431f21ec495055faab522992a76b9a67445e9",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -33,7 +37,9 @@
     "positive": "2ab3ae26f17bdeb1b1f3fe993ea8f2e7fd24eb3027b8699c46c0afe381786179",
     "negative": "96d402420ae07107320dc5300fd431f21ec495055faab522992a76b9a67445e9",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -45,7 +51,9 @@
     "positive": "2ab3ae26f17bdeb1b1f3fe993ea8f2e7fd24eb3027b8699c46c0afe381786179",
     "negative": "96d402420ae07107320dc5300fd431f21ec495055faab522992a76b9a67445e9",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -57,7 +65,9 @@
     "positive": "2ab3ae26f17bdeb1b1f3fe993ea8f2e7fd24eb3027b8699c46c0afe381786179",
     "negative": "96d402420ae07107320dc5300fd431f21ec495055faab522992a76b9a67445e9",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -69,7 +79,9 @@
     "positive": "2ab3ae26f17bdeb1b1f3fe993ea8f2e7fd24eb3027b8699c46c0afe381786179",
     "negative": "96d402420ae07107320dc5300fd431f21ec495055faab522992a76b9a67445e9",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -81,7 +93,9 @@
     "positive": "1c3a2cd5b0338b3fbe24bb0b9b375b196264c7abae9ab85584629d4bf85d90eb",
     "negative": "382148de60fbb1b34f5ddc23d672d18dba0f74a1e89e250270997b73b3c867e7",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -93,7 +107,9 @@
     "positive": "1c3a2cd5b0338b3fbe24bb0b9b375b196264c7abae9ab85584629d4bf85d90eb",
     "negative": "382148de60fbb1b34f5ddc23d672d18dba0f74a1e89e250270997b73b3c867e7",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -105,7 +121,9 @@
     "positive": "1c3a2cd5b0338b3fbe24bb0b9b375b196264c7abae9ab85584629d4bf85d90eb",
     "negative": "382148de60fbb1b34f5ddc23d672d18dba0f74a1e89e250270997b73b3c867e7",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -117,7 +135,9 @@
     "positive": "1c3a2cd5b0338b3fbe24bb0b9b375b196264c7abae9ab85584629d4bf85d90eb",
     "negative": "382148de60fbb1b34f5ddc23d672d18dba0f74a1e89e250270997b73b3c867e7",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -129,7 +149,9 @@
     "positive": "1c3a2cd5b0338b3fbe24bb0b9b375b196264c7abae9ab85584629d4bf85d90eb",
     "negative": "382148de60fbb1b34f5ddc23d672d18dba0f74a1e89e250270997b73b3c867e7",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -141,7 +163,9 @@
     "positive": "1c3a2cd5b0338b3fbe24bb0b9b375b196264c7abae9ab85584629d4bf85d90eb",
     "negative": "382148de60fbb1b34f5ddc23d672d18dba0f74a1e89e250270997b73b3c867e7",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -153,7 +177,9 @@
     "positive": "0655f43f8e60d66c832474c25106b758b14aadea0e3db3606e3d7689df84f169",
     "negative": "0858f34d440fb87050054a07215fc58916dc574fd0eaaa0271c457c277758ac5",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -165,7 +191,9 @@
     "positive": "0655f43f8e60d66c832474c25106b758b14aadea0e3db3606e3d7689df84f169",
     "negative": "0858f34d440fb87050054a07215fc58916dc574fd0eaaa0271c457c277758ac5",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -177,7 +205,9 @@
     "positive": "0655f43f8e60d66c832474c25106b758b14aadea0e3db3606e3d7689df84f169",
     "negative": "0858f34d440fb87050054a07215fc58916dc574fd0eaaa0271c457c277758ac5",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -189,7 +219,9 @@
     "positive": "0655f43f8e60d66c832474c25106b758b14aadea0e3db3606e3d7689df84f169",
     "negative": "0858f34d440fb87050054a07215fc58916dc574fd0eaaa0271c457c277758ac5",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -201,7 +233,9 @@
     "positive": "0655f43f8e60d66c832474c25106b758b14aadea0e3db3606e3d7689df84f169",
     "negative": "0858f34d440fb87050054a07215fc58916dc574fd0eaaa0271c457c277758ac5",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "cora",
@@ -213,7 +247,9 @@
     "positive": "0655f43f8e60d66c832474c25106b758b14aadea0e3db3606e3d7689df84f169",
     "negative": "0858f34d440fb87050054a07215fc58916dc574fd0eaaa0271c457c277758ac5",
     "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392",
-    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1"
+    "classes": "0e11dbb69806d37120a3314816b8ad38f04c873cabe6eed77486b54a7147e8c1",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -225,7 +261,9 @@
     "positive": "af83d153e208e0c69fbefb96b5c46440e624b9562500d6113aa5c0931c883475",
     "negative": "7500ac7d86dabd0f4be11d2d89ceb8e30f060c1f469996703092ba46ae6bd9c2",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -237,7 +275,9 @@
     "positive": "af83d153e208e0c69fbefb96b5c46440e624b9562500d6113aa5c0931c883475",
     "negative": "7500ac7d86dabd0f4be11d2d89ceb8e30f060c1f469996703092ba46ae6bd9c2",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -249,7 +289,9 @@
     "positive": "af83d153e208e0c69fbefb96b5c46440e624b9562500d6113aa5c0931c883475",
     "negative": "7500ac7d86dabd0f4be11d2d89ceb8e30f060c1f469996703092ba46ae6bd9c2",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -261,7 +303,9 @@
     "positive": "af83d153e208e0c69fbefb96b5c46440e624b9562500d6113aa5c0931c883475",
     "negative": "7500ac7d86dabd0f4be11d2d89ceb8e30f060c1f469996703092ba46ae6bd9c2",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -273,7 +317,9 @@
     "positive": "af83d153e208e0c69fbefb96b5c46440e624b9562500d6113aa5c0931c883475",
     "negative": "7500ac7d86dabd0f4be11d2d89ceb8e30f060c1f469996703092ba46ae6bd9c2",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -285,7 +331,9 @@
     "positive": "af83d153e208e0c69fbefb96b5c46440e624b9562500d6113aa5c0931c883475",
     "negative": "7500ac7d86dabd0f4be11d2d89ceb8e30f060c1f469996703092ba46ae6bd9c2",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -297,7 +345,9 @@
     "positive": "574ad3c1574d785f263fc9d7b9e7bf652284a70b3619d25fb49afd1b01647514",
     "negative": "53454464853bed2f8cbec44c2f69c91c4e9e9cbdbfff3c1e23948029e7c840f9",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -309,7 +359,9 @@
     "positive": "574ad3c1574d785f263fc9d7b9e7bf652284a70b3619d25fb49afd1b01647514",
     "negative": "53454464853bed2f8cbec44c2f69c91c4e9e9cbdbfff3c1e23948029e7c840f9",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -321,7 +373,9 @@
     "positive": "574ad3c1574d785f263fc9d7b9e7bf652284a70b3619d25fb49afd1b01647514",
     "negative": "53454464853bed2f8cbec44c2f69c91c4e9e9cbdbfff3c1e23948029e7c840f9",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -333,7 +387,9 @@
     "positive": "574ad3c1574d785f263fc9d7b9e7bf652284a70b3619d25fb49afd1b01647514",
     "negative": "53454464853bed2f8cbec44c2f69c91c4e9e9cbdbfff3c1e23948029e7c840f9",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -345,7 +401,9 @@
     "positive": "574ad3c1574d785f263fc9d7b9e7bf652284a70b3619d25fb49afd1b01647514",
     "negative": "53454464853bed2f8cbec44c2f69c91c4e9e9cbdbfff3c1e23948029e7c840f9",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -357,7 +415,9 @@
     "positive": "574ad3c1574d785f263fc9d7b9e7bf652284a70b3619d25fb49afd1b01647514",
     "negative": "53454464853bed2f8cbec44c2f69c91c4e9e9cbdbfff3c1e23948029e7c840f9",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -369,7 +429,9 @@
     "positive": "fa42ebcc928fe48e1a5fca911f83b7722305c43bd5f1099354639ba8c27597e7",
     "negative": "9d403dd2543c21093024efa06b8c332f475cb3f2eaeea96be002b9ca4067cd2c",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -381,7 +443,9 @@
     "positive": "fa42ebcc928fe48e1a5fca911f83b7722305c43bd5f1099354639ba8c27597e7",
     "negative": "9d403dd2543c21093024efa06b8c332f475cb3f2eaeea96be002b9ca4067cd2c",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -393,7 +457,9 @@
     "positive": "fa42ebcc928fe48e1a5fca911f83b7722305c43bd5f1099354639ba8c27597e7",
     "negative": "9d403dd2543c21093024efa06b8c332f475cb3f2eaeea96be002b9ca4067cd2c",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -405,7 +471,9 @@
     "positive": "fa42ebcc928fe48e1a5fca911f83b7722305c43bd5f1099354639ba8c27597e7",
     "negative": "9d403dd2543c21093024efa06b8c332f475cb3f2eaeea96be002b9ca4067cd2c",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -417,7 +485,9 @@
     "positive": "fa42ebcc928fe48e1a5fca911f83b7722305c43bd5f1099354639ba8c27597e7",
     "negative": "9d403dd2543c21093024efa06b8c332f475cb3f2eaeea96be002b9ca4067cd2c",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   },
   {
     "dataset": "citeseer",
@@ -429,6 +499,8 @@
     "positive": "fa42ebcc928fe48e1a5fca911f83b7722305c43bd5f1099354639ba8c27597e7",
     "negative": "9d403dd2543c21093024efa06b8c332f475cb3f2eaeea96be002b9ca4067cd2c",
     "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767",
-    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48"
+    "classes": "744514eb8ac07f52d7feecd7fbe09e8600e76dbe3fa120b563eac88d105bcc48",
+    "evaluator": "experiments.new_link_models.run.evaluate",
+    "evaluator_sha256": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4"
   }
 ]

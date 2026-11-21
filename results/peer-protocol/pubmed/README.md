@@ -4,8 +4,9 @@ Lin Junxiong 在 Cora 和 CiteSeer 上发表了三模型结果。PubMed 是本�
 
 - **规模**　19,717 个节点、44,324 条无向边、500 维节点属性。测试集为 6,649 条未见正边和 6,649 个固定负对。训练种子为 0、1、2。DICE 使用的类别按同学的读入规则从原始 Planetoid 标签做过逐节点核对。
 - **训练**　SP4LP 完整、仅端点和无原始属性各训练三次，使用与本组另两张图相同的 2,000 个平衡训练对、最多 500 个验证对、最多 300 轮的训练配方。Katz 固定衰减规则，比较最大游走长度 2、3、5。
-- **评测**　冻结权重后，用同学版本的划分、扰动和四个指标计算器评分。11 个条件包括干净，RF 和 DICE 分别取 10%、25%、50%，均匀删边、高度优先删边、插边分别取 50%，以及特征行随机置换。每张图保护全部测试正负对及验证负对。路径打分沿用 SP4LP 原实现；对受保护的测试对用排序邻接的 CSR 广度优先搜索提取同一条最短路径，每个条件均抽查 24 对，与原生提取器核对路径及可达标记。
-- **EA 的资源评估**　原评测器在 EA 中显式构造稠密邻接、归一化中间量、梯度、增益和掩码，最后排序选边。PubMed 的单张 float32 矩阵占 1.45 GiB。仅四张等大矩阵就约 5.79 GiB，另需临时张量和操作系统内存。在本次 18 GiB 统一内存、存在交换压力的 Mac 上，EA 10%/25%/50% 均记录为未运行，汇总只包含实际计算的 11 个条件。
+- **评测**　冻结权重后，用同学版本的划分、扰动和四个指标计算器评分。14 个条件包括干净，RF、DICE 和 EA 分别取 10%、25%、50%，均匀删边、高度优先删边、插边分别取 50%，以及特征行随机置换。每张图保护全部测试正负对及验证负对。路径打分沿用 SP4LP 原实现；对受保护的测试对用排序邻接的 CSR 广度优先搜索提取同一条最短路径，每个条件均抽查 24 对，与原生提取器核对路径及可达标记。
+- **正式框架**　PubMed 与 Cora、CiteSeer 调用同一份 Junxiong 原生 `evaluate`。它构建测试上下文（训练正边加验证正边）、锁定正负测试对、读取或生成扰动图、预测并计算指标。本分支的适配器负责加载已有权重、准备 Katz 或 SP4LP 的图输入及模型打分。每次运行校验框架文件与 Git 提交 `95083da` 一致。
+- **EA**　使用该提交的原生 `perturb(..., "ea", ..., device="cuda")` 在一张 NVIDIA H200 上生成 9 张图，随后在本机由原生评测器读取同一批缓存。实测 PyTorch CUDA 分配峰值约 8.77 GiB。每个种子的干净测试上下文有 37,675 条边；10%、25%、50% 的实际编辑量分别为 3,768、9,419、18,838 条。三个种子在三个预算下全都选中了插边，删边数均为 0。这里的百分比是允许翻转的总边数，新增边是由辅助模型梯度选出的。
 - **指标与归档**　AUROC、AP、Hits@100 和 Precision@100 均以 0–1 表示。每个种子的 ZIP 包含训练/验证/测试划分、实际编辑后的图、特征置换、全部逐对分数，以及三套 SP4LP 权重。端点候选保护、编辑预算、权重及图指纹均逐项复核。
 
 [逐种子结果](per_seed.csv) · [跨种子均值、样本标准差、降幅及完整模型减变体](summary.csv) · [划分与权重指纹](provenance.json) · [ZIP 下载校验值](SHA256SUMS)
@@ -25,14 +26,46 @@ Lin Junxiong 在 Cora 和 CiteSeer 上发表了三模型结果。PubMed 是本�
 
 PubMed 上，完整 SP4LP 和无属性变体在干净图上仅相差约 0.07 个 AUROC 百分点。删掉一半边后，完整模型分别领先约 4.57（随机）及 5.91（高度优先）个百分点。这支持原始属性在结构受损时能够补偿一部分信息。整行打乱属性时，完整模型降至 0.8319；无属性变体的逐对分数与干净条件相同。
 
+### H200 生成的 EA 扰动
+
+| 配置 | 干净 | EA 10% | EA 25% | EA 50% |
+|---|---:|---:|---:|---:|
+| Katz，最多五步 | 0.8256 | 0.8237 | 0.8205 | 0.8141 |
+| Katz，最多两步 | 0.6421 | 0.6470 | 0.6515 | 0.6570 |
+| Katz，最多三步 | 0.7987 | 0.7987 | 0.7983 | 0.7976 |
+| SP4LP 完整 | 0.9666 | 0.9646 | 0.9626 | 0.9591 |
+| SP4LP 仅端点 | 0.9353 | 0.9329 | 0.9302 | 0.9256 |
+| SP4LP 无原始属性 | 0.9659 | 0.9641 | 0.9621 | 0.9580 |
+
+EA 50% 下，完整 Katz 和 SP4LP 的平均 AUROC 分别下降约 1.15 和 0.75 个百分点。这里是梯度选边的可迁移攻击，九张图的实际编辑均为插边。两步 Katz 的平均 AUROC 随预算上升，说明该攻击对不同打分规则的影响方向也可能不同。
+
+14 个条件、6 种配置、3 个种子合计 252 组；新增 EA 54 组。切换到原生入口后，其余 198 组的全部 2,633,004 个逐对预测与上一版归档逐值相等。[评测器及历史结果核验](native_evaluator_audit.json)
+
 下载每个种子的测试对、预测、图和三个模型权重：[种子 0](pubmed_seed0.zip) · [种子 1](pubmed_seed1.zip) · [种子 2](pubmed_seed2.zip)。
+
+## 复用攻击图与测试对
+
+[下载 PubMed EA 攻击图、数据划分和测试查询](pubmed_ea_graphs.zip)。解压后包含：
+
+- `attacks/pubmed_s{seed}_ea_{ratio}.npz`，共 9 份。每份包含完整的扰动后无向边 `edges`，相对干净测试上下文的 `added` 和 `removed`，以及原生评测器读取的 `base_sha256` 与 `statistics`。
+- `splits/pubmed_seed{seed}.npz`，包含训练、验证、测试的固定正负对。用 `train_pos` 与 `val_pos` 的并集恢复干净测试上下文。
+- `queries/pubmed_s{seed}.npz`，按评测顺序保存的节点对和正例数量。每个种子先排 6,649 个正对，再排 6,649 个负对。节点编号沿用 Planetoid PubMed 数据。
+- `attacks/manifest.json`，记录框架版本、运行硬件、实际编辑数、逐图指纹、下载文件哈希和生成时的显存峰值。
+
+后续方法沿用同一种子的划分、对应图的 `edges` 和固定查询，即可在相同输入上打分。节点属性通过原 PubMed 数据加载。
 
 ## 复算
 
-从仓库根目录执行，peer 工作树固定在上级说明中的提交。训练命令自动复用指定目录内已有的合适权重。
+完整三数据集命令见[统一入口说明](../README.md#复算)。只运行 PubMed 时，解压已发布的图包和已有权重后执行：
 
 ```bash
-python scripts/evaluate_pubmed_extension.py --peer ../lin-eval --data-root data --output runs/pubmed-peer --tables results/peer-protocol/pubmed
-python scripts/summarize_peer_protocol.py results/peer-protocol/pubmed
-python scripts/verify_pubmed_extension.py --peer ../lin-eval --output runs/pubmed-peer --tables results/peer-protocol/pubmed
+python scripts/evaluate_pubmed_extension.py --peer ../lin-eval --data-root data --output runs/pubmed-peer --ea-cache runs/pubmed-cache/attacks --tables runs/pubmed-tables
+python scripts/summarize_peer_protocol.py runs/pubmed-tables
+python scripts/verify_pubmed_extension.py --peer ../lin-eval --output runs/pubmed-peer --tables runs/pubmed-tables --ea-cache runs/pubmed-cache/attacks
+```
+
+若要独立复现生成过程，可在 CUDA 机器上运行以下命令。要与发布表格逐图比较，请使用上述缓存及其哈希。
+
+```bash
+python scripts/generate_pubmed_ea.py --peer ../lin-eval --splits runs/pubmed-cache/splits --output runs/regenerated-ea
 ```

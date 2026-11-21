@@ -20,6 +20,23 @@ from sgdiff.engine.team_study import settings
 REVISION = "95083da808e500c02da458e205f4b861ceb80871"
 
 
+def bind_peer(peer):
+    """Load only the original attack and evaluation modules at the recorded revision."""
+    rev = subprocess.check_output(["git", "-C", str(peer), "rev-parse", "HEAD"], text=True).strip()
+    if rev != REVISION:
+        raise ValueError(f"Expected peer checkout {REVISION}, found {rev}")
+    experiments.__path__.append(str((peer / "experiments").resolve()))
+    from experiments.new_link_models import protocol, run
+
+    for module in (protocol, run):
+        relative = f"experiments/new_link_models/{Path(module.__file__).name}"
+        source = (peer / relative).resolve()
+        original = subprocess.check_output(["git", "-C", str(peer), "show", f"{REVISION}:{relative}"])
+        if Path(module.__file__).resolve() != source or source.read_bytes() != original:
+            raise ValueError(f"Evaluator does not match pinned peer source: {source}")
+    return protocol, run
+
+
 class FrozenPredictor:
     device = torch.device("cpu")
 
@@ -44,13 +61,12 @@ def main():
     p.add_argument("--weights", type=Path, default=Path("runs/pair"))
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--tables", type=Path, required=True)
+    p.add_argument("--pubmed-ea-cache", type=Path,
+                   help="Also run all 14 PubMed conditions using the published H200 graphs")
     a = p.parse_args()
-    rev = subprocess.check_output(["git", "-C", str(a.peer), "rev-parse", "HEAD"], text=True).strip()
-    if rev != REVISION:
-        p.error(f"peer checkout must be at {REVISION}")
-    experiments.__path__.append(str((a.peer / "experiments").resolve()))
-    from experiments.new_link_models.protocol import digest, load_data, metrics, split_data
-    from experiments.new_link_models.run import evaluate, variants
+    protocol, native = bind_peer(a.peer)
+    digest = protocol.digest
+    evaluator_hash = file_digest(Path(native.__file__))
 
     torch.set_num_threads(2)
     peer_results = a.peer / "experiments/new_link_models/benchmarks"
@@ -59,9 +75,9 @@ def main():
     rows = []
     provenance = []
     for dataset in ("cora", "citeseer"):
-        graph = load_data(a.peer_data, dataset)
+        graph = protocol.load_data(a.peer_data, dataset)
         for seed in (0, 1, 2):
-            split, split_sha = split_data(graph, seed, a.output)
+            split, split_sha = protocol.split_data(graph, seed, a.output)
             cfg = settings(dataset, seed, "reference", str(a.data_root), "cpu")
             old, original = load_split(cfg)
             np.testing.assert_array_equal(old.edges, graph.edges)
@@ -83,12 +99,13 @@ def main():
                 if receipt.exists() and json.loads(receipt.read_text()) != source:
                     raise ValueError(f"inputs changed: {run}")
                 receipt.write_text(json.dumps(source, indent=2)+"\n")
-                provenance.append(source)
+                provenance.append(dict(**source, evaluator="experiments.new_link_models.run.evaluate",
+                                       evaluator_sha256=evaluator_hash))
                 family = "sp4lp" if name.startswith("sp4lp") else "katz"
                 args = SimpleNamespace(dataset=dataset, seed=seed, model=family, variant=name,
                                        output=a.output, eval_batch_size=512)
-                records = evaluate(FrozenPredictor(model), graph, split, args, run)
-                assert len(records) == len(variants()) == 14
+                records = native.evaluate(FrozenPredictor(model), graph, split, args, run)
+                assert len(records) == len(native.variants()) == 14
                 for r in records:
                     attack, ratio = r["attack"], r["ratio"]
                     tag = attack if attack in ("clean", "feature_shuffle") else f"{attack}_{ratio:g}"
@@ -96,7 +113,7 @@ def main():
                         pos, neg = scores["positive"], scores["negative"]
                         assert len(pos)==len(split.test_pos) and len(neg)==len(split.test_neg)
                         assert np.isfinite(pos).all() and np.isfinite(neg).all()
-                        replay = metrics(pos,neg)
+                        replay = protocol.metrics(pos,neg)
                     for key in replay:
                         assert replay[key] == r["metrics"][key]
                     actual = r["statistics"]["graph_sha256"]
@@ -113,6 +130,17 @@ def main():
     (a.tables / "provenance.json").write_text(json.dumps(provenance,indent=2)+"\n")
     assert len(rows)==504
     print(f"Replayed all {len(rows)} cells; {sum(r['graph_hash_matches'] for r in rows)} match the published graph hashes.")
+
+    from summarize_peer_protocol import summarize
+    summarize(a.tables)
+    if a.pubmed_ea_cache:
+        from evaluate_pubmed_extension import evaluate_pubmed
+        pubmed_args = SimpleNamespace(peer=a.peer, data_root=a.data_root, weights=a.weights,
+                                      tables=a.tables / "pubmed", output=a.output / "pubmed",
+                                      ea_cache=a.pubmed_ea_cache)
+        evaluate_pubmed(pubmed_args)
+        summarize(pubmed_args.tables)
+
 
 if __name__ == "__main__":
     main()
