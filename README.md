@@ -58,6 +58,8 @@ full mapping lives in [`docs/alignment.md`](docs/alignment.md).
 
 ## Repository layout
 
+A consolidated [Chinese LaTeX research report](experiments/new_link_models/paper_report/README.md) is available as [PDF](experiments/new_link_models/paper_report/report.pdf) and [TeX source bundle](experiments/new_link_models/paper_report/report_sources.zip), including model introductions, citations, experimental design, figures and complete numerical appendices.
+
 The optional [NCNC / LPFormer / Refined-GAE study](experiments/new_link_models/README.md)
 adds pinned author-model adapters, protected-target robustness experiments and
 retrained component ablations under a documented shared protocol.

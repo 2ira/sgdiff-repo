@@ -1,0 +1,29 @@
+{\small
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{longtable}{llrrrr}
+\caption{main 协议：完整模型 AUC（百分数）}\\
+\toprule
+数据 & 模型 & Clean & RF50 & DICE50 & EA50 \\
+\midrule
+\endfirsthead
+\multicolumn{6}{l}{main 协议：完整模型 AUC（百分数）（续）}\\
+\toprule
+数据 & 模型 & Clean & RF50 & DICE50 & EA50 \\
+\midrule
+\endhead
+\midrule\multicolumn{6}{r}{续下页}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Cora & NCNC & $95.60\pm0.26$ & $93.57\pm0.38$ & $93.01\pm1.03$ & $94.50\pm0.42$ \\
+Cora & LPFormer & $92.35\pm1.03$ & $87.92\pm0.76$ & $86.76\pm1.18$ & $91.41\pm0.79$ \\
+Cora & Refined-GAE & $94.36\pm1.14$ & $90.89\pm1.09$ & $90.14\pm1.49$ & $93.62\pm1.37$ \\
+Citeseer & NCNC & $95.41\pm0.54$ & $93.35\pm0.56$ & $93.22\pm0.40$ & $94.58\pm0.47$ \\
+Citeseer & LPFormer & $93.55\pm0.35$ & $91.03\pm0.47$ & $90.78\pm0.42$ & $92.99\pm0.37$ \\
+Citeseer & Refined-GAE & $95.31\pm0.33$ & $93.38\pm0.41$ & $93.64\pm0.29$ & $94.92\pm0.40$ \\
+PubMed & NCNC & $98.09\pm0.22$ & $96.37\pm0.17$ & $95.43\pm0.21$ & N/A \\
+PubMed & LPFormer & $95.66\pm0.89$ & $92.82\pm0.59$ & $92.32\pm1.22$ & N/A \\
+PubMed & Refined-GAE & $96.32\pm0.61$ & $93.95\pm0.52$ & $93.50\pm0.60$ & N/A \\
+\end{longtable}
+}

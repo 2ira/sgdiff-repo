@@ -1,0 +1,38 @@
+{\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{longtable}{lllrrrr}
+\caption{M 协议组件效应：完整模型减变体 AUC（百分点）}\\
+\toprule
+数据 & 模型 & 变体 & Clean & RF50 & DICE50 & EA50 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{M 协议组件效应：完整模型减变体 AUC（百分点）（续）}\\
+\toprule
+数据 & 模型 & 变体 & Clean & RF50 & DICE50 & EA50 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Cora & NCNC & noCN & $0.09\pm0.51$ & $0.22\pm0.30$ & $0.32\pm0.71$ & $0.07\pm0.56$ \\
+Cora & NCNC & noCNC & $0.14\pm0.52$ & $0.31\pm0.19$ & $0.37\pm0.51$ & $-0.25\pm0.25$ \\
+Cora & LPFormer & noPE & $-0.21\pm0.56$ & $0.10\pm1.10$ & $0.21\pm1.16$ & $-0.23\pm0.38$ \\
+Cora & LPFormer & Uniform & $0.43\pm1.23$ & $0.32\pm1.04$ & $0.52\pm1.30$ & $0.06\pm0.41$ \\
+Cora & Refined-GAE & Dot & $2.98\pm0.98$ & $3.11\pm1.69$ & $3.52\pm1.95$ & $3.41\pm1.21$ \\
+Cora & Refined-GAE & noLN & $0.80\pm0.79$ & $0.23\pm0.99$ & $0.47\pm1.24$ & $0.82\pm0.68$ \\
+Citeseer & NCNC & noCN & $-0.31\pm0.32$ & $-0.39\pm0.22$ & $-0.35\pm0.33$ & $-0.35\pm0.10$ \\
+Citeseer & NCNC & noCNC & $-0.15\pm0.35$ & $-0.51\pm0.19$ & $-0.38\pm0.50$ & $-0.25\pm0.17$ \\
+Citeseer & LPFormer & noPE & $0.33\pm0.44$ & $0.45\pm0.57$ & $-0.07\pm0.18$ & $0.34\pm0.42$ \\
+Citeseer & LPFormer & Uniform & $0.09\pm0.32$ & $0.37\pm0.31$ & $0.10\pm0.39$ & $0.44\pm0.43$ \\
+Citeseer & Refined-GAE & Dot & $0.64\pm0.35$ & $1.13\pm0.52$ & $0.89\pm0.54$ & $1.11\pm0.60$ \\
+Citeseer & Refined-GAE & noLN & $0.02\pm0.31$ & $0.04\pm0.64$ & $-0.14\pm0.58$ & $0.55\pm0.08$ \\
+PubMed & NCNC & noCN & $0.07\pm0.36$ & $0.04\pm0.39$ & $-0.20\pm0.53$ & N/A \\
+PubMed & NCNC & noCNC & $0.21\pm0.37$ & $0.21\pm0.29$ & $-0.11\pm0.44$ & N/A \\
+PubMed & LPFormer & noPE & $-0.31\pm0.41$ & $-0.42\pm0.82$ & $-0.33\pm0.75$ & N/A \\
+PubMed & LPFormer & Uniform & $-0.23\pm0.59$ & $-0.33\pm0.60$ & $-0.15\pm0.70$ & N/A \\
+PubMed & Refined-GAE & Dot & $5.09\pm0.36$ & $6.47\pm0.94$ & $7.23\pm1.08$ & N/A \\
+PubMed & Refined-GAE & noLN & $1.18\pm0.45$ & $0.98\pm0.69$ & $1.13\pm0.62$ & N/A \\
+\end{longtable}
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "file": "figures/ncnc_original_fig2.png",
+    "source_pdf_sha256": "d3362745f73cbe835c76c99eabe5515191fc600ea6310d009da88eae9681fb1a",
+    "page_1based": 2,
+    "crop_box_points": [
+      304,
+      178,
+      505,
+      270
+    ],
+    "description": "Figure 2, architecture comparison",
+    "source_url": "https://proceedings.iclr.cc/paper_files/paper/2024/file/3efb4bdc6bfe13e1ff95b4407c37961d-Paper-Conference.pdf",
+    "attribution": "Original authors retain copyright; cropped panel, original labels unchanged."
+  },
+  {
+    "file": "figures/lpformer_original_fig2_panel2.png",
+    "source_pdf_sha256": "7221b8b12f9192657ff8817c7221580b1acc14e3bd811760891d321585de2e9d",
+    "page_1based": 4,
+    "crop_box_points": [
+      315,
+      82,
+      558,
+      199
+    ],
+    "description": "Figure 2, panel 2 only, PPR candidate selection",
+    "source_url": "https://arxiv.org/pdf/2310.11009v4",
+    "attribution": "Original authors retain copyright; cropped panel, original labels unchanged."
+  },
+  {
+    "file": "figures/refined_original_fig2.png",
+    "source_pdf_sha256": "60564619cccc0310e0bdc2df7576a4b561cf4eb3352e025b138997f2bcc1847f",
+    "page_1based": 4,
+    "crop_box_points": [
+      328,
+      73,
+      542,
+      298
+    ],
+    "description": "Figure 2, generic GAE architecture",
+    "source_url": "https://arxiv.org/pdf/2411.03845v4",
+    "attribution": "Original authors retain copyright; cropped panel, original labels unchanged."
+  }
+]

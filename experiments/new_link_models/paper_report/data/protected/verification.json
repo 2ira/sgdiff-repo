@@ -1,0 +1,65 @@
+{
+  "verified_at_utc": "2026-11-18T08:10:22.791729+00:00",
+  "full_pytest": {
+    "passed": 205,
+    "skipped": 2,
+    "skip_reason": "Two MPS device parametrizations unavailable on Linux",
+    "output_summary": "205 passed, 2 skipped in 136.71s (0:02:16)",
+    "test_source_sha256": "95f59170f8b7e0ffb1d385b3b7eaab987df69da42ae3fe46c336794466679967"
+  },
+  "author_protocol_module": {
+    "passed": 18,
+    "description": "Forward/backward of all components, protected attacks, disjoint splits, tied metrics, DGL bridge outputs/gradients, PPR reference parity, process cache concurrency",
+    "test_source_sha256": "3a6f72a07df92cbada608b8c14253268f4524cf8c191e75811b7286e7f8e063f",
+    "output_summary": "18 passed in 19.51s"
+  },
+  "network_filesystem_cache_test": {
+    "passed": 1,
+    "description": "Concurrent cache test also run with basetemp on the workspace AFS mount"
+  },
+  "runtime_code_sha256": {
+    "__init__.py": "988f49e229f68f1a373b0e3ef59ec34e12c295b828423558a299b41f52c2ad39",
+    "adapters.py": "cad94771cef21f5cdcf53b32e5d0b35233a06119a1a5f7323bc8ebb214b04cb8",
+    "ppr_backend.py": "d5fe180e8de50e5e5c1d2b2e699e338fcd508f85949c9598c3f4d96ae006ee8c",
+    "protocol.py": "7567b820fa0ea9eca5152bfe25bde882031247a64113f3a8cce1990c3f6cb98d",
+    "run.py": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4",
+    "sources.py": "33917016f6a922be37573bac5d34178a5a163a1161619d7dd1beb5a7e0735743",
+    "sources.lock.json": "53833e2c3b064ef7acfb71c6d8c7be62a806b998d204e9632568605b3f2ea780"
+  },
+  "analysis_code_sha256": {
+    "audit.py": "f363ab5879eeeefc418ef9d05324eae1ef62177c973729567a8816ec7bf2a614",
+    "summarize.py": "135faf5203da81a2de78595a9e4b5e50fe9b62367fa67d90e45550b1de529a05",
+    "diagnostics.py": "de84639654fd70bfbaeb059e36634f88cf7f2a356ef21bc282beba7236ddfa09",
+    "replay.py": "ec088a29c1c9f238d116d44d68ca5dee023f5dddfe3f296ea591dd3bd424b9d2",
+    "introspection.py": "34fd31d8e421961eb2ba124318913cf9d0892f53a3ae69a27b1ebd034cb708c6",
+    "prepare.py": "c119156c11cbf56f94c4c5ab22ce81838ae18bc69e57502b29d9ae34de77f099"
+  },
+  "test_source_sha256": "3a6f72a07df92cbada608b8c14253268f4524cf8c191e75811b7286e7f8e063f",
+  "completed_training_configurations": 54,
+  "evaluations": 756,
+  "checkpoint_reloads": 54,
+  "replayed_evaluations": 162,
+  "max_absolute_replay_score_error": 6.103515625e-05,
+  "replay_score_tolerance": {
+    "atol": 2e-05,
+    "rtol": 2e-05
+  },
+  "max_replay_auc_ap_difference": 5.741681738946625e-07,
+  "attack_graphs_audited": 78,
+  "all_test_candidates_protected": true,
+  "all_attack_budgets_verified": true,
+  "candidate_counts_and_component_behavior_verified": true,
+  "canonical_data_reprocessing_matches_earlier_gcn_inputs": true,
+  "external_artifacts": [
+    "Model checkpoints",
+    "Raw datasets",
+    "Graph and PPR caches",
+    "Per-epoch training histories"
+  ],
+  "curation_csv_line_endings": "LF; parsed CSV values verified unchanged",
+  "minimal_optional_environment_check": {
+    "passed": true,
+    "expected_skipped": 2,
+    "description": "No author checkout configured and numba import disabled: reference-only checks skip before loading optional numba"
+  }
+}

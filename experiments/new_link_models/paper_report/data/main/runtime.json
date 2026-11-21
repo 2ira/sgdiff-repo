@@ -1,0 +1,68 @@
+{
+  "torch": "2.3.0a0+6ddf5cf85e.nv24.04",
+  "numpy": "1.24.4",
+  "python": "3.10.12",
+  "cuda": "12.4",
+  "gpu": "NVIDIA H100 80GB HBM3 MIG 3g.40gb",
+  "total_gpu_bytes": 42412802048,
+  "tf32_matmul": false,
+  "tf32_cudnn": true,
+  "author_source_commits": {
+    "ncn": {
+      "repository": "GraphPKU/NeuralCommonNeighbor",
+      "commit": "11d597013750da17ce7468e344bec756a7af39a4",
+      "python_sha256": {
+        "NeighborOverlap.py": "a86dd0e702574ae778c142321c9e1b483e3b53fd07e7be32ea7cad552119afaf",
+        "NeighborOverlapCitation2.py": "9e7da7c291c51fe59075c2b08d5a459b004e2fa8aac0d31645db4dd223aaa484",
+        "model.py": "5b6cfe26074c83d57900f589b37a4ef57fc7b8eb6dff3179fc52e3f6943aa5e3",
+        "ogbdataset.py": "107717867ef4a27401853b3c00a58afd1abd852f04f44131aac955456a77834b",
+        "utils.py": "29df3b9cf82ae5885ece0fac010b81383f1fb5391068649c88b7d2bc98ad86be"
+      }
+    },
+    "lpformer": {
+      "repository": "HarryShomer/LPFormer",
+      "commit": "3ca80aba3bd1ba4903ec5c042608e4a034110c9f",
+      "python_sha256": {
+        "src/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "src/models/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "src/models/link_transformer.py": "b0dbd6e03f83d0a03757199486b0e6f70b95d6728de4bff7998c1fb9e527b8b1",
+        "src/models/other_models.py": "52ec7f7460b2c454bce744894c7fc71cd400fbf8d5acdab3b6c1001c1ca61086",
+        "src/modules/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "src/modules/layers.py": "7149dcd5971e975e32e712bb373081c10fc274a71cd0dd7bdd349ab7467b960f",
+        "src/modules/node_encoder.py": "93a7d3fe3357cfc39a1c877b02b820667c42fed447b596f940249583307998ff",
+        "src/run.py": "2c22b74cb501d15b21494fa06f2962ebd79fbe910cbda7f5ca1c20523339d651",
+        "src/train/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "src/train/eval.py": "db34cbe8c4fbf76f76473c70967eff5e0d92e380ff6715c9057e44ad84704b82",
+        "src/train/evaluation.py": "188ee6811a944beef5e22a830349909adffde14742137db0919b243d05e423a1",
+        "src/train/testing.py": "4a41b16cd5744352120cfab1fdf4b2e79775265b7aabb7a7a003cecebf2fc5f6",
+        "src/train/train_model.py": "4c6ec5d5346e6eb8aff058d9f514f5bc6ff132719f5f2ff483801ab8f86b5ef8",
+        "src/util/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "src/util/calc_ppr_scores.py": "0c5a1a6516b96d9b9eec54e2a30db93d56418f262be6302e0e67da20cef7fa48",
+        "src/util/read_datasets.py": "9353ab585759eca5f9e4e690450837105b65c0ff81ddc15d358d3df619de03d7",
+        "src/util/utils.py": "cfb4d6b07e1d680893c6dfb6e1c0cad68e635ceec83d00c2ee22cd1e21bfab0e"
+      }
+    },
+    "refined_gae": {
+      "repository": "GraphPKU/Refined-GAE",
+      "commit": "5bcf00ee42134a31995bbc7bcc5359810aa99b6c",
+      "python_sha256": {
+        "citation.py": "464861739a7d47eda60d01ed1b9193120a00ae8dfa0d04c769737d27e9046342",
+        "collab.py": "895613435a32ad99a4a97af3cd1ca41cbbf23308480eb242b88c3110c0766918",
+        "loss.py": "2bd7a3831770c2c4bab8c806faa935d8660abb74dd4ebf120db208d22f878597",
+        "model.py": "38604ce25fc98ad2f3dfee9d02259325dd4ac370035dfdfde2c340376d06113c",
+        "pyggcn.py": "f8c86b9a6d15caed5049aa12d7efb5112050067623605213731b01d4dda9357f",
+        "train_w_feat_small.py": "45c588bc84094fffa777b46e079333bd32b1bc6387a2f573573af0478d902869",
+        "train_wo_feat.py": "1ed67e1ac03e7a472fcaca84c3b6c9ed180743d4bcdfff13e7332333de858d90",
+        "util.py": "eed07741057851bf5c538d6bef45be6d1f9fbf466b807c19d18608d36ff7f43c"
+      }
+    }
+  },
+  "training_implementation_commit": "37001ad",
+  "pinned_main": "d4b150c121625001f52ead23abf15aead1a4b665",
+  "training_jobs": 2,
+  "training_torch_threads": 4,
+  "ppr_prefetch_numba_threads": 2,
+  "replay_torch_threads": 2,
+  "cpu_cgroup_max": "800000 100000",
+  "replay": "Independent checkpoint reload while training proceeds; score tolerances and observed differences saved separately"
+}

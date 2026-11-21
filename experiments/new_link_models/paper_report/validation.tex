@@ -1,0 +1,25 @@
+\subsection{已执行的核验与资源}
+M 的729次指标由保存的预测独立重算；81份检查点重新加载，在 clean 和一个重攻击条件各重放一次，共162次重放（Cora/Citeseer 为EA50，PubMed为DICE50）。AUC/AP 最大差为 $3.32\times10^{-7}$，main 的 Precision@100 差为0。原始分数以绝对和相对容差均 $2\times10^{-5}$ 联合判断，最大绝对分数差为 $2.4414\times10^{-4}$；该值在相对容差下通过，不能错误写成绝对差小于 $2\times10^{-5}$。
+
+全部共享图、划分、测试正边移除、EA配额、DICE规则、汇总均值/标准差与配对降幅均已审计；发布版 NumPy 验证器可独立核验81图、9划分与729行结果。新协议及报告相关21项测试通过。作者源码固定并逐文件校验，Refined-GAE 的稀疏图卷积桥接经过与 DGL 的输出/梯度对照，PPR后端也已有参考一致性检查。
+
+P 的756次指标也已重算，54份检查点在 clean、DICE50、属性置换三个条件独立重放162次；AUC/AP 最大差约 $5.74\times10^{-7}$。其历史测试记录为205通过、2项MPS设备相关跳过；这是对应旧版本的记录，不是本次重新运行了完整205项测试。报告生成器又独立从逐种子CSV核验两套协议全部汇总的均值与样本标准差，并保存 \code{table_audit.json}。
+
+实验使用本机 H100 80GB 的40GB MIG 分区，PyTorch2.3.0a0、CUDA12.4、NumPy1.24.4、PyG2.5.3及固定作者依赖。M 记录的单进程 PyTorch 分配峰值约2.98GiB，训练任务最多并行2个；这个值不是设备总占用，也不包括所有框架外分配。训练时间不含图/PPR准备与重放时间，不能作端到端效率比较。完整检查点与PPR在外部实验目录，Git保存报告、指标、图快照和指纹，本轮没有提交ACP任务。
+
+\subsection{局限与可以支持的结论}
+\begin{enumerate}
+\item \textbf{可比较范围有限。}同协议、同划分、同图和同候选下可比较本文三个模型及其变体；不同协议、原论文难负例设置与历史SGDiff表不能直接合并。作者专属超参数保留，所以跨模型差异不能全部归因于架构。
+\item \textbf{验证与训练上下文限制。}M 有验证正边可见的选点上下文；LPFormer 的训练PPR可能保留批次目标信息。这两点已明确披露，不把结果包装成严格隐藏验证边的无泄漏基准。
+\item \textbf{攻击强度与适用范围。}EA是固定代理的一次梯度排序；没有逐模型自适应白盒攻击或多轮扰动优化。PubMed EA按上限跳过。P 旧EA全部插边，删边证据来自独立探针。
+\item \textbf{候选与样本量。}M 每类500个，P使用全测试候选，负例较易且数量有限；历史Hits和本文严格负池Hits都依赖候选定义。只有三种子，未做显著性检验，没有额外图数据集或低同配图的外推证据。
+\item \textbf{机制不能过度归因。}noCN仍含结构，noPE仍含PPR筛选，noLN保留其他归一化，Dot会改变训练轨迹。较小消融差不等于机制无用，较大精度收益也不自动代表降幅更小。
+\end{enumerate}
+就当前证据，可报告“NCNC 在本次 Cora/PubMed 的 RF/DICE 下具有较高攻击后AUC；Citeseer 部分条件由Refined-GAE更高”，“补全边际收益有限且依设置变化”，“PubMed 的Refined-GAE解码器选择影响较大”。不宜报告“共同邻居补全导致普遍鲁棒”“注意力必然优于均匀聚合”或“已经超过SGDiff原论文”。
+
+\subsection{后续实验建议与交付文件}
+后续优先让SGDiff与合作者模型读取本轮同一图快照及500+500候选，再进行联合比较；若对方已有图，应核对指纹后决定能否复用。方法分析可增加严格训练图验证的受控重训、逐模型自适应攻击、难负例、更多种子、编码器/解码器归一化分拆，以及三模型跨数据集迁移。PubMed EA如需扩展，应明确命名为新的稀疏或可扩展攻击协议，不能混入本轮已对齐main的表。
+
+本次交付的 \code{report.tex} 与章节文件可编辑；\code{references.bib} 含三个模型与相关方法；\code{figures/} 含原作者图的局部摘录与实验/适配器图；\code{generated/} 含全部表格；\code{data/} 含对应CSV及配置审计。\code{build_tables.py} 可在不加载GPU模型的情况下重建表格；\code{build.sh} 可调用Tectonic或XeLaTeX/BibTeX生成PDF。图快照与大检查点不重复打包进TeX源包，分别保留在仓库原结果归档与外部实验目录。
+
+\noindent 实验入口：\href{https://github.com/2ira/sgdiff-repo/tree/feat/ncnc-lpformer-refined-gae/experiments/new_link_models}{实验代码与全部结果归档}；\href{https://github.com/2ira/sgdiff-repo/blob/feat/ncnc-lpformer-refined-gae/experiments/new_link_models/benchmarks/repository_protocol/report.md}{M协议完整Markdown报告}；\href{https://github.com/2ira/sgdiff-repo/blob/feat/ncnc-lpformer-refined-gae/experiments/new_link_models/benchmarks/report.md}{P协议完整Markdown报告及新实验入口}。

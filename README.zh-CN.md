@@ -38,6 +38,8 @@
 
 ## 目录结构
 
+已整理 [中文 LaTeX 研究报告](experiments/new_link_models/paper_report/README.md)，提交 [PDF](experiments/new_link_models/paper_report/report.pdf) 与 [TeX 源包](experiments/new_link_models/paper_report/report_sources.zip)，包含三个模型介绍、原论文示意图摘录、引用、详细实验设计、图像及全部1485次评估的数值附录。
+
 2026-11-18 新增的 **NCNC / LPFormer / Refined-GAE** 实验见
 [完整实验报告](experiments/new_link_models/benchmarks/report.md)：Cora/Citeseer、3 个种子、
 54 组训练、756 次评估。报告包含随机删边、按度删边、插边、RF/DICE/EA 全部预算、

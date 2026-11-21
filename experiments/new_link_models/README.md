@@ -1,5 +1,7 @@
 # NCNC, LPFormer and Refined-GAE
 
+**Full Chinese research report:** [PDF](paper_report/report.pdf), [LaTeX source bundle](paper_report/report_sources.zip), [editable TeX](paper_report/report.tex), [BibTeX](paper_report/references.bib), and [model introductions](paper_report/MODEL_INTRO.zh-CN.md). Includes both completed protocol cohorts, original-paper figure excerpts, experiment diagrams, all 1485 evaluations and full numerical appendices.
+
 Three external author architectures under one **new, protected-target evasion
 protocol**. This experiment is independent of the older baseline trainer. It
 does not overwrite SGDiff v2 results, and its numbers must not be presented as

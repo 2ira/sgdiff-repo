@@ -1,0 +1,17 @@
+{
+  "cora": {
+    "train_pos": 4222,
+    "val_pos": 264,
+    "test_pos": 792
+  },
+  "citeseer": {
+    "train_pos": 3641,
+    "val_pos": 228,
+    "test_pos": 683
+  },
+  "pubmed": {
+    "train_pos": 35459,
+    "val_pos": 2216,
+    "test_pos": 6649
+  }
+}

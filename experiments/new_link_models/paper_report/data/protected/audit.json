@@ -1,0 +1,11 @@
+{
+  "completed_training_runs": 54,
+  "evaluations": 756,
+  "prediction_metrics_recomputed": true,
+  "attacked_graphs_identical_across_models": true,
+  "expected_training_runs": 54,
+  "expected_evaluations": 756,
+  "missing_configurations": [],
+  "extra_configurations": [],
+  "complete": true
+}

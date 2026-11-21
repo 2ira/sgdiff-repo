@@ -1,0 +1,87 @@
+\documentclass[UTF8,a4paper,11pt,fontset=fandol]{ctexart}
+\usepackage[margin=23mm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,booktabs,longtable,array,graphicx,xcolor}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{caption,float,pdflscape,fancyhdr}
+\usepackage{xurl}
+\usepackage[unicode,colorlinks=true,linkcolor=blue!45!black,citecolor=green!35!black,urlcolor=blue!55!black]{hyperref}
+\hypersetup{pdftitle={NCNC、LPFormer 与 Refined-GAE：复现、鲁棒性及组件消融},pdfauthor={xiaoming},pdfsubject={Cora、Citeseer、PubMed；完整实验报告}}
+\setlength{\emergencystretch}{3em}
+\setlength{\parskip}{3pt}
+\setlength{\LTcapwidth}{\textwidth}
+\captionsetup{font=small,labelfont=bf}
+\pagestyle{fancy}\fancyhf{}\fancyhead[L]{\small 三模型链路预测实验报告}\fancyhead[R]{\small xiaoming}\fancyfoot[C]{\thepage}
+\newcommand{\code}[1]{{\small\nolinkurl{#1}}}
+\newcommand{\Fig}[4]{\begin{figure}[htbp]\centering\includegraphics[width=#2\linewidth]{figures/#1}\caption{#3}\label{#4}\end{figure}}
+\title{\textbf{NCNC、LPFormer 与 Refined-GAE}\\链路预测复现、结构鲁棒性与组件消融\\\large Cora、Citeseer 与 PubMed 的完整实验报告}
+\author{xiaoming}\date{2026年11月21日}
+\begin{document}
+\maketitle
+\begin{abstract}
+本报告在 SGDiff 复现仓库的数据集与代码环境中，比较共同邻居补全、点对注意力和改进图自编码器三条技术路线。报告整理了两套已完成实验：对齐固定 main 的输入与攻击协议，覆盖三个数据集、三个模型、每模型两个组件消融和三个随机种子，共81组从头训练与729次评估；此前的候选保护协议覆盖 Cora/Citeseer，共54组训练与756次评估，并包含纯删边、按度删边、纯插边及特征打乱探针。两套协议分别呈现，不混合排名。
+
+在 main 协议下，PubMed 完整模型干净 AUC 为 NCNC $98.09\pm0.22$、LPFormer $95.66\pm0.89$、Refined-GAE $96.32\pm0.61$；DICE50 后分别为 $95.43\pm0.21$、$92.32\pm1.22$、$93.50\pm0.60$（百分数，三个种子的均值与样本标准差）。补全和注意力组件的收益依赖数据及设置；Refined-GAE 在 PubMed 上的 MLP 解码器具有较大的配对精度收益。本文同时提供模型介绍、原论文示意图的局部摘录、实际适配器结构图、相关方法引用、实验设计、全部汇总和逐种子结果。结果反映指定训练预算和协议，不等同于原论文表格复现或无条件鲁棒性证明。
+\end{abstract}
+\noindent\textbf{完成状态：}本报告整理已有真实测量结果，没有为撰写报告新增训练。全部135组训练、1485次评估已完成；PubMed EA 因固定 main 的4000节点上限按协议跳过。报告附录展开全部数值，源数据与审计随 TeX 一并提交。
+\tableofcontents\clearpage
+\section{研究目标与结果范围}
+本工作的目标有三项：理解三个代表模型各自使用哪些结构与属性信息；在共享图与测试点对上重做结构扰动实验；通过独立重训的组件消融评估具体机制的净收益。模型分别为 ICLR 2024 的 NCNC、KDD 2024 的 LPFormer，以及 CIKM 2025 的 Refined-GAE（作者仓库名；论文题为 \emph{Reconsidering the Performance of GAE in Link Prediction}）\cite{wang2024ncnc,shomer2024lpformer,ma2025refined}。
+
+\textbf{主结果}采用\emph{main 输入与攻击补实验}，以下简记 M 协议；\textbf{补充机制证据}采用此前的\emph{候选保护实验}，简记 P 协议。M 协议固定仓库 main 提交 \code{d4b150c121625001f52ead23abf15aead1a4b665}；训练实现提交为 \code{37001ad}，数值结果归档提交为 \code{5d82427}。本报告的表格来自该归档的 CSV/JSON，附带输入指纹。
+
+\begin{center}\small
+\begin{tabular}{llll}\toprule
+协议&数据集&训练组数&评估次数\\\midrule
+M：main 输入/攻击&Cora、Citeseer、PubMed&81&729\\
+P：候选保护&Cora、Citeseer&54&756\\\bottomrule
+\end{tabular}\end{center}
+M 组数为 $3\times3\times3\times3=81$；Cora/Citeseer 的每组训练各评估10条件，PubMed 各评估7条件，因此为 $54\times10+27\times7=729$。P 为 $2\times3\times3\times3=54$，每组14条件，共756次。
+
+\textbf{范围边界：}本报告的135组训练只属于上述三个新模型。早期 GCN 的结构-only、特征-only、两者结合及迁移实验属于另一项归档；三个新模型没有在本轮完成跨数据集迁移，也没有完成原论文全套基准。不能把本文的端点预测消融称为特征-only，也不能把特征打乱称为重新训练的结构-only。
+
+\section{相关工作与三个模型}
+\input{models.tex}
+\clearpage
+\section{实验设计与可比性}
+\input{methods.tex}
+\clearpage
+\begin{landscape}
+\section{main 协议实验结果}
+\input{results.tex}
+\clearpage
+\begin{landscape}
+\section{候选保护协议的补充机制实验}
+\input{protected.tex}
+\clearpage
+\section{可信度核验、局限与后续方向}
+\input{validation.tex}
+\clearpage
+\bibliographystyle{plainnat}\bibliography{references}
+\clearpage\appendix
+\section{M 协议：全部243行跨种子汇总}\label{app:m}
+所有分数以百分数表示；$\Delta=\mathrm{clean}-\mathrm{attack}$，差值单位为百分点。均值与样本标准差基于相同种子的配对降幅计算。$P_{100}$ 是 main 原命名 \code{hit@100}，实际为池化 Precision@100；$H_{100}$ 是严格负池 Hits@100。变体缩写定义见表\ref{tab:ablations}。N/A 的 PubMed EA 不生成虚构数值。
+\input{generated/main_all.tex}
+\clearpage\section{M 协议：全部162行配对组件汇总}
+$F-V$ 为同种子完整模型减变体，正值表示完整模型精度较高；$D_V-D_F$ 为变体降幅减完整降幅，正值表示变体退化更多。每个差值先按种子计算，再汇总，不能由两个标准差相减得到。
+\input{generated/main_paired.tex}
+\clearpage\section{M 协议：全部729次逐种子结果}
+$\bar P_{100}$ 额外使用并列分数平均处理。表中没有误差棒，因为每行是一个种子的一次实际评估。
+\input{generated/main_seeds.tex}
+\clearpage\section{M 协议：81次训练与81张共享图的预算}
+时间为记录的训练循环时间，不含图与 PPR 准备；显存是单进程 PyTorch 分配峰值，不是设备总占用。验证 AUC 含验证正边上下文，不能解释为严格未见边泛化精度。
+\input{generated/main_training.tex}
+预算表的“原删/原插”为攻击完整图的实际差集计数；“可见删/可见插”为移除全部测试正边之后，相对干净推理图的差集计数。“负例插入”是本轮500个计分负例中被攻击图插入的数量。RF 可能重插刚删的边，故差集计数与请求编辑次数不总相等。
+\input{generated/main_budgets.tex}
+\clearpage\section{P 协议：全部252行跨种子汇总}
+本附录全部属于候选保护协议，与附录\ref{app:m}分别解释。Del 为随机纯删边，HubDel 为按节点度加权删边，Ins 为纯插边，Shuffle 为节点属性行置换。RF/DICE/EA 是混合编辑预算，不等于纯删边。
+\input{generated/protected_all.tex}
+\clearpage\section{P 协议：全部168行配对组件汇总}
+\input{generated/protected_paired.tex}
+\clearpage\section{P 协议：全部756次逐种子结果}
+\input{generated/protected_seeds.tex}
+\clearpage\section{P 协议：54次训练与干净图分层结果}
+\input{generated/protected_training.tex}
+\input{generated/protected_budgets.tex}
+分层由干净推理图的共同邻居数、端点最小度数和特征余弦决定。正负样本数随分层改变，AP 的基准率也随之改变。单类或样本过少分层不能支持稳定判断。全扰动分层、相关性、抽样注意力与传播系数的原始记录均在源包 \code{data/protected/}，下表展开全部504行分层汇总，未将它们解释为因果重要性。n 是该分层有效种子数，462行使用3种子，42行使用2种子；无有效正负两类的种子不纳入该分层的AUC/AP汇总。计数随有效种子汇总，不能把2种子的误差当成3种子误差。
+\input{generated/protected_strata_all.tex}
+\end{document}

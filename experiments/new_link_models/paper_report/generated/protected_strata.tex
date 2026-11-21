@@ -1,0 +1,56 @@
+{\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{longtable}{lllrrrr}
+\caption{候选保护协议：干净图分层结果，计数为三种子均值}\\
+\toprule
+数据 & 模型 & 分层 & 正例数 & 负例数 & AUC & AP \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{候选保护协议：干净图分层结果，计数为三种子均值（续）}\\
+\toprule
+数据 & 模型 & 分层 & 正例数 & 负例数 & AUC & AP \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Citeseer & LPFormer & CN=0 & 451.0 & 681.3 & $91.72\pm0.96$ & $89.04\pm1.31$ \\
+Citeseer & LPFormer & CN=1 & 149.5 & 2.5 & $91.03\pm0.90$ & $99.84\pm0.02$ \\
+Citeseer & LPFormer & cosine=0 & 14.7 & 191.0 & $86.80\pm4.06$ & $67.13\pm2.48$ \\
+Citeseer & LPFormer & cosine>0 & 668.3 & 492.0 & $93.99\pm0.66$ & $95.69\pm0.48$ \\
+Citeseer & LPFormer & min-degree<=2 & 472.7 & 624.0 & $92.81\pm0.92$ & $91.95\pm1.17$ \\
+Citeseer & LPFormer & min-degree>=3 & 210.3 & 59.0 & $97.02\pm1.05$ & $98.87\pm0.57$ \\
+Citeseer & NCNC & CN=0 & 451.0 & 681.3 & $95.44\pm1.05$ & $93.64\pm1.16$ \\
+Citeseer & NCNC & CN=1 & 149.5 & 2.5 & $84.56\pm7.79$ & $99.66\pm0.28$ \\
+Citeseer & NCNC & cosine=0 & 14.7 & 191.0 & $92.78\pm1.53$ & $71.16\pm5.29$ \\
+Citeseer & NCNC & cosine>0 & 668.3 & 492.0 & $96.42\pm0.76$ & $97.33\pm0.51$ \\
+Citeseer & NCNC & min-degree<=2 & 472.7 & 624.0 & $96.26\pm1.21$ & $95.53\pm1.26$ \\
+Citeseer & NCNC & min-degree>=3 & 210.3 & 59.0 & $97.38\pm1.36$ & $99.12\pm0.52$ \\
+Citeseer & Refined-GAE & CN=0 & 451.0 & 681.3 & $95.06\pm1.05$ & $93.11\pm1.39$ \\
+Citeseer & Refined-GAE & CN=1 & 149.5 & 2.5 & $87.87\pm10.47$ & $99.79\pm0.16$ \\
+Citeseer & Refined-GAE & cosine=0 & 14.7 & 191.0 & $92.72\pm3.36$ & $72.91\pm9.38$ \\
+Citeseer & Refined-GAE & cosine>0 & 668.3 & 492.0 & $96.02\pm0.94$ & $97.02\pm0.68$ \\
+Citeseer & Refined-GAE & min-degree<=2 & 472.7 & 624.0 & $95.91\pm1.10$ & $95.22\pm1.20$ \\
+Citeseer & Refined-GAE & min-degree>=3 & 210.3 & 59.0 & $96.66\pm0.35$ & $98.75\pm0.14$ \\
+Cora & LPFormer & CN=0 & 433.7 & 784.0 & $89.21\pm0.22$ & $84.01\pm0.63$ \\
+Cora & LPFormer & CN=1 & 238.7 & 8.0 & $87.31\pm3.13$ & $99.46\pm0.24$ \\
+Cora & LPFormer & cosine=0 & 88.7 & 314.7 & $90.11\pm1.60$ & $82.88\pm1.50$ \\
+Cora & LPFormer & cosine>0 & 703.3 & 477.3 & $93.35\pm0.39$ & $95.60\pm0.22$ \\
+Cora & LPFormer & min-degree<=2 & 490.7 & 588.7 & $92.28\pm0.13$ & $92.14\pm0.26$ \\
+Cora & LPFormer & min-degree>=3 & 301.3 & 203.3 & $95.88\pm0.54$ & $97.34\pm0.45$ \\
+Cora & NCNC & CN=0 & 433.7 & 784.0 & $93.67\pm0.27$ & $89.15\pm0.71$ \\
+Cora & NCNC & CN=1 & 238.7 & 8.0 & $84.38\pm0.47$ & $99.28\pm0.23$ \\
+Cora & NCNC & cosine=0 & 88.7 & 314.7 & $94.64\pm0.17$ & $88.72\pm1.72$ \\
+Cora & NCNC & cosine>0 & 703.3 & 477.3 & $95.42\pm0.27$ & $96.47\pm0.29$ \\
+Cora & NCNC & min-degree<=2 & 490.7 & 588.7 & $95.54\pm0.35$ & $94.73\pm0.23$ \\
+Cora & NCNC & min-degree>=3 & 301.3 & 203.3 & $96.37\pm0.24$ & $97.24\pm0.41$ \\
+Cora & Refined-GAE & CN=0 & 433.7 & 784.0 & $93.89\pm0.64$ & $89.70\pm1.26$ \\
+Cora & Refined-GAE & CN=1 & 238.7 & 8.0 & $87.54\pm1.84$ & $99.35\pm0.32$ \\
+Cora & Refined-GAE & cosine=0 & 88.7 & 314.7 & $94.35\pm2.04$ & $88.83\pm3.65$ \\
+Cora & Refined-GAE & cosine>0 & 703.3 & 477.3 & $95.75\pm0.15$ & $96.60\pm0.43$ \\
+Cora & Refined-GAE & min-degree<=2 & 490.7 & 588.7 & $95.62\pm0.40$ & $95.06\pm0.66$ \\
+Cora & Refined-GAE & min-degree>=3 & 301.3 & 203.3 & $96.93\pm0.35$ & $97.22\pm0.73$ \\
+\end{longtable}
+}

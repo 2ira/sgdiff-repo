@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "compiler": "Tectonic 0.17.0 (XeTeX + BibTeX)",
+  "pages": 109,
+  "body_and_references_pages": 25,
+  "appendix_pages": 84,
+  "bibliography_items": 16,
+  "all_fonts_embedded": true,
+  "unique_embedded_fonts": 38,
+  "page_content_outside_bounds": [],
+  "overfull_boxes": 0,
+  "undefined_references": 0,
+  "source_archive_commit": "5d82427",
+  "frozen_data_files_identical_to_commit": 27,
+  "generated_numeric_rows": {
+    "main_all": 243,
+    "main_paired": 162,
+    "main_seeds": 729,
+    "protected_all": 252,
+    "protected_paired": 168,
+    "protected_seeds": 756
+  },
+  "paired_effects_and_mean_sd_recomputed": true,
+  "underfull_warnings": "4 minor spacing warnings; no clipping or missing text",
+  "pdf_sha256": "1c99c42affe37e88067a4e749134c462fc608b98a619c5286652792923799cdb",
+  "standalone_source_build_passed": true,
+  "standalone_pdf_text_identical": true,
+  "standalone_pages": 109
+}

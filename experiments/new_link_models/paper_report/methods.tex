@@ -1,0 +1,69 @@
+\subsection{数据、划分与属性}
+三个引用网络采用 Planetoid 数据发布格式\cite{yang2016planetoid}，原始文件固定到 \code{af6abf468a772cc055bec88c52e4d6f51b7c37e3}。无向化后去除自环与重复边，保留原节点索引和属性。Cora、Citeseer、PubMed 的实际规范化统计如下；PubMed 为44324条边，和原论文表存在3条差异，沿用 main 已记录的版本。
+\input{generated/datasets.tex}
+对每个种子0、1、2生成一次80\%/5\%/15\%正边划分。训练、验证、测试负例数量分别与其正例相等，均为完整干净图中不存在的无向非自环点对，三组负例互斥。不同模型和组件共享同种子的数据划分；不按模型性能挑图或重抽负例。
+
+M 使用 main 的数据加载、划分、\code{node_feature_matrix} 逐属性列标准化，以及 \code{_cap_pairs}：按固定顺序取测试正负例各前500个。每次评估1000个点对，绝非按分数选最高的500个。P 使用原始属性并对完整测试候选计分：Cora 每类792个，Citeseer 每类683个。两轮输入不同，所以 M 的81组权重全部从头训练，没有复用 P 的54组权重。DICE 可读取类别标签以选择攻击边；预测模型不读取这些标签。
+
+\subsection{训练目标、目标边移除与选点}
+所有模型与变体均独立训练。正例 minibatch 为512，负例与正例按固定划分一一配对，采用 logits 形式的二元交叉熵：
+\begin{equation}
+ \mathcal L=-\frac1{2B}\left[\sum_{i=1}^B\log\sigma(f(u_i,v_i))+\sum_{j=1}^B\log(1-\sigma(f(\bar u_j,\bar v_j)))\right].
+\end{equation}
+训练传播图只含训练正边，并移除当前批次全部目标正边；梯度范数裁剪上限为1。采用共享 batch512 是为了在目标移除后保留非空训练上下文；例如 Citeseer 的3641条训练边不足以支撑作者4096条正例全批移除。作者原始批量、负采样数、训练轮次与本文有明确差别。
+
+M 最多训练100轮，每10轮用干净验证 AUC 选点，30轮未提升停止；完整保留 main 节点对基线实际使用的 \emph{train+validation 图上下文}，因此验证正边在验证传播图中可见。这是协议限制，较高的验证 AUC 不应解释为对未见边的泛化证明。P 则每5轮在\emph{只含训练边}的上下文验证，同样最多100轮、耐心30轮。测试正边在所有推理图中移除，模型权重在攻击推理前冻结。
+
+NCNC 使用编码器/预测器分组学习率；LPFormer 使用作者的指数学习率因子；Refined-GAE 在 Cora 使用 AdamW，其余采用 Adam。各作者数据集专属配置保留，未额外用测试性能调参，因此跨模型差异也包含优化配方的影响。
+\input{generated/hyperparameters.tex}
+该表的 dropout 是预测器或共享配置，不能替代各路径的全部 dropout。NCNC 的 GCN dropout 为 Cora0.05、Citeseer0.75、PubMed0.1；输入 dropout 为0.7/0.4/0.3，尾部为0.3/0/0，预测器为0.05/0.55/0.05。Cora 的预测器边 dropout 另为0.4，其余为0。NCNC 的补全校准 $(\mathrm{pt},\mathrm{scale},\mathrm{offset},\alpha)$ 分别是 Cora $(0.75,4.3,2.8,1)$、Citeseer $(0.75,6.5,4.4,0.4)$、PubMed $(0.5,5.3,0.5,0.3)$。
+
+LPFormer 的 PPR 参数 $\alpha=0.15$，误差阈值为 Cora/Citeseer $10^{-7}$、PubMed $10^{-5}$；单侧候选阈值0.01，较远候选阈值为 Cora/PubMed0.01、Citeseer1.0。Refined-GAE 的传播深度、预测器激活和残差设置见上一节。源包 \code{data/main/run_manifest.json} 提供81组完整运行配置及作者来源，P 对应 manifest 独立保存。
+
+\subsection{M：固定 main 的攻击与缓存}
+直接调用固定 main 的 \code{apply_attack}，在\emph{完整干净图}上生成结构扰动，再删除\emph{全部}测试正边，得到推理图：
+\begin{equation}
+ E^{\rm raw}_{a,r,s}=\mathcal A_a(E,r,s),\quad
+ E^{\rm infer}_{a,r,s}=E^{\rm raw}_{a,r,s}\setminus E^{+}_{\rm test,s},\quad
+ b=\operatorname{round}(r|E|).
+\end{equation}
+所有模型和组件使用同一 $E^{\rm infer}$；不为某模型重新优化攻击。$r$ 取0.1、0.25、0.5，clean 为额外条件。预算是编辑次数相对于完整图边数的比例，\textbf{50\%混合编辑预算不等于删掉一半边}。
+\begin{itemize}
+\item \textbf{RF}：随机删除约半预算，再随机插入其余预算；原实现可能重新插入刚删的边，所以实际差集编辑数可小于请求预算。本文保留此行为并单独记录实际数值。
+\item \textbf{DICE}：优先采用类别标签作为社区，删同社区边、插跨社区边，约一半删除、一半插入。该攻击使用额外标签知识，与不使用标签的 RF/EA 的威胁信息不同。
+\item \textbf{EA}：main 的32维单层线性节点嵌入代理，拟合60步，每步2048正例和2048随机节点对；后者不是严格过滤后的非边。冻结代理权重后，对邻接求一次梯度，分别选取约半预算删除和插入。原函数注释使用“meta-gradient”措辞，但实际没有反向展开60步优化；应解释为固定代理的邻接梯度排序。
+\end{itemize}
+原 SGDiff 论文的嵌入攻击关联 Bojchevski 与 G\"unnemann 的图投毒方法，并调用 DeepRobust\cite{bojchevski2019attack,li2020deeprobust}。\textbf{main 的线性代理实现不是该谱/NetMF攻击的原样实现。}因此本轮是对齐\emph{仓库代码}，不是声称复现原论文 DeepRobust 的 EA 表。对训练好的三个目标模型仅扰动推理图，属于迁移式 evasion 评估，既不是三个模型各自的白盒最强攻击，也不是重新训练目标模型的投毒实验。
+
+PubMed 有19717节点，超过 main 密集 EA 的 \code{EA_MAX_NODES=4000}，三种子均按协议跳过。M 总共保存81张共享图（含9张clean）及9份划分，保留 \code{raw_edges} 与 \code{edges} 两层边表；模型推理必须用后者。测试负例未受到额外保护，某些计分负例可能被攻击插入；附录如实列出数量。这种情况影响指标解释，不能悄悄修改攻击后仍声称使用原协议。
+
+图缓存是这次用固定代码新生成的，不保证与历史 main/H20 或合作者环境的旧缓存逐边相同。共享算法名称与种子还不足以合表；必须共享边表、测试点对或验证指纹。历史18张 P 协议 EA 图已另行归档，不作为本轮 M 的 EA 图。
+
+\subsection{P：候选保护与额外机制探针}
+P 在移除测试正边的 train+val 可见图上攻击，预算分母也用该图边数；保护所有测试正负候选及验证负例。RF/DICE 的删插预算固定；EA 则采用统一的合法翻转梯度排序，而不是 main 的删插半配额。本轮旧18张 EA 图经实际差集审计\textbf{全部为插边}，不能用它们证明抵抗删边。
+
+在 clean、RF/DICE/EA三档之外，P 另外评估随机纯删边50\%、按节点度加权删边50\%、纯插边50\%及属性行置换，共14条件。属性置换保持特征集合与图结构，打乱属性对应节点；不等于去掉属性或重新训练结构-only。按度加权删边也不等同于专门寻找最危险边的最优攻击。M 未运行这些额外探针；PubMed 的探针结果因而不存在，不以 Cora/Citeseer 代替。
+
+\subsection{组件消融的操作与解释}
+\begin{table}[htbp]\centering\small
+\caption{每模型两个变体；全部独立重训。表与附录统一使用简短标签。}\label{tab:ablations}
+\begin{tabular}{lp{3.8cm}p{6.0cm}}\toprule
+变体&操作&保留内容与解释边界\\\midrule
+noCNC&NCNC 补全深度1改0&保留共同邻域聚合，相当于本配置下 NCN\\
+noCN&NCNC 使用作者CN0预测器&保留 GCN$(A,X)$；不是特征-only\\
+Uniform&LPFormer 注意力向量置零冻结&保留候选、值投影、位置编码和计数\\
+noPE&LPFormer 位置编码输出置零&保留 PPR 候选筛选、类别划分与计数\\
+noLN&Refined-GAE LayerNorm改恒等&保留 dropout、输入标准化、邻接归一化\\
+Dot&Refined-GAE 改作者点积预测器&编码器架构保留，全部参数独立重训\\\bottomrule
+\end{tabular}\end{table}
+模型结构改变会影响参数初始化和训练轨迹；共享种子不意味着逐参数严格匹配。配对设计控制数据、图和候选，不能排除参数量、优化难度、正则化的共同影响。
+
+\subsection{指标、配对差值与统计口径}
+主指标 AUC 与 AP 调用 main 的实际指标函数。AUC 衡量正例相对负例的排序，AP 反映精确率与召回率的综合排序表现；二者受测试候选与负例难度影响。补充排名指标明确区分：
+\begin{equation}
+ P_{100}=\frac{\#\{\text{合并正负候选最高100分中的正例}\}}{100},\quad
+ H_{100}=\frac1{n_+}\sum_i\mathbf1\{s_i^+>s^-_{(100)}\}.
+\end{equation}
+$s^-_{(100)}$ 为固定全局负池第100高分。main 历史名 \code{hit@100} 实际为 $P_{100}$，并列分数沿输入次序处理；M 还记录并列平均 $\bar P_{100}$。此处 $H_{100}$ 不是对所有可能非边排名的指标，也不等同于不同论文/OGB配置下的 Hits@100。
+
+每个设置报告三个种子的均值与\emph{样本标准差}（ddof=1），不把标准差写成置信区间。鲁棒性同时看攻击后绝对精度 $m_a$ 和同种子降幅 $D_s=m_{s,\rm clean}-m_{s,a}$。组件效应为 $C_s=m_{s,\rm full}-m_{s,\rm variant}$，并额外报告 $D_{s,\rm variant}-D_{s,\rm full}$。所有差值先配对再求标准差；没有进行显著性检验，三个种子不足以支持普遍机制结论。

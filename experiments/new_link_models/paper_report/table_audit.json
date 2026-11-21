@@ -1,0 +1,49 @@
+{
+  "passed": true,
+  "counts": {
+    "main": {
+      "training": 81,
+      "summary": 243,
+      "evaluations": 729,
+      "paired_summary": 162
+    },
+    "protected": {
+      "training": 54,
+      "summary": 252,
+      "evaluations": 756,
+      "paired_summary": 168
+    }
+  },
+  "input_sha256": {
+    "data/main/audit.json": "dbfd0526bd20a7ae5240a601dd04fdd5ed2b49e1296caa24b2059c042986bd79",
+    "data/main/input_manifest.json": "2c02343f765a808a590a508e4b7d177171004958723d473dbb2cc32b46cfd233",
+    "data/main/paired_components.csv": "a6d7dc1ba5a283432e0cf9bae3aa9d8794dd374ffdd2eab2be3f393b040f553e",
+    "data/main/paired_components_summary.csv": "36fe022a5972fef311e2fda9069d521777d58c72ba7fd578092b6907a610b5fc",
+    "data/main/per_seed.csv": "a27c18e377f85e201b0de07133e8d6fb497c914624208eacd39f061e85dcb705",
+    "data/main/replay_audit.json": "6b4ea00a05ca209e53c8126bc71381acfda8c08bc59355939e3ecd1eeec4bef9",
+    "data/main/run_manifest.json": "fb9f8c7808515af2fdc30bddfd5dad78b8f0775dc95a24c65bb65a285d8e1975",
+    "data/main/runtime.json": "40d2d1f0647d5414c37a13a51f2c0306a18214e2849da1979eb6c40c78455bed",
+    "data/main/split_counts.json": "e0abbdcbe3df0ab5b36b3427b3c5579531865d8476b8f2cf565e862aa67e6a2d",
+    "data/main/summary.csv": "32daf50a6542147dc1a6f8ad8bb0e5fe7412b9c77901bee38c711636c4f76c7f",
+    "data/main/training_summary.csv": "f26438041b89128955d453b23a42b386c93b11e2c81a3b803e9051275092e6bc",
+    "data/main/verification.json": "38f87d42624534574bf47bd2d39b9d341003651d9acc320145f5896c134b9981",
+    "data/protected/attention_per_pair.csv": "e9ebecf67c332b5715ae7b55070bc1a90e42d91d0ee3aac4523e2b6a782f98e3",
+    "data/protected/audit.json": "7d5223c07d4b442605be6f27000a100eba746bdfcaf4465adc5e5931e9f1a3ac",
+    "data/protected/dataset_statistics.json": "b8c51a23fb58574f53aee9639aa36a4381b48094c0be3a8f0dc1b71b4e684dcb",
+    "data/protected/learned_parameters.csv": "5ca61579ba8738b8c94de2d12be09470fc9a20458eb73aa6202d565aea50e167",
+    "data/protected/paired_components.csv": "9149e835416da295489c82f987bd128b7f828423decf1f44fb9c3e7e4bc9b677",
+    "data/protected/paired_components_summary.csv": "70569ab9e93273a09c09245bc4bdc4ee4a53f77a0832a09c280a2eda18584f59",
+    "data/protected/per_seed.csv": "124b84160d39b972ce88db82fe5435b1703db66d8a6b695ac47286e7a3cbf96d",
+    "data/protected/protocol_audit.json": "6f3ae85ecdf2bbf1bed4c57c70c60e7ff8a6fa27a3b7b6a3b8b3dc1c47887bbd",
+    "data/protected/replay_audit.json": "35df45f7cf14837e875a2bd669f871f50d61c0e91d733714d2488c8722ce0882",
+    "data/protected/run_manifest.json": "a972bca3da850b52c5e8b4ddd722c16e6b67d78abb9a215a35b5a1797a42755b",
+    "data/protected/runtime.json": "fd31aaf754a42f325111942edf2427a22f9a4a01f3ab98c126828477be09ec36",
+    "data/protected/score_correlations.csv": "3ab2a029aebc9c1678c41b49fc2dc2765fd19951f8784775377ed66bf5334396",
+    "data/protected/strata_summary.csv": "ee678e2eda0cbaeeb0ead9eb899e51263bc219ea9e9e7a8a6a811af833c28274",
+    "data/protected/summary.csv": "13f63b1206f290bcc38a01cd4b200cf39cde0dbb7eca700bba888d8c8aff4f19",
+    "data/protected/training_summary.csv": "5140135a5bc575e5046d60c2b98d809cea8d6adebea80e928320f6b2a5664c9c",
+    "data/protected/verification.json": "4211a8dfb632aa5d1f1fb2d84a10ee7109d34ca1f837a6c6238354c12b6c6a41"
+  },
+  "mean_std_recomputed": true,
+  "unit": "all scores and differences times 100; sample SD ddof=1"
+}

@@ -1,0 +1,29 @@
+{\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{longtable}{llrrrrrr}
+\caption{主训练配置；统一采用 batch512，dropout 指预测器/共享配置（详见正文）}\\
+\toprule
+数据 & 模型 & 维数 & dropout & 学习率 & 衰减项 & LR因子 & 作者batch \\
+\midrule
+\endfirsthead
+\multicolumn{8}{l}{主训练配置；统一采用 batch512，dropout 指预测器/共享配置（详见正文）（续）}\\
+\toprule
+数据 & 模型 & 维数 & dropout & 学习率 & 衰减项 & LR因子 & 作者batch \\
+\midrule
+\endhead
+\midrule\multicolumn{8}{r}{续下页}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Cora & NCNC & 256 & 0.05 & 0.0043/0.0024 & 0.0 & 1.0 & 1152 \\
+Cora & LPFormer & 128 & 0.1 & 0.005 & 0.0 & 0.975 & 1024 \\
+Cora & Refined-GAE & 1024 & 0.6 & 0.005 & 0.01 & 1.0 & 2048 \\
+Citeseer & NCNC & 256 & 0.55 & 0.0085/0.0078 & 0.0 & 1.0 & 384 \\
+Citeseer & LPFormer & 256 & 0.1 & 0.005 & 0.0 & 0.95 & 1024 \\
+Citeseer & Refined-GAE & 1024 & 0.6 & 0.001 & 0.0 & 1.0 & 4096 \\
+PubMed & NCNC & 256 & 0.05 & 0.0097/0.002 & 0.0 & 1.0 & 2048 \\
+PubMed & LPFormer & 128 & 0.3 & 0.001 & 0.0001 & 1.0 & 1024 \\
+PubMed & Refined-GAE & 512 & 0.4 & 0.001 & 0.0 & 1.0 & 4096 \\
+\end{longtable}
+}

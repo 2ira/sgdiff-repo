@@ -1,0 +1,101 @@
+{\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{longtable}{lllrrrrrr}
+\caption{main 协议：每次训练的选点与资源记录}\\
+\toprule
+数据 & 模型 & 版本 & 种子 & 最优轮 & 停止轮 & 验证AUC & 秒 & GiB \\
+\midrule
+\endfirsthead
+\multicolumn{9}{l}{main 协议：每次训练的选点与资源记录（续）}\\
+\toprule
+数据 & 模型 & 版本 & 种子 & 最优轮 & 停止轮 & 验证AUC & 秒 & GiB \\
+\midrule
+\endhead
+\midrule\multicolumn{9}{r}{续下页}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Cora & NCNC & Full & 0 & 90 & 100 & 99.80 & 12.1 & 0.219 \\
+Cora & NCNC & Full & 1 & 20 & 50 & 99.50 & 20.1 & 0.219 \\
+Cora & NCNC & Full & 2 & 70 & 100 & 99.69 & 39.9 & 0.220 \\
+Cora & NCNC & noCN & 0 & 40 & 70 & 99.50 & 9.3 & 0.180 \\
+Cora & NCNC & noCN & 1 & 80 & 100 & 99.58 & 13.4 & 0.180 \\
+Cora & NCNC & noCN & 2 & 50 & 80 & 99.32 & 10.4 & 0.180 \\
+Cora & NCNC & noCNC & 0 & 100 & 100 & 99.56 & 19.5 & 0.205 \\
+Cora & NCNC & noCNC & 1 & 50 & 80 & 99.31 & 15.8 & 0.205 \\
+Cora & NCNC & noCNC & 2 & 70 & 100 & 99.31 & 20.7 & 0.205 \\
+Cora & LPFormer & Full & 0 & 10 & 40 & 99.51 & 19.4 & 0.730 \\
+Cora & LPFormer & Full & 1 & 30 & 60 & 99.83 & 56.5 & 0.741 \\
+Cora & LPFormer & Full & 2 & 40 & 70 & 99.36 & 26.3 & 0.726 \\
+Cora & LPFormer & noPE & 0 & 90 & 100 & 99.57 & 51.0 & 0.731 \\
+Cora & LPFormer & noPE & 1 & 20 & 50 & 99.70 & 45.5 & 0.741 \\
+Cora & LPFormer & noPE & 2 & 10 & 40 & 99.33 & 36.0 & 0.726 \\
+Cora & LPFormer & Uniform & 0 & 10 & 40 & 99.59 & 36.9 & 0.730 \\
+Cora & LPFormer & Uniform & 1 & 60 & 90 & 99.79 & 84.1 & 0.741 \\
+Cora & LPFormer & Uniform & 2 & 70 & 100 & 99.67 & 94.0 & 0.726 \\
+Cora & Refined-GAE & Full & 0 & 10 & 40 & 99.70 & 3.6 & 0.291 \\
+Cora & Refined-GAE & Full & 1 & 50 & 80 & 99.63 & 6.8 & 0.291 \\
+Cora & Refined-GAE & Full & 2 & 40 & 70 & 99.36 & 6.1 & 0.291 \\
+Cora & Refined-GAE & Dot & 0 & 40 & 70 & 99.55 & 4.9 & 0.215 \\
+Cora & Refined-GAE & Dot & 1 & 10 & 40 & 99.70 & 7.8 & 0.215 \\
+Cora & Refined-GAE & Dot & 2 & 40 & 70 & 99.64 & 12.5 & 0.215 \\
+Cora & Refined-GAE & noLN & 0 & 10 & 40 & 99.55 & 3.5 & 0.283 \\
+Cora & Refined-GAE & noLN & 1 & 40 & 70 & 99.85 & 13.9 & 0.283 \\
+Cora & Refined-GAE & noLN & 2 & 30 & 60 & 99.77 & 12.3 & 0.283 \\
+Citeseer & NCNC & Full & 0 & 10 & 40 & 100.00 & 5.2 & 0.357 \\
+Citeseer & NCNC & Full & 1 & 10 & 40 & 99.05 & 5.3 & 0.356 \\
+Citeseer & NCNC & Full & 2 & 40 & 70 & 99.91 & 8.8 & 0.357 \\
+Citeseer & NCNC & noCN & 0 & 10 & 40 & 99.98 & 2.8 & 0.315 \\
+Citeseer & NCNC & noCN & 1 & 10 & 40 & 99.66 & 5.8 & 0.315 \\
+Citeseer & NCNC & noCN & 2 & 40 & 70 & 99.88 & 9.5 & 0.315 \\
+Citeseer & NCNC & noCNC & 0 & 10 & 40 & 100.00 & 3.6 & 0.343 \\
+Citeseer & NCNC & noCNC & 1 & 30 & 60 & 99.88 & 11.7 & 0.343 \\
+Citeseer & NCNC & noCNC & 2 & 40 & 70 & 99.92 & 14.1 & 0.343 \\
+Citeseer & LPFormer & Full & 0 & 40 & 70 & 99.99 & 17.2 & 0.517 \\
+Citeseer & LPFormer & Full & 1 & 20 & 50 & 99.86 & 7.0 & 0.519 \\
+Citeseer & LPFormer & Full & 2 & 10 & 40 & 100.00 & 5.9 & 0.522 \\
+Citeseer & LPFormer & noPE & 0 & 60 & 90 & 99.95 & 17.1 & 0.517 \\
+Citeseer & LPFormer & noPE & 1 & 40 & 70 & 99.71 & 11.8 & 0.518 \\
+Citeseer & LPFormer & noPE & 2 & 10 & 40 & 100.00 & 16.5 & 0.522 \\
+Citeseer & LPFormer & Uniform & 0 & 20 & 50 & 99.97 & 7.1 & 0.517 \\
+Citeseer & LPFormer & Uniform & 1 & 20 & 50 & 99.85 & 7.5 & 0.519 \\
+Citeseer & LPFormer & Uniform & 2 & 30 & 60 & 100.00 & 23.5 & 0.522 \\
+Citeseer & Refined-GAE & Full & 0 & 10 & 40 & 99.97 & 4.3 & 0.376 \\
+Citeseer & Refined-GAE & Full & 1 & 30 & 60 & 99.79 & 6.5 & 0.376 \\
+Citeseer & Refined-GAE & Full & 2 & 10 & 40 & 100.00 & 4.7 & 0.376 \\
+Citeseer & Refined-GAE & Dot & 0 & 20 & 50 & 100.00 & 7.9 & 0.355 \\
+Citeseer & Refined-GAE & Dot & 1 & 10 & 40 & 99.98 & 5.0 & 0.355 \\
+Citeseer & Refined-GAE & Dot & 2 & 10 & 40 & 100.00 & 9.7 & 0.355 \\
+Citeseer & Refined-GAE & noLN & 0 & 10 & 40 & 99.96 & 4.3 & 0.375 \\
+Citeseer & Refined-GAE & noLN & 1 & 40 & 70 & 99.93 & 7.0 & 0.375 \\
+Citeseer & Refined-GAE & noLN & 2 & 10 & 40 & 100.00 & 9.5 & 0.375 \\
+PubMed & NCNC & Full & 0 & 40 & 70 & 99.74 & 100.4 & 0.528 \\
+PubMed & NCNC & Full & 1 & 10 & 40 & 99.72 & 57.3 & 0.528 \\
+PubMed & NCNC & Full & 2 & 10 & 40 & 99.60 & 64.0 & 0.527 \\
+PubMed & NCNC & noCN & 0 & 70 & 100 & 99.74 & 109.5 & 0.340 \\
+PubMed & NCNC & noCN & 1 & 10 & 40 & 99.70 & 32.5 & 0.340 \\
+PubMed & NCNC & noCN & 2 & 40 & 70 & 99.49 & 95.9 & 0.340 \\
+PubMed & NCNC & noCNC & 0 & 10 & 40 & 99.67 & 66.4 & 0.465 \\
+PubMed & NCNC & noCNC & 1 & 40 & 70 & 99.70 & 117.2 & 0.465 \\
+PubMed & NCNC & noCNC & 2 & 10 & 40 & 99.59 & 89.4 & 0.465 \\
+PubMed & LPFormer & Full & 0 & 20 & 50 & 99.97 & 246.3 & 2.975 \\
+PubMed & LPFormer & Full & 1 & 20 & 50 & 99.97 & 254.2 & 2.969 \\
+PubMed & LPFormer & Full & 2 & 10 & 40 & 99.93 & 236.9 & 2.982 \\
+PubMed & LPFormer & noPE & 0 & 20 & 50 & 99.97 & 284.5 & 2.975 \\
+PubMed & LPFormer & noPE & 1 & 40 & 70 & 99.96 & 376.1 & 2.969 \\
+PubMed & LPFormer & noPE & 2 & 30 & 60 & 99.92 & 278.1 & 2.982 \\
+PubMed & LPFormer & Uniform & 0 & 20 & 50 & 99.97 & 292.7 & 2.975 \\
+PubMed & LPFormer & Uniform & 1 & 70 & 100 & 99.98 & 572.7 & 2.969 \\
+PubMed & LPFormer & Uniform & 2 & 10 & 40 & 99.94 & 220.3 & 2.982 \\
+PubMed & Refined-GAE & Full & 0 & 10 & 40 & 99.82 & 51.0 & 0.462 \\
+PubMed & Refined-GAE & Full & 1 & 30 & 60 & 99.61 & 109.0 & 0.462 \\
+PubMed & Refined-GAE & Full & 2 & 50 & 80 & 99.61 & 143.8 & 0.462 \\
+PubMed & Refined-GAE & Dot & 0 & 10 & 40 & 99.35 & 73.2 & 0.458 \\
+PubMed & Refined-GAE & Dot & 1 & 10 & 40 & 99.14 & 73.7 & 0.458 \\
+PubMed & Refined-GAE & Dot & 2 & 10 & 40 & 99.13 & 70.6 & 0.458 \\
+PubMed & Refined-GAE & noLN & 0 & 10 & 40 & 99.57 & 68.8 & 0.462 \\
+PubMed & Refined-GAE & noLN & 1 & 10 & 40 & 99.34 & 69.4 & 0.462 \\
+PubMed & Refined-GAE & noLN & 2 & 10 & 40 & 99.27 & 68.9 & 0.462 \\
+\end{longtable}
+}

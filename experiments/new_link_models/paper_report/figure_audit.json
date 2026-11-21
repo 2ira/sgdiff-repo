@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "source_csv_sha256": {
+    "data/main/paired_components.csv": "a6d7dc1ba5a283432e0cf9bae3aa9d8794dd374ffdd2eab2be3f393b040f553e",
+    "data/main/paired_components_summary.csv": "36fe022a5972fef311e2fda9069d521777d58c72ba7fd578092b6907a610b5fc",
+    "data/main/per_seed.csv": "a27c18e377f85e201b0de07133e8d6fb497c914624208eacd39f061e85dcb705",
+    "data/main/summary.csv": "32daf50a6542147dc1a6f8ad8bb0e5fe7412b9c77901bee38c711636c4f76c7f",
+    "data/main/training_summary.csv": "f26438041b89128955d453b23a42b386c93b11e2c81a3b803e9051275092e6bc",
+    "data/protected/attention_per_pair.csv": "e9ebecf67c332b5715ae7b55070bc1a90e42d91d0ee3aac4523e2b6a782f98e3",
+    "data/protected/learned_parameters.csv": "5ca61579ba8738b8c94de2d12be09470fc9a20458eb73aa6202d565aea50e167",
+    "data/protected/paired_components.csv": "9149e835416da295489c82f987bd128b7f828423decf1f44fb9c3e7e4bc9b677",
+    "data/protected/paired_components_summary.csv": "70569ab9e93273a09c09245bc4bdc4ee4a53f77a0832a09c280a2eda18584f59",
+    "data/protected/per_seed.csv": "124b84160d39b972ce88db82fe5435b1703db66d8a6b695ac47286e7a3cbf96d",
+    "data/protected/score_correlations.csv": "3ab2a029aebc9c1678c41b49fc2dc2765fd19951f8784775377ed66bf5334396",
+    "data/protected/strata_summary.csv": "ee678e2eda0cbaeeb0ead9eb899e51263bc219ea9e9e7a8a6a811af833c28274",
+    "data/protected/summary.csv": "13f63b1206f290bcc38a01cd4b200cf39cde0dbb7eca700bba888d8c8aff4f19",
+    "data/protected/training_summary.csv": "5140135a5bc575e5046d60c2b98d809cea8d6adebea80e928320f6b2a5664c9c"
+  },
+  "output_pdf_sha256": {
+    "figures/lpformer_evaluated_architecture.pdf": "19d906dfac3abbfc62e8b6b4e9acacb9055afeeb074c3d33a55b2c88e1c3b3f9",
+    "figures/main_attack_curves.pdf": "d1c12495e7dbec611d4bc26f41d05a903c9f092ca7810673a7e6505631a44204",
+    "figures/main_component_effects.pdf": "5c8296396d10238443202854a7ee38bcdaa3efdc59bff7f67376206ec045893a",
+    "figures/main_full_models.pdf": "044bd882c410d1db64fcc5ac93712ea783a68747133d55da11abe8b68904643c",
+    "figures/ncnc_evaluated_architecture.pdf": "6cd21fa1c2c1b64eef411b5682c6b5bc6d0eb054fd7f58b4e69ab4cffaabb0d6",
+    "figures/protected_attack_curves.pdf": "aa069c931d9108902ce057385005c265126b7fd38c80bc93e0665d22e18af992",
+    "figures/protected_component_effects.pdf": "bc06c8ab7755c665a92979fbc3acbdecfe8c56216ed02b513901a1c025b452dd",
+    "figures/protected_performance_overview.pdf": "e8ee4475c669d02569e88b6a52eea01cd9b95189dd40d1a10868e7ae957d3cd2",
+    "figures/protected_probe_damage.pdf": "8ee8bf6428ea715e641506692ccf14de9fe8622585231862d5f13b4bff5c7d6e",
+    "figures/refined_evaluated_architecture.pdf": "4b9a4b5350a4ba671af0d3632ae5c14e4a76afbae4488f7ac8c809d8424d86d8"
+  },
+  "main_missing_cells": "PubMed EA only; checked explicitly",
+  "scores_multiplied_by": 100,
+  "uncertainty": "sample SD ddof=1",
+  "source": "included frozen result CSVs"
+}

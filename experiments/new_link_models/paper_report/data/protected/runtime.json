@@ -1,0 +1,33 @@
+{
+  "python": "3.10.12",
+  "torch": "2.3.0a0+6ddf5cf85e.nv24.04",
+  "cuda": "12.4",
+  "cxx11_abi": true,
+  "gpu": "NVIDIA H100 80GB HBM3 MIG 3g.40gb",
+  "gpu_memory_bytes": 42412802048,
+  "compute_capability": [
+    9,
+    0
+  ],
+  "cpu_affinity_count": 192,
+  "cpu_quota": "800000 100000",
+  "dependencies": {
+    "torch-geometric": "2.5.3",
+    "torch-scatter": "2.1.2",
+    "torch-sparse": "0.6.18",
+    "dgl": "1.1.3",
+    "numpy": "1.24.4",
+    "scipy": "1.12.0",
+    "scikit-learn": "1.2.0",
+    "numba": "0.59.0+1.g20ae2b56c",
+    "matplotlib": "3.8.4"
+  },
+  "base_commit": "d4b150c121625001f52ead23abf15aead1a4b665",
+  "core_files_sha256": {
+    "sgdiff/data/graph.py": "40e1b05c4c573f3f71e658286224c49c6331bd0fb313fec9f859e50cc2b76856",
+    "sgdiff/data/splits.py": "48311efd47c729f84368d1c0b1e5d1c4825e957c5d4500937c96a741df8f5e6e"
+  },
+  "implementation_commit": "d3da9041b294c63c56b8e2eb4bb5247e282e9ca4",
+  "workers": 2,
+  "peak_gpu_memory_definition": "Per-process torch.cuda.max_memory_allocated; excludes reserved/driver memory"
+}
