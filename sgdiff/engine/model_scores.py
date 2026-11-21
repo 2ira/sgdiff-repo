@@ -7,6 +7,7 @@ from .baseline_trainer import _edge_index
 from .course_baselines import score_course_model
 from .evaluator import _evaluation_context, _loader, score_pairs
 from .factory import build_extractor
+from ..models.baselines.node_pair import GAE_ABLATIONS
 from ..models.baselines.fsd import propagate_features
 
 
@@ -48,11 +49,12 @@ def frozen_scores(name, model, cfg, graph, pairs, features, observed, device, se
             return {name: score_pairs(model, extractor, pairs, bs, device, seed=seed)}
         cohorts = (pairs,) if cohort_boundary is None else (pairs[:cohort_boundary], pairs[cohort_boundary:])
         return sgdiff_streams(model, extractor, cohorts, bs, device, seed)
-    if name in ("gae", "fsd"):
+    if name in ("gae", "fsd", *GAE_ABLATIONS):
         edges = _edge_index(graph, device)
         if name == "fsd" and not observed.all():
             features = propagate_features(features, edges.cpu().numpy(), observed, method="fsd", gamma=1.2)
         x = torch.as_tensor(features, device=device)
-        z = model.encoder(x, edges, len(x))
+        z = (model.encode(x, edges, len(x)) if name in GAE_ABLATIONS
+             else model.encoder(x, edges, len(x)))
         return {name: model.score_pairs(z, torch.as_tensor(pairs, device=device)).cpu().numpy()}
     return {name: score_course_model(model, graph, pairs, features, device)}

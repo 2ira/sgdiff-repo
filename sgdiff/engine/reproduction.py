@@ -19,10 +19,12 @@ from .benchmark import build_registry, capped_train_split, fit_model, pairs_fing
 from .course_baselines import build_course_model
 from .factory import build_model, load_split
 from .model_scores import frozen_scores
-from .team_study import COMPONENTS, PRIMARY, settings, study_datasets, study_plan
+from ..models.baselines.node_pair import AblatedGAE, GAE_ABLATIONS
+from .team_study import COMPONENTS as HISTORICAL_COMPONENTS, PRIMARY, settings, study_datasets, study_plan
 from .trainer import Trainer, load_checkpoint
 
-OWNED = ("sgdiff", "sp4lp", "katz")
+OWNED = ("gae", "sp4lp", "katz")
+COMPONENTS = {**HISTORICAL_COMPONENTS, "gae": GAE_ABLATIONS}
 HEURISTICS = {"cn", "feature_cosine", "katz", *COMPONENTS["katz"]}
 PROTOCOL = "paired-citation-v1"
 
@@ -30,7 +32,7 @@ PROTOCOL = "paired-citation-v1"
 def expanded(names):
     for name in dict.fromkeys(names):
         yield name
-        if name in ("katz", "sp4lp"):
+        if name in ("katz", "sp4lp", "gae"):
             yield from COMPONENTS[name]
 
 
@@ -127,8 +129,9 @@ def training(cfg, dataset, seed, names, directory, device, padded_limit):
             model.structure.denoiser.max_padded_pairs = padded_limit
             Trainer(model, cfg, run_dir=ckpt.parent.parent).fit(datasets["train"], datasets["val"])
             continue
-        if name == "gae":
-            model = registry["fsd_none"].builder(graph.num_features, cfg)
+        if name == "gae" or name in GAE_ABLATIONS:
+            model = (registry["fsd_none"].builder(graph.num_features, cfg) if name == "gae"
+                     else AblatedGAE(graph.num_features, name))
             selected = {k: (d.pairs[d.labels == 1], d.pairs[d.labels == 0])
                         for k, d in datasets.items() if k != "train"}
             metrics = train_node_pair_baseline(model, graph, capped_train_split(split, cfg), device=device,
@@ -160,8 +163,11 @@ def restore(name, cfg, graph, ckpt, device, padded_limit):
         actual = ExperimentConfig.from_dict(payload["config"])
         if payload["name"] != ("gae" if name == "fsd" else name):
             raise ValueError(f"wrong checkpoint variant: {ckpt}")
-        spec = build_registry(cfg)["fsd_none" if name in ("gae", "fsd") else name]
-        model = spec.builder(graph.num_features, cfg)
+        if name in GAE_ABLATIONS:
+            model = AblatedGAE(graph.num_features, name)
+        else:
+            spec = build_registry(cfg)["fsd_none" if name in ("gae", "fsd") else name]
+            model = spec.builder(graph.num_features, cfg)
         model.load_state_dict(payload["model_state"])
         model.to(device)
     for section in ("data", "structure", "feature", "subgraph", "train", "model"):

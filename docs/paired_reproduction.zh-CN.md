@@ -1,6 +1,6 @@
 # DATA8002 链接预测的统一评测与三组组件消融
 
-**共同问题**　给定同一对论文，均匀删边与优先删去低度节点的连边，会让模型损失多少预测能力？属性能补回多少？框架可以给八种方法提供相同的受损输入。本组负责 SGDiff、SP4LP、Katz 三种方法的完整实验，另外五种只验证接口，由相应负责人分析。每组组件实验都覆盖干净条件和全部扰动条件。
+**共同问题**　给定同一对论文，均匀删边与优先删去低度节点的连边，会让模型损失多少预测能力？属性能补回多少？框架可以给八种方法提供相同的受损输入。本组负责 GAE、SP4LP、Katz 三种方法的完整实验，另外五种只验证接口，由相应负责人分析。每组组件实验都覆盖干净条件和全部扰动条件。
 
 ## 八种方法和分工边界
 
@@ -9,15 +9,15 @@
 | 基础 | cn | 数两个端点的共同邻居 | 仅验证接口 |
 | 基础 | feature_cosine | 比较两端词向量的夹角，一个向量为零时得零分 | 仅验证接口 |
 | 基础 | katz | 统计可重复经过节点的多跳游走，较长游走折扣更大 | **完整 H=5、H=3、H=2** |
-| 基础 | gae | 两层 GCN 从邻居聚合属性，以两个端点表示的内积打分 | 仅验证接口 |
+| 基础 | gae | 两层 GCN 从邻居聚合属性，以两个端点表示的内积打分 | **完整、去邻居聚合、去原始属性** |
 | 研究型适配 | fsd | 先用 FSD 的属性传播补全缺失行，再用与 GAE 共享权重的编码器预测 | 仅验证接口，范围为仓库实现的第一阶段 |
 | 研究型适配 | pencil | 一跳包围子图中的属性、DRNL 结构角色和端点标记经注意力编码 | 仅验证接口，代码为 PENCIL-style |
 | 论文方法适配 | sp4lp | GCN 汇集邻居属性，结合两端表示与最短路径上节点的表示 | **完整、仅端点、无原始属性** |
-| 论文方法复现 | sgdiff | 对有边和无边两个假设分别计算结构、属性条件扩散分数，再融合 | **完整、只读结构分支、只读属性分支** |
+| 论文方法复现 | sgdiff | 对有边和无边两个假设分别计算结构、属性条件扩散分数，再融合 | 接口已验证；原有检查点与读出结果已归档 |
 
 Katz 属于经典图方法。课程第 6 讲中按长度衰减路径证据的思想对应这份实现；具体代码使用有限长度的游走和。当前图最大度为 Δ 时，β=0.85/max(1,Δ)，H 跳模型对长度 1 至 H 的游走按 β 的相应幂加权求和。例子中 A–C–B 和 A–D–E–B 分别贡献 β² 和 β³。隐藏 A–B 后只保留两跳，排序等价于共同邻居。在有观测缺失的图上重新数游走。
 
-SP4LP 的仅端点版本重新训练 GCN 和端点读出，移除路径 Transformer；无原始属性版本将所有节点属性统一为常数 1，重新训练完整路径模型。二者分别测试路径模块和原始属性带来的增量。不同数据集、缺失类型及种子可以给出不同方向。SGDiff 的两项消融则测量同一模型的**推断时分支贡献**：固定扩散权重、融合参数、子图和随机抽样，将一个分支的两类分数都置零。属性扩散仍以邻接为条件。这个设计无法推断单独重新训练一种分支会达到的性能。各方法的源码入口、四人分工建议与图例见[方法讲解](team_study.zh-CN.md)。
+SP4LP 的仅端点版本重新训练 GCN 和端点读出，移除路径 Transformer；无原始属性版本将所有节点属性统一为常数 1，重新训练完整路径模型。二者分别测试路径模块和原始属性带来的增量。不同数据集、缺失类型及种子可以给出不同方向。GAE 的两个消融均在干净图上独立重训。去邻居聚合把每层的图传播换成恒等映射，节点自己的属性通过 32→16 维编码器后用内积解码。去原始属性给每个节点相同的标量 1，保留两层归一化 GCN 和内积解码，仍可区分邻域结构。此版本的输入层参数随输入维度减少。三个版本使用相同训练对、优化器、验证 AUROC 早停和推断图。各方法的源码入口、四人分工建议与图例见[方法讲解](team_study.zh-CN.md)。
 
 ## 输入、训练与测试
 
@@ -40,26 +40,27 @@ SP4LP 和其两个变体沿用 Part 2 的最多 2,000 个平衡训练对、最�
 
 ## 怎样重跑并核对结论
 
-从仓库根目录进入可用的 Python/PyTorch 环境，依赖见项目安装说明。已训练好的权重解压到 runs/pair 后可将 run 改为 evaluate。Mac 用 mps 运行 SGDiff，CPU 可运行其余模型。GPU 型号和版本应随报告记录。
+从仓库根目录进入可用的 Python/PyTorch 环境，依赖见项目安装说明。已训练好的权重解压到 runs/pair 后可将 run 改为 evaluate。本组的 GAE、SP4LP、Katz 均可在 CPU 上复现。
 
 ```bash
-python scripts/run_reproduction.py run --models sgdiff --device mps
-python scripts/run_reproduction.py run --models sp4lp katz --device cpu
+python scripts/run_reproduction.py run --models gae sp4lp katz --device cpu
 python scripts/audit_reproduction.py --out results/paired-reproduction/graph_diagnostics.csv
-python scripts/report_reproduction.py --out results/paired-reproduction/tables
+python scripts/report_reproduction.py --out results/paired-reproduction/owned-tables
 ```
 
 五个额外接口的最小检查只需一张图、一个种子和干净 / 联合扰动两个条件。已有权重时运行：
 
 ```bash
-python scripts/run_reproduction.py evaluate --models cn feature_cosine gae fsd pencil --datasets cora --seeds 0 --conditions clean joint_degree_delete_25 --device cpu
+python scripts/run_reproduction.py evaluate --models cn feature_cosine fsd pencil --datasets cora --seeds 0 --conditions clean joint_degree_delete_25 --device cpu
 ```
+
+SGDiff 的同批查询验证使用已归档的首轮校准权重，[独立命令见检查点说明](../results/paired-reproduction/sgdiff-milestone/README.md)。
 
 默认数据集为 cora 和 citeseer，种子为 0/1/2。每个命令支持指定数据集和种子，训练/评测入口支持单独选择方法，三个指定家族各自自动带上两个消融。若使用相邻仓库的数据，可追加 `--data-root ../sgdiff-repo/data` 到运行和 audit 命令。每个训练配置记录权重指纹，每个评分文件关联图指纹；评测可从已完成条件继续，SGDiff 从最近完整轮次的 last.pt 继续训练。汇总遇到缺失的请求单元直接报错。
 
 读表时先看 clean 绝对 AUROC/AP，再看同一种子 clean 减受扰值，最后看相同图上完整方法减去变体的配对差。正值表示完整方法较高。三种子报告样本标准差和差值为正的种子数。图诊断分正、负查询输出共同邻居数、较小端点度、端点孤立或无法连通的比例。约 0.8582 是[历史 Cora SGDiff RQ3](../results/sgdiff-paper-v2/robustness_cora__v2_seed0.json)三个种子的平均 AUROC，不能用作新的评分记录。此前 256 对小样本实验仅用于接口检查。[历史预算核对](../results/team-study/budget-audit/README.md) · [本次重训与原始预测](../results/paired-reproduction/README.md)
 
-端点度分组可用 `python scripts/report_degree_groups.py --models sp4lp katz --out degree.csv` 复算，SGDiff 权重评分齐备后可在同一入口加入 sgdiff。分组固定使用干净训练图中两端较小的度，界限为 0–1、2–3、4+，同时报告每组正负样本数。旧攻击中进入可见图的测试负对数可在 graph_diagnostics.csv 查到。
+端点度分组可用 `python scripts/report_degree_groups.py --models gae sp4lp katz --out degree.csv` 复算。分组固定使用干净训练图中两端较小的度，界限为 0–1、2–3、4+，同时报告每组正负样本数。旧攻击中进入可见图的测试负对数可在 graph_diagnostics.csv 查到。
 
 历史 v2 RQ3 实际跑了多少轮可以从训练日志逐种子数出来。下表按“扩散预训练 + 融合校准”记；同一预算在不同种子上触发早停的时刻不同。这些是团队复现日志中的轮次。
 

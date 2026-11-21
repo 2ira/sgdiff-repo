@@ -6,8 +6,10 @@ Cora，种子 0。使用同一批 1000 个测试节点对，从已有逐对输�
 |---|---|---|
 | cn | 通过 | 通过 |
 | feature_cosine | 通过 | 通过 |
-| gae | 通过 | 通过 |
+| sgdiff（首个校准权重） | 通过 | 通过 |
 | fsd | 通过 | 通过 |
 | pencil | 通过 | 通过 |
 
 [共享图和逐对输出归档](seven-methods/archives/cora_seed0.zip)
+
+[SGDiff 的 21 条件复验](sgdiff-milestone/conditions/per_seed.csv)

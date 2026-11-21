@@ -1,10 +1,27 @@
-# 本组正式实验：SGDiff、SP4LP、Katz
+# 本组正式实验：GAE、SP4LP、Katz
 
 [统一协议与三组消融](../../docs/paired_reproduction.zh-CN.md)。本目录只收录从新训练权重或无参数方法得到的结果。历史值在表中使用 archived 字段。
 
 - 图诊断包含两个数据集、三个种子、21 个条件的实际编辑数，以及正负查询端点的度、共同邻居、孤立和断连比例。[graph_diagnostics.csv](graph_diagnostics.csv)
 - 汇总程序从每个节点对的分数重新计算 AUROC/AP，核对测试对和输入图的 SHA-256 后才输出。结果表的 n 为独立种子数。components 中 full_minus_variant 的单位与 AUROC/AP 相同。
 - 每个已发布 ZIP 按数据集和种子保存输入图、训练/验证/测试对、逐查询预测、配方及相应推断权重。解压到仓库根目录后可复算表格与指标。清单中的 SHA-256 用于校验下载。文件夹名称标明实际包含的方法范围。
+
+## GAE 的鲁棒性与组件消融
+
+本组正式汇总共 1,134 组：3 个方法，每个方法 1 个完整版和 2 个消融版，2 张图、3 个种子、21 个条件。每组对同一批 1,000 个候选链接打分。[三种方法全部 AUROC/AP 及标准差](owned-tables/summary.csv) · [逐种子指标](owned-tables/per_seed.csv) · [配对组件差值](owned-tables/components.csv) · [按端点度分组](owned-tables/endpoint_degree.csv)
+
+GAE 使用已保存的六套完整版权重。本次另外训练了十二套权重：去聚合版本只看端点自己的词向量；去属性版本给每个节点同一个常数，再通过邻居传播得到表示。三个版本都用内积打分并在相同的干净验证集上选权重。[六份 GAE 归档，含全部权重与逐对预测](gae-archives)
+
+| 数据 | GAE 版本 | 干净 AUROC | 随机删边 50% | 属性遮蔽 50% | 低度删边和属性遮蔽各 50% |
+|---|---|---:|---:|---:|---:|
+| cora | gae | 0.7996 | 0.7466 | 0.7541 | 0.6720 |
+| cora | gae_no_neighbors | 0.6522 | 0.6522 | 0.5625 | 0.5625 |
+| cora | gae_no_attributes | 0.6798 | 0.6570 | 0.6798 | 0.6465 |
+| citeseer | gae | 0.7911 | 0.7638 | 0.7335 | 0.6898 |
+| citeseer | gae_no_neighbors | 0.7271 | 0.7271 | 0.5654 | 0.5654 |
+| citeseer | gae_no_attributes | 0.6401 | 0.6279 | 0.6401 | 0.6380 |
+
+从权重和图重新运行共享评分入口，378 组 GAE 预测均与原逐对分数完全一致。两张图上完整 GAE 的干净 AUROC 均高于两个消融版。在六个数据集/种子组合中，去邻居聚合的逐对预测在纯结构扰动下完全相同；去原始属性的逐对预测在纯属性遮蔽下完全相同。
 
 ## SP4LP 和 Katz 的完整鲁棒性与组件消融
 
@@ -29,7 +46,7 @@ Cora 的完整 SP4LP 在干净图上超过仅端点版本；随机删掉一半�
 
 [各条件的 AUROC/AP、标准差与相对干净降幅](sp4lp-katz/summary.csv) · [逐种子值及历史差值](sp4lp-katz/per_seed.csv) · [完整模型减去组件变体](sp4lp-katz/components.csv) · [六份可离线复验的归档与校验值](seven-methods/archives)
 
-SGDiff v2 的历史 Cora 三种子 clean AUROC 为 0.8582。本组的 SGDiff 结果待完整训练、融合校准和独立回算评分后列入本目录。
+SGDiff 的已有结果作为历史检查点归档。
 
 ## 同样删掉一半边，谁更受影响？
 
@@ -39,4 +56,4 @@ SGDiff v2 的历史 Cora 三种子 clean AUROC 为 0.8582。本组的 SGDiff 结
 
 ## 公共框架的其他五个接口
 
-本组交付的接口验证覆盖 CN、属性余弦、GAE、FSD、PENCIL-style。五者均已通过同一组干净 / 联合扰动查询的校验。[验证记录](interface-check.md)
+本组交付的接口验证覆盖 CN、属性余弦、SGDiff、FSD、PENCIL-style。五者均已通过同一组干净 / 联合扰动查询的校验。[验证记录](interface-check.md)

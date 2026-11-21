@@ -2,13 +2,15 @@ import copy
 
 import torch
 
-from sgdiff.engine.team_study import PRIMARY, COMPONENTS, study_plan
-from sgdiff.engine.reproduction import OWNED, conditions, expanded
+from sgdiff.engine.team_study import PRIMARY, study_plan
+from sgdiff.engine.reproduction import COMPONENTS, OWNED, conditions, expanded
 from sgdiff.models.transformer_denoiser import TransformerStructureDenoiser
 
 
 def test_owned_components_and_target_list():
-    assert set(OWNED) == set(COMPONENTS) == {"katz", "sp4lp", "sgdiff"}
+    assert set(OWNED) == {"katz", "sp4lp", "gae"}
+    assert list(expanded(["gae"])) == ["gae", "gae_no_neighbors", "gae_no_attributes"]
+    assert set(OWNED) <= set(COMPONENTS)
     assert len({c.name for c in conditions()}) == 21
     assert len(PRIMARY) == 8 and len(study_plan()) == 15
     assert list(expanded(["cn", "katz"])) == ["cn", "katz", "katz_h2", "katz_h3"]

@@ -1,6 +1,6 @@
 # SGDiff 复现仓库（中文说明）
 
-本组负责 SGDiff、SP4LP 和 Katz 的正式鲁棒性评测与组件消融。其余五种方法的接口验证、统一协议及实际产物见[统一实验协议](docs/paired_reproduction.zh-CN.md)。
+本组负责 GAE、SP4LP 和 Katz 的正式鲁棒性评测与组件消融。其余五种方法的接口验证、统一协议及实际产物见[统一实验协议](docs/paired_reproduction.zh-CN.md)。
 
 论文：**Sub-graph Based Diffusion Model for Link Prediction**（Li et al., LoG 2024）。
 

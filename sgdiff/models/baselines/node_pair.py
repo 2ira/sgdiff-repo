@@ -177,6 +177,25 @@ class NodePairLinkPredictor(nn.Module):
         return self.score_pairs(self.encode(x, edge_index, x.shape[0]), pairs)
 
 
+GAE_ABLATIONS = ("gae_no_neighbors", "gae_no_attributes")
+
+
+class AblatedGAE(NodePairLinkPredictor):
+    """Remove one input channel in both training and inference, keeping the dot decoder."""
+
+    def __init__(self, in_dim, variant):
+        if variant not in GAE_ABLATIONS:
+            raise ValueError(f"unknown GAE ablation: {variant}")
+        super().__init__(1 if variant == "gae_no_attributes" else in_dim,
+                         hidden_dim=32, out_dim=16, num_layers=2, dropout=0.0)
+        self.variant = variant
+
+    def encode(self, x, edge_index, num_nodes):
+        if self.variant == "gae_no_neighbors":
+            return self.encoder.forward_preaggregated(x, normalized_adjacency=None)
+        return self.encoder(x.new_ones((num_nodes, 1)), edge_index, num_nodes)
+
+
 class VGAE(nn.Module):
     """Variational graph auto-encoder with an inner-product decoder (Kipf & Welling)."""
 
