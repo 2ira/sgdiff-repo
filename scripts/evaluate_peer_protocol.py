@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from zipfile import ZipFile
 
 import numpy as np
 import torch
@@ -35,6 +36,28 @@ def bind_peer(peer):
         if Path(module.__file__).resolve() != source or source.read_bytes() != original:
             raise ValueError(f"Evaluator does not match pinned peer source: {source}")
     return protocol, run
+
+
+def stage_first_report_ea(output, dataset, seed, base_hash, published, protocol):
+    """Use the released graph, including for fresh runs with no cached attacks."""
+    directory = output / "attacks"
+    directory.mkdir(parents=True, exist_ok=True)
+    bundle = Path(__file__).resolve().parents[1] / "results/peer-protocol/predictions-and-graphs.zip"
+    for ratio in (0.1, 0.25, 0.5):
+        name = f"{dataset}_s{seed}_ea_{ratio:g}.npz"
+        path = directory / name
+        with protocol.cache_lock(path):
+            if not path.exists():
+                with ZipFile(bundle) as z:
+                    payload = z.read(f"attacks/{name}")
+                tmp = path.with_suffix(".npz.tmp")
+                tmp.write_bytes(payload)
+                tmp.replace(path)
+            with np.load(path) as cache:
+                expected = published[name]
+                if (str(cache["base_sha256"]) != base_hash or protocol.digest(cache["edges"]) != expected
+                        or json.loads(str(cache["statistics"]))["graph_sha256"] != expected):
+                    raise ValueError(f"Cache differs from Junxiong's original graph: {path}. Use a fresh output directory.")
 
 
 class FrozenPredictor:
@@ -86,6 +109,8 @@ def main():
                 for label in ("pos", "neg"):
                     key = f"{k}_{label}"
                     np.testing.assert_array_equal(getattr(split, key), getattr(original, key))
+            base = native.graph_with_edges(graph, np.vstack([split.train_pos, split.val_pos]))
+            stage_first_report_ea(a.output, dataset, seed, digest(base.edges), published, protocol)
             for name in expanded(("katz", "sp4lp")):
                 ckpt = checkpoint_path(a.weights, dataset, seed, name)
                 model = restore(name, cfg, graph, ckpt, "cpu", None)
@@ -119,6 +144,8 @@ def main():
                     actual = r["statistics"]["graph_sha256"]
                     saved_tag = "clean" if attack == "feature_shuffle" else tag
                     expected = published[f"{dataset}_s{seed}_{saved_tag}.npz"]
+                    if actual != expected:
+                        raise ValueError(f"Cached evaluation for {run}/{tag} used a different graph. Use a fresh output directory.")
                     rows.append(dict(dataset=dataset, seed=seed, family=family, model=name, condition=tag,
                                      positives=len(pos), negatives=len(neg), graph_hash_matches=int(actual==expected),
                                      graph_sha256=actual, peer_graph_sha256=expected,

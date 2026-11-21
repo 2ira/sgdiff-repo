@@ -24,7 +24,7 @@ SGDiff 保留主论文的直接比较对象。研究模型覆盖 2024 年的 [NC
 
 SP4LP 复用本组在各自干净训练划分上训练的 18 套权重（训练查询上限 2,000，最多 300 轮）。Lin 的三种学习模型用其原批次目标边遮蔽、最多 100 轮的训练配方。这里统一测试查询、指标和扰动规则，各模型保留自己的训练预算。Katz 直接数游走。
 
-**合并表格时选取图指纹一致的条件。** 每种子 11 个非 EA 条件的边指纹都与对方归档相同；特征打乱还复用了同一版本的特征置换代码、节点顺序与种子。三档 EA 用同学原代码在 CPU 上生成，18 张 EA 图均与对方发布的指纹不同。EA 可以在这次生成的同一张图内比较 SP4LP 和 Katz；与 Lin 的三模型做逐图对照时应使用其原始 EA 边缓存。总计 396 组来自边指纹一致的条件，108 组属于单列的 CPU EA。[同学的逐图审计](https://github.com/2ira/sgdiff-repo/blob/95083da808e500c02da458e205f4b861ceb80871/experiments/new_link_models/benchmarks/protocol_audit.json)
+**五模型在第一版协议下的全部 14 个条件已对齐。** 本次复用 Junxiong 第一版的 18 张 EA 原图和此前的模型权重，重评两个方法及各自消融，共 108 组。原图文件逐字节一致，6 份划分逐元素一致；本组 504 组结果的边指纹全部匹配第一版审计。其余 396 组非 EA 记录保留原值。Cora、CiteSeer 在 EA 50% 下，完整 SP4LP 的三种子平均 AUROC 分别为 0.8953、0.8948，完整 Katz 为 0.8214、0.7745。[五模型对比、组件结果和核验明细](five-models/README.md)。
 
 表中是三个种子的平均 AUROC（0–1）。Lin 的报告表以百分数展示；引用前需统一量纲。
 
@@ -57,7 +57,7 @@ Katz 在两张图上都对高度优先删边更敏感。CiteSeer 上 SP4LP 对�
 
 ## 复算
 
-从本分支根目录执行。使用已安装本仓库依赖的 Python 环境，PubMed 原始数据位于项目的数据根目录。先解压本组各数据集已有的权重，再运行同一个入口。三个数据集都由 Junxiong 的原生 `evaluate` 驱动，训练配方仍保留各方法原有设置。
+从本分支根目录执行。使用已安装本仓库依赖的 Python 环境，PubMed 原始数据位于项目的数据根目录。请用新的输出目录，以免复用历史 CPU EA 预测。先解压本组各数据集已有的权重，再运行同一个入口。三个数据集都由 Junxiong 的原生 `evaluate` 驱动，训练配方仍保留各方法原有设置。
 
 ```bash
 git fetch origin feat/ncnc-lpformer-refined-gae
@@ -67,9 +67,9 @@ for archive in results/paired-reproduction/seven-methods/archives/*_seed*.zip re
     unzip -oq "$archive" 'runs/pair/*' -d .
 done
 unzip -oq results/peer-protocol/pubmed/pubmed_ea_graphs.zip -d runs/pubmed-cache
-unzip -oq results/peer-protocol/predictions-and-graphs.zip 'attacks/*' -d runs/lin-eval
-python scripts/evaluate_peer_protocol.py --peer ../lin-eval --peer-data ../lin-peer-data --data-root data --output runs/lin-eval --tables runs/peer-tables --pubmed-ea-cache runs/pubmed-cache/attacks
-python scripts/verify_pubmed_extension.py --peer ../lin-eval --output runs/lin-eval/pubmed --tables runs/peer-tables/pubmed --ea-cache runs/pubmed-cache/attacks
+unzip -oq results/peer-protocol/predictions-and-graphs.zip 'attacks/*' -d runs/lin-first-report
+python scripts/evaluate_peer_protocol.py --peer ../lin-eval --peer-data ../lin-peer-data --data-root data --output runs/lin-first-report --tables runs/peer-tables --pubmed-ea-cache runs/pubmed-cache/attacks
+python scripts/verify_pubmed_extension.py --peer ../lin-eval --output runs/lin-first-report/pubmed --tables runs/peer-tables/pubmed --ea-cache runs/pubmed-cache/attacks
 ```
 
 [Cora 与 CiteSeer 的逐对预测、测试划分和实际使用的攻击图](predictions-and-graphs.zip) · [PubMed 归档与复用说明](pubmed/README.md)。
