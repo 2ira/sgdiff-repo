@@ -9,7 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from report_reproduction import historical, read_seed
-from sgdiff.engine.reproduction import HEURISTICS, PRIMARY, checkpoint_path, digest, expanded
+from sgdiff.engine.reproduction import HEURISTICS, OWNED, PRIMARY, checkpoint_path, digest, expanded
 
 
 def package(dataset, seed, names, root, weights, out):
@@ -47,7 +47,7 @@ def package(dataset, seed, names, root, weights, out):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--models", nargs="+", choices=PRIMARY, default=list(PRIMARY))
+    p.add_argument("--models", nargs="+", choices=PRIMARY, default=list(OWNED))
     p.add_argument("--datasets", nargs="+", default=["cora","citeseer"])
     p.add_argument("--seeds", nargs="+", type=int, default=[0,1,2])
     p.add_argument("--root", type=Path, default=Path("results/paired-reproduction"))

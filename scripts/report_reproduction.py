@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from sgdiff.engine.reproduction import COMPONENTS, PRIMARY, conditions, digest, expanded
+from sgdiff.engine.reproduction import COMPONENTS, OWNED, PRIMARY, conditions, digest, expanded
 
 
 def historical(dataset):
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--datasets", nargs="+", default=["cora","citeseer"])
     p.add_argument("--seeds", nargs="+", type=int, default=[0,1,2])
-    p.add_argument("--models", nargs="+", choices=PRIMARY, default=list(PRIMARY))
+    p.add_argument("--models", nargs="+", choices=PRIMARY, default=list(OWNED))
     p.add_argument("--root", type=Path, default=Path("results/paired-reproduction"))
     p.add_argument("--out", type=Path, required=True)
     a = p.parse_args()

@@ -1,17 +1,17 @@
 # DATA8002 链接预测的统一评测与三组组件消融
 
-**共同问题**　给定同一对论文，均匀删边与优先删去低度节点的连边，会让模型损失多少预测能力？属性能补回多少？我们先在干净图上训练，固定权重，再让八种方法看同一份受损输入。每组组件实验都覆盖干净条件和全部扰动条件。
+**共同问题**　给定同一对论文，均匀删边与优先删去低度节点的连边，会让模型损失多少预测能力？属性能补回多少？框架可以给八种方法提供相同的受损输入。本组负责 SGDiff、SP4LP、Katz 三种方法的完整实验，另外五种只验证接口，由相应负责人分析。每组组件实验都覆盖干净条件和全部扰动条件。
 
 ## 八种方法和分工边界
 
 | 类型 | 命令名 | 用什么证据预测两篇论文相连 | 本组组件实验 |
 |---|---|---|---|
-| 基础 | cn | 数两个端点的共同邻居 | 主比较 |
-| 基础 | feature_cosine | 比较两端词向量的夹角，一个向量为零时得零分 | 主比较 |
+| 基础 | cn | 数两个端点的共同邻居 | 仅验证接口 |
+| 基础 | feature_cosine | 比较两端词向量的夹角，一个向量为零时得零分 | 仅验证接口 |
 | 基础 | katz | 统计可重复经过节点的多跳游走，较长游走折扣更大 | **完整 H=5、H=3、H=2** |
-| 基础 | gae | 两层 GCN 从邻居聚合属性，以两个端点表示的内积打分 | 主比较 |
-| 研究型适配 | fsd | 先用 FSD 的属性传播补全缺失行，再用与 GAE 共享权重的编码器预测 | 主比较，范围为仓库实现的第一阶段 |
-| 研究型适配 | pencil | 一跳包围子图中的属性、DRNL 结构角色和端点标记经注意力编码 | 主比较，代码为 PENCIL-style |
+| 基础 | gae | 两层 GCN 从邻居聚合属性，以两个端点表示的内积打分 | 仅验证接口 |
+| 研究型适配 | fsd | 先用 FSD 的属性传播补全缺失行，再用与 GAE 共享权重的编码器预测 | 仅验证接口，范围为仓库实现的第一阶段 |
+| 研究型适配 | pencil | 一跳包围子图中的属性、DRNL 结构角色和端点标记经注意力编码 | 仅验证接口，代码为 PENCIL-style |
 | 论文方法适配 | sp4lp | GCN 汇集邻居属性，结合两端表示与最短路径上节点的表示 | **完整、仅端点、无原始属性** |
 | 论文方法复现 | sgdiff | 对有边和无边两个假设分别计算结构、属性条件扩散分数，再融合 | **完整、只读结构分支、只读属性分支** |
 
@@ -44,9 +44,15 @@ SP4LP 和其两个变体沿用 Part 2 的最多 2,000 个平衡训练对、最�
 
 ```bash
 python scripts/run_reproduction.py run --models sgdiff --device mps
-python scripts/run_reproduction.py run --models cn feature_cosine katz gae fsd pencil sp4lp --device cpu
+python scripts/run_reproduction.py run --models sp4lp katz --device cpu
 python scripts/audit_reproduction.py --out results/paired-reproduction/graph_diagnostics.csv
 python scripts/report_reproduction.py --out results/paired-reproduction/tables
+```
+
+五个额外接口的最小检查只需一张图、一个种子和干净 / 联合扰动两个条件。已有权重时运行：
+
+```bash
+python scripts/run_reproduction.py evaluate --models cn feature_cosine gae fsd pencil --datasets cora --seeds 0 --conditions clean joint_degree_delete_25 --device cpu
 ```
 
 默认数据集为 cora 和 citeseer，种子为 0/1/2。每个命令支持指定数据集和种子，训练/评测入口支持单独选择方法，三个指定家族各自自动带上两个消融。若使用相邻仓库的数据，可追加 `--data-root ../sgdiff-repo/data` 到运行和 audit 命令。每个训练配置记录权重指纹，每个评分文件关联图指纹；评测可从已完成条件继续，SGDiff 从最近完整轮次的 last.pt 继续训练。汇总遇到缺失的请求单元直接报错。
