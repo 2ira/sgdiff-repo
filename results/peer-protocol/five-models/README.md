@@ -2,6 +2,12 @@
 
 Cora、CiteSeer 各三个种子，每个种子评 EA 10%、25%、50%。本次用原图重新计算了 Katz、SP4LP 及四个消融的 108 组预测，沿用干净条件的冻结权重。NCNC、LPFormer、Refined-GAE 的成绩取自 Junxiong 第一版逐种子表。两组使用相同的测试对、受扰动的图及指标函数，各模型的训练配方和预算沿用原实验。[第一版评测记录](https://github.com/2ira/sgdiff-repo/blob/95083da808e500c02da458e205f4b861ceb80871/experiments/new_link_models/benchmarks/per_seed.csv) · [发布的原图、划分和清单](https://github.com/2ira/sgdiff-repo/tree/5d8242701e2325b2dec8461a16d3b4963876b892/experiments/new_link_models/benchmarks/ea_graphs)
 
+## 训练配置对排名的影响
+
+这些成绩比较各自已训练配置在同一评测输入上的表现。SP4LP 使用宽度 64 的单层 GCN 和单层 Transformer；训练损失仅使用 1,000 个正对和 1,000 个负对，完整训练图仍用于节点传播。在 Cora，原训练划分含 4,222 个正对；CiteSeer 为 3,641 个正对。Junxiong 第一版的三个学习模型遍历完整训练正负对，并按批次更新参数。本组 SP4LP 则在每轮内累积所有批次的梯度，再更新一次参数，最多 300 轮，以验证 AUROC 每 5 轮选一次权重，连续 6 次未提升即停止。现有 SP4LP 检查点保存了配置、权重和指标，缺少逐轮历史与最佳轮数，所以实际训练轮数和是否充分收敛仍待实证核验。[本组训练器](../../../sgdiff/engine/course_baselines.py) · [检查点保存逻辑](../../../sgdiff/engine/reproduction.py) · [Junxiong 的训练器](https://github.com/2ira/sgdiff-repo/blob/95083da808e500c02da458e205f4b861ceb80871/experiments/new_link_models/run.py#L54-L110)
+
+SP4LP 论文表 1 使用 HeaRT 的困难负例和 MRR、Hits@K。这里使用随机负例及 AUROC、AP，模型排序可能改变。论文附录表 10 为 Cora/CiteSeer 列出隐藏维度 128，所固定作者仓库的 Cora 配置则为 256，本组为 64。这些配置存在差异，后续忠实复现需要明确采用的论文或代码版本。现有表格可以支持本配置下的鲁棒性和组件分析；验证 SP4LP 方法在该任务上的充分训练表现，需要补做完整训练样本、作者配置和带逐轮日志的训练对照，并以验证集选择配置。[论文实验设置](https://arxiv.org/html/2507.07138v2#A4) · [固定作者 Cora 配置](https://github.com/francescoferrini/sp4lp/blob/1b664cbb91eb0b88f7c99dca20754664f92632d0/configs/cora.json)
+
 ## 完整模型
 
 各格为三个种子的平均 AUROC / AP，均按 0–1 展示。最后一列为同种子干净 AUROC 减 EA 50% AUROC 的平均差，单位为百分点。
