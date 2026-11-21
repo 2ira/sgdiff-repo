@@ -5,6 +5,15 @@ protocol**. This experiment is independent of the older baseline trainer. It
 does not overwrite SGDiff v2 results, and its numbers must not be presented as
 reproductions of the original models' paper tables.
 
+**EA comparability:** the new EA changes the attack input graph, budget
+denominator, surrogate sampling and deletion/insertion allocation relative to
+the existing repository implementation. All 18 measured new EA graphs contain
+insertions only. These are substantive protocol differences, not just random
+seeds, and the two EA result tables must not be directly combined. The original
+protocol comparison for the three new models has not been run.
+[Download the exact 18 snapshots, six clean graphs and six original splits](benchmarks/ea_graphs/README.zh-CN.md),
+with a detailed comparison, file hashes and a NumPy-only verification script.
+
 For model mechanisms and the meaning of each ablation, see the
 [Chinese model guide](MODEL_GUIDE.zh-CN.md).
 

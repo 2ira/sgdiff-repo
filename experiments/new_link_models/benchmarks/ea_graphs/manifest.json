@@ -1,0 +1,1301 @@
+{
+  "protocol": "new-link-models-evasion-v2-common-batch512",
+  "copied_from": "new_link_formal_v3 actual evaluation caches; no regeneration",
+  "num_nodes": {
+    "cora": 2708,
+    "citeseer": 3327
+  },
+  "source_code_sha256": {
+    "__init__.py": "988f49e229f68f1a373b0e3ef59ec34e12c295b828423558a299b41f52c2ad39",
+    "adapters.py": "cad94771cef21f5cdcf53b32e5d0b35233a06119a1a5f7323bc8ebb214b04cb8",
+    "ppr_backend.py": "d5fe180e8de50e5e5c1d2b2e699e338fcd508f85949c9598c3f4d96ae006ee8c",
+    "protocol.py": "7567b820fa0ea9eca5152bfe25bde882031247a64113f3a8cce1990c3f6cb98d",
+    "run.py": "454f0e7425cea400d389011f0a5235f8fe26919ba6bd34d67bea418c9ae3cde4",
+    "sources.py": "33917016f6a922be37573bac5d34178a5a163a1161619d7dd1beb5a7e0735743",
+    "sources.lock.json": "53833e2c3b064ef7acfb71c6d8c7be62a806b998d204e9632568605b3f2ea780"
+  },
+  "contexts": [
+    {
+      "dataset": "cora",
+      "seed": 0,
+      "clean_file": "clean/cora_s0_clean.npz",
+      "split_file": "splits/cora_seed0.npz",
+      "base_sha256": "391ce1b424eae5ad803f8956523a1191062ee833884f91f9f1c0a5c2435bdd10"
+    },
+    {
+      "dataset": "cora",
+      "seed": 1,
+      "clean_file": "clean/cora_s1_clean.npz",
+      "split_file": "splits/cora_seed1.npz",
+      "base_sha256": "643ac1f89546b02ba1e983485e6c388a5b989f88899c684cbb80cbb0a3c9afd2"
+    },
+    {
+      "dataset": "cora",
+      "seed": 2,
+      "clean_file": "clean/cora_s2_clean.npz",
+      "split_file": "splits/cora_seed2.npz",
+      "base_sha256": "42196bb13eda46c2c5239b6e015dd25c1f015d6a77422abbad2d25ea8abf660c"
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 0,
+      "clean_file": "clean/citeseer_s0_clean.npz",
+      "split_file": "splits/citeseer_seed0.npz",
+      "base_sha256": "c8e157b33092b009f1af225aba6fc9ba000eae685299cff312c6048b54e08b33"
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 1,
+      "clean_file": "clean/citeseer_s1_clean.npz",
+      "split_file": "splits/citeseer_seed1.npz",
+      "base_sha256": "22d2d7972c45779c42bdac042042786e18fe9485ac0876c472132bee657507e8"
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 2,
+      "clean_file": "clean/citeseer_s2_clean.npz",
+      "split_file": "splits/citeseer_seed2.npz",
+      "base_sha256": "3ae81dde4a1690a5e8e268885843000aa7babfe5d1cdd95da2d6f8a20122f4e0"
+    }
+  ],
+  "graphs": [
+    {
+      "dataset": "cora",
+      "seed": 0,
+      "ratio": 0.1,
+      "file": "graphs/cora_s0_ea_0.1.npz",
+      "base_sha256": "391ce1b424eae5ad803f8956523a1191062ee833884f91f9f1c0a5c2435bdd10",
+      "graph_sha256": "f6c317641b65696422a4372a6119827f250059649643bb38fdef45225f20c083",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.1,
+        "requested_budget": 449,
+        "deleted": 0,
+        "inserted": 449,
+        "effective_edits": 449,
+        "base_edges": 4486,
+        "graph_sha256": "f6c317641b65696422a4372a6119827f250059649643bb38fdef45225f20c083",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 0
+        }
+      ]
+    },
+    {
+      "dataset": "cora",
+      "seed": 0,
+      "ratio": 0.25,
+      "file": "graphs/cora_s0_ea_0.25.npz",
+      "base_sha256": "391ce1b424eae5ad803f8956523a1191062ee833884f91f9f1c0a5c2435bdd10",
+      "graph_sha256": "c3b7381f7a57095e1b02ecdb529f35e8083522f08466aecd1d3c146995e3aa30",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.25,
+        "requested_budget": 1122,
+        "deleted": 0,
+        "inserted": 1122,
+        "effective_edits": 1122,
+        "base_edges": 4486,
+        "graph_sha256": "c3b7381f7a57095e1b02ecdb529f35e8083522f08466aecd1d3c146995e3aa30",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 0
+        }
+      ]
+    },
+    {
+      "dataset": "cora",
+      "seed": 0,
+      "ratio": 0.5,
+      "file": "graphs/cora_s0_ea_0.5.npz",
+      "base_sha256": "391ce1b424eae5ad803f8956523a1191062ee833884f91f9f1c0a5c2435bdd10",
+      "graph_sha256": "7eee15b7f491fbc4d8fa759fb4812664d7e2b5fc8408cb4083f4d0f7eb53e3a4",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.5,
+        "requested_budget": 2243,
+        "deleted": 0,
+        "inserted": 2243,
+        "effective_edits": 2243,
+        "base_edges": 4486,
+        "graph_sha256": "7eee15b7f491fbc4d8fa759fb4812664d7e2b5fc8408cb4083f4d0f7eb53e3a4",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 0
+        }
+      ]
+    },
+    {
+      "dataset": "cora",
+      "seed": 1,
+      "ratio": 0.1,
+      "file": "graphs/cora_s1_ea_0.1.npz",
+      "base_sha256": "643ac1f89546b02ba1e983485e6c388a5b989f88899c684cbb80cbb0a3c9afd2",
+      "graph_sha256": "a3b095408260091e5e5beb4335033a3ce91e99b2eba3a1605ecc397fcd026777",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.1,
+        "requested_budget": 449,
+        "deleted": 0,
+        "inserted": 449,
+        "effective_edits": 449,
+        "base_edges": 4486,
+        "graph_sha256": "a3b095408260091e5e5beb4335033a3ce91e99b2eba3a1605ecc397fcd026777",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 1
+        }
+      ]
+    },
+    {
+      "dataset": "cora",
+      "seed": 1,
+      "ratio": 0.25,
+      "file": "graphs/cora_s1_ea_0.25.npz",
+      "base_sha256": "643ac1f89546b02ba1e983485e6c388a5b989f88899c684cbb80cbb0a3c9afd2",
+      "graph_sha256": "ae9e0ca25bc4c9127c518944388824b20e77ada9a1f4e5b036b2740fc381cd81",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.25,
+        "requested_budget": 1122,
+        "deleted": 0,
+        "inserted": 1122,
+        "effective_edits": 1122,
+        "base_edges": 4486,
+        "graph_sha256": "ae9e0ca25bc4c9127c518944388824b20e77ada9a1f4e5b036b2740fc381cd81",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 1
+        }
+      ]
+    },
+    {
+      "dataset": "cora",
+      "seed": 1,
+      "ratio": 0.5,
+      "file": "graphs/cora_s1_ea_0.5.npz",
+      "base_sha256": "643ac1f89546b02ba1e983485e6c388a5b989f88899c684cbb80cbb0a3c9afd2",
+      "graph_sha256": "d1087c5a16ce076fcf10c980c70a20544946b23b98c5f13b0851f056c156dc34",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.5,
+        "requested_budget": 2243,
+        "deleted": 0,
+        "inserted": 2243,
+        "effective_edits": 2243,
+        "base_edges": 4486,
+        "graph_sha256": "d1087c5a16ce076fcf10c980c70a20544946b23b98c5f13b0851f056c156dc34",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 1
+        }
+      ]
+    },
+    {
+      "dataset": "cora",
+      "seed": 2,
+      "ratio": 0.1,
+      "file": "graphs/cora_s2_ea_0.1.npz",
+      "base_sha256": "42196bb13eda46c2c5239b6e015dd25c1f015d6a77422abbad2d25ea8abf660c",
+      "graph_sha256": "094a57b4cf3a643d7a6f666718b19db2c062975ed2b8b45e82502f54be815f69",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.1,
+        "requested_budget": 449,
+        "deleted": 0,
+        "inserted": 449,
+        "effective_edits": 449,
+        "base_edges": 4486,
+        "graph_sha256": "094a57b4cf3a643d7a6f666718b19db2c062975ed2b8b45e82502f54be815f69",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 2
+        }
+      ]
+    },
+    {
+      "dataset": "cora",
+      "seed": 2,
+      "ratio": 0.25,
+      "file": "graphs/cora_s2_ea_0.25.npz",
+      "base_sha256": "42196bb13eda46c2c5239b6e015dd25c1f015d6a77422abbad2d25ea8abf660c",
+      "graph_sha256": "21b3b7db27ca5b3799fd98ea22bf21c63b177db9e7e7afdf17933135dadc0d3b",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.25,
+        "requested_budget": 1122,
+        "deleted": 0,
+        "inserted": 1122,
+        "effective_edits": 1122,
+        "base_edges": 4486,
+        "graph_sha256": "21b3b7db27ca5b3799fd98ea22bf21c63b177db9e7e7afdf17933135dadc0d3b",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 2
+        }
+      ]
+    },
+    {
+      "dataset": "cora",
+      "seed": 2,
+      "ratio": 0.5,
+      "file": "graphs/cora_s2_ea_0.5.npz",
+      "base_sha256": "42196bb13eda46c2c5239b6e015dd25c1f015d6a77422abbad2d25ea8abf660c",
+      "graph_sha256": "5b9339d245250463e2c7b8667c5c1e74e1ef6d8207cc8ea5850df3b082e809ee",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.5,
+        "requested_budget": 2243,
+        "deleted": 0,
+        "inserted": 2243,
+        "effective_edits": 2243,
+        "base_edges": 4486,
+        "graph_sha256": "5b9339d245250463e2c7b8667c5c1e74e1ef6d8207cc8ea5850df3b082e809ee",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 2
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 0,
+      "ratio": 0.1,
+      "file": "graphs/citeseer_s0_ea_0.1.npz",
+      "base_sha256": "c8e157b33092b009f1af225aba6fc9ba000eae685299cff312c6048b54e08b33",
+      "graph_sha256": "538bc884eab96dd39e7be28a2fb5abdac954dd6d7e24a6bb37dffabcde1e3afb",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.1,
+        "requested_budget": 387,
+        "deleted": 0,
+        "inserted": 387,
+        "effective_edits": 387,
+        "base_edges": 3869,
+        "graph_sha256": "538bc884eab96dd39e7be28a2fb5abdac954dd6d7e24a6bb37dffabcde1e3afb",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 0
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 0,
+      "ratio": 0.25,
+      "file": "graphs/citeseer_s0_ea_0.25.npz",
+      "base_sha256": "c8e157b33092b009f1af225aba6fc9ba000eae685299cff312c6048b54e08b33",
+      "graph_sha256": "57b24c551f10326c7fbf2729f2169b362f0c44d18d2d20e71c947e9fa490e544",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.25,
+        "requested_budget": 967,
+        "deleted": 0,
+        "inserted": 967,
+        "effective_edits": 967,
+        "base_edges": 3869,
+        "graph_sha256": "57b24c551f10326c7fbf2729f2169b362f0c44d18d2d20e71c947e9fa490e544",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 0
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 0,
+      "ratio": 0.5,
+      "file": "graphs/citeseer_s0_ea_0.5.npz",
+      "base_sha256": "c8e157b33092b009f1af225aba6fc9ba000eae685299cff312c6048b54e08b33",
+      "graph_sha256": "46087e0e8256716284d135667f231d74263985cc3e0efb5b1617e423f4661781",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.5,
+        "requested_budget": 1934,
+        "deleted": 0,
+        "inserted": 1934,
+        "effective_edits": 1934,
+        "base_edges": 3869,
+        "graph_sha256": "46087e0e8256716284d135667f231d74263985cc3e0efb5b1617e423f4661781",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 0
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 0
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 0
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 0
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 1,
+      "ratio": 0.1,
+      "file": "graphs/citeseer_s1_ea_0.1.npz",
+      "base_sha256": "22d2d7972c45779c42bdac042042786e18fe9485ac0876c472132bee657507e8",
+      "graph_sha256": "055e8abeca8f623f7cfd347121ec16b1b2751903765fb6fd16c3e60859af0f6d",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.1,
+        "requested_budget": 387,
+        "deleted": 0,
+        "inserted": 387,
+        "effective_edits": 387,
+        "base_edges": 3869,
+        "graph_sha256": "055e8abeca8f623f7cfd347121ec16b1b2751903765fb6fd16c3e60859af0f6d",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 1
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 1,
+      "ratio": 0.25,
+      "file": "graphs/citeseer_s1_ea_0.25.npz",
+      "base_sha256": "22d2d7972c45779c42bdac042042786e18fe9485ac0876c472132bee657507e8",
+      "graph_sha256": "50a2d29e3f8e7739c361c684a92c38cad667bebe05402477bd6706c495769d41",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.25,
+        "requested_budget": 967,
+        "deleted": 0,
+        "inserted": 967,
+        "effective_edits": 967,
+        "base_edges": 3869,
+        "graph_sha256": "50a2d29e3f8e7739c361c684a92c38cad667bebe05402477bd6706c495769d41",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 1
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 1,
+      "ratio": 0.5,
+      "file": "graphs/citeseer_s1_ea_0.5.npz",
+      "base_sha256": "22d2d7972c45779c42bdac042042786e18fe9485ac0876c472132bee657507e8",
+      "graph_sha256": "c9e6465a723ce17730f32fad3a8ac234b55edfca23eb5011da139e5d2b343b6e",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.5,
+        "requested_budget": 1934,
+        "deleted": 0,
+        "inserted": 1934,
+        "effective_edits": 1934,
+        "base_edges": 3869,
+        "graph_sha256": "c9e6465a723ce17730f32fad3a8ac234b55edfca23eb5011da139e5d2b343b6e",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 1
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 1
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 1
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 1
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 2,
+      "ratio": 0.1,
+      "file": "graphs/citeseer_s2_ea_0.1.npz",
+      "base_sha256": "3ae81dde4a1690a5e8e268885843000aa7babfe5d1cdd95da2d6f8a20122f4e0",
+      "graph_sha256": "8cffdc4ef4a2ca72cf590f2181eef9f365c85251cd87d82f150aa9908e5b02ef",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.1,
+        "requested_budget": 387,
+        "deleted": 0,
+        "inserted": 387,
+        "effective_edits": 387,
+        "base_edges": 3869,
+        "graph_sha256": "8cffdc4ef4a2ca72cf590f2181eef9f365c85251cd87d82f150aa9908e5b02ef",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 2
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 2,
+      "ratio": 0.25,
+      "file": "graphs/citeseer_s2_ea_0.25.npz",
+      "base_sha256": "3ae81dde4a1690a5e8e268885843000aa7babfe5d1cdd95da2d6f8a20122f4e0",
+      "graph_sha256": "a2c5eda0d06f60da86768bc6ae9c903a010fc314df3002570ac2e4ed3dcbed47",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.25,
+        "requested_budget": 967,
+        "deleted": 0,
+        "inserted": 967,
+        "effective_edits": 967,
+        "base_edges": 3869,
+        "graph_sha256": "a2c5eda0d06f60da86768bc6ae9c903a010fc314df3002570ac2e4ed3dcbed47",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 2
+        }
+      ]
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 2,
+      "ratio": 0.5,
+      "file": "graphs/citeseer_s2_ea_0.5.npz",
+      "base_sha256": "3ae81dde4a1690a5e8e268885843000aa7babfe5d1cdd95da2d6f8a20122f4e0",
+      "graph_sha256": "786aa14984136457e807dde0403b16d12a771f235c35408acc622d84ea6dd461",
+      "statistics": {
+        "attack": "ea",
+        "ratio": 0.5,
+        "requested_budget": 1934,
+        "deleted": 0,
+        "inserted": 1934,
+        "effective_edits": 1934,
+        "base_edges": 3869,
+        "graph_sha256": "786aa14984136457e807dde0403b16d12a771f235c35408acc622d84ea6dd461",
+        "attacker_labels": "none",
+        "implementation": "visible-graph linear surrogate, 60 steps"
+      },
+      "used_by": [
+        {
+          "model": "lpformer",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "no_ppr_encoding",
+          "seed": 2
+        },
+        {
+          "model": "lpformer",
+          "component": "uniform_attention",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_cn",
+          "seed": 2
+        },
+        {
+          "model": "ncnc",
+          "component": "no_completion",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "dot_decoder",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "full",
+          "seed": 2
+        },
+        {
+          "model": "refined_gae",
+          "component": "no_norm",
+          "seed": 2
+        }
+      ]
+    }
+  ],
+  "file_sha256": {
+    "clean/cora_s0_clean.npz": "0d85af8ca753765e513cc53df381b4263d1878a03f9998b066d2aae73da7081e",
+    "splits/cora_seed0.npz": "670480fecfbb6efc36c2a235c52dac3f4f8cfc34f97e1a750055818c8bcb067c",
+    "graphs/cora_s0_ea_0.1.npz": "26fe37420f156cd7e979ef5f1336b9130f74e4c5200610efc402f48fd286e434",
+    "graphs/cora_s0_ea_0.25.npz": "b1b26412ccf000fbd7afdb11865fa666d1ce07eb60fb52b62b2864ee6f86b533",
+    "graphs/cora_s0_ea_0.5.npz": "d32350c0beba70341879457bbf1b34c3a0d3ec1bb8717f8571f583c4d4cb376a",
+    "clean/cora_s1_clean.npz": "5d1182cfe227cf0fee57ff82c1e2dc01394284c4d717a893d3755e1ece84eeb2",
+    "splits/cora_seed1.npz": "ace34f9d668dc33fb5e25c2e4906e1950bf1aa2d33a6e6882185df959d25dde2",
+    "graphs/cora_s1_ea_0.1.npz": "1b3ca3052f1293e8cbae8464fa36f397a75743e3e551cc8a4b18dec3b4d383fa",
+    "graphs/cora_s1_ea_0.25.npz": "a6a93812ba38372d47042452a52e465af65810e13be68a29406e644a71091e3e",
+    "graphs/cora_s1_ea_0.5.npz": "fc565ac581b9c081e6b78cbbc54bf540ab5c2cda58172e2eed029729784c6117",
+    "clean/cora_s2_clean.npz": "b818dded12d69e47814983db89b10afa7142e1524fe24cf99e610b9541f39795",
+    "splits/cora_seed2.npz": "9bbabe22b16466afbc480ecb15e84a212dafeafa096f5c698cedb5efaa35b750",
+    "graphs/cora_s2_ea_0.1.npz": "4b370e08cab244e14e559f5ca1dfe370fe079d4003c43fb52aa8980bad277cea",
+    "graphs/cora_s2_ea_0.25.npz": "a4d020e3b9924d37bcbe0161a9290f31d1a421f67ed824f7588f3eb9058b5ef8",
+    "graphs/cora_s2_ea_0.5.npz": "69643cb631d261d2eb66d2c6059fcea7006cff472c38c484c5e110f477d99507",
+    "clean/citeseer_s0_clean.npz": "502c0c1149debad07a3f70ae4ce229f0ea4b2e57d36200c44e321aac6d5f7fa5",
+    "splits/citeseer_seed0.npz": "d2cfab20efc3289ed8c1354cd0050d193669818a603966f7d8334c5ab073e745",
+    "graphs/citeseer_s0_ea_0.1.npz": "e8b39def3667b3295b0bf3616f54975a6efb932866334e3574c83ee8a564d6ed",
+    "graphs/citeseer_s0_ea_0.25.npz": "830ba11835b975547cf182e79abc991b016bb9c01294d687bebc317e4d332589",
+    "graphs/citeseer_s0_ea_0.5.npz": "d77f5436fe4bbc6d0235e0fc710af6b7eefe62eb43c2d83f67eabbaaabdd2b9a",
+    "clean/citeseer_s1_clean.npz": "42c87b8b7a56d45459e75f48fccd2633ab98f4847ed3cc8375f162031f76a3b5",
+    "splits/citeseer_seed1.npz": "0191f24b52e3a0ca01ac339e2a35250cace57b1a544c4f17495a4cc62efbcd99",
+    "graphs/citeseer_s1_ea_0.1.npz": "a0c86a08c7092d36a14ec15fb6ad308407d522280e95cb7fe3a8ea32144fc6ea",
+    "graphs/citeseer_s1_ea_0.25.npz": "b54172e1b1124bbbba2ab952654862f9a56a8fc4e14ff4a17b4c774163ff99f9",
+    "graphs/citeseer_s1_ea_0.5.npz": "be70481ca6679094438251f1d9c991187def3f33a36250b45a169cd1c90cf1eb",
+    "clean/citeseer_s2_clean.npz": "496525498a584dbf11d9c721ea8b1de4648df5450411377091d64c064f145353",
+    "splits/citeseer_seed2.npz": "80ad485a5296c7076f1aec40e1d751a29c61a4c3928b1e4b8575b93d5d20bbec",
+    "graphs/citeseer_s2_ea_0.1.npz": "e6c61bf8c127ce3f5a2d65e1fbea69dea0115dd1a7947e42e8e37da735a8cf92",
+    "graphs/citeseer_s2_ea_0.25.npz": "ff75a289ed0456533156f14b04dce4bc25cff558f300794f2afbf383ab724caf",
+    "graphs/citeseer_s2_ea_0.5.npz": "0c87833997e0a7a881d7863dd9c4475f79bcda72f8de554f513e29c167fb11ea"
+  }
+}

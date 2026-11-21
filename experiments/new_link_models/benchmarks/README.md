@@ -8,6 +8,11 @@ Protocol: `new-link-models-evasion-v2-common-batch512`.
   rows, 168 paired component rows, actual edit budgets, 54 training records and
   all 756 seed-level evaluations, with AUC/AP/Hits@100/Precision@100 and drops.
 - [Chinese findings](FINDINGS.zh-CN.md): mechanism interpretation and limitations.
+- [Exact 18 EA graphs](ea_graphs/README.zh-CN.md), plus six clean inference graphs
+  and six original splits. These are byte-for-byte snapshots used by the measured
+  runs, with hashes and a NumPy-only verifier. Their EA protocol differs from the
+  original repository's input graph, budget denominator, sampling and edit
+  allocation; do not combine the corresponding performance tables directly.
 - Four integrated figures appear before the report's tables: all-condition
   AUC/AP heatmaps, AUC/AP attack curves with sample-SD bars, paired perturbation
   damage and paired component effects. Each has standalone PNG/PDF exports:
