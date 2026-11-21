@@ -1,14 +1,16 @@
-# Katz 主模型与 SP4LP 扩展：按 Lin Junxiong 的协议重新评测
+# Katz 与 SP4LP 两个主模型：按 Lin Junxiong 的协议重新评测
 
-## 模型名单与分工
+## 八模型建议与已确定分工
 
-| 用途 | 模型 |
-|---|---|
-| 团队截图中的建议八模型 | SGDiff、SEAL、PENCIL、GCN、GAT、VGAE、RGCN、Katz |
-| Lin Junxiong 已完成的独立研究 | NCNC、LPFormer、Refined-GAE |
-| 本组负责（两个） | Katz 属于建议八模型；SP4LP 作为扩展单列 |
+| 席位 | 方法 | 状态 |
+|---|---|---|
+| 1–3 | NCNC、LPFormer、Refined-GAE | Lin Junxiong 已完成三种方法的鲁棒性与组件消融 |
+| 4–5 | Katz、SP4LP | 本组负责的两种主模型，各有完整模型和两个组件对照 |
+| 6 | SGDiff | 建议由其他成员负责。作为主论文模型，可用结构分数、属性分数及融合分数研究两类证据如何变化；算力需求最高。 |
+| 7 | 属性余弦（Feature Cosine） | 建议由其他成员负责。它只用两端的词向量，固定测试对后删边不会改变分数，特征打乱则改变分数。无需训练；如需组件对照，可去掉范数归一化，比较原始点积。 |
+| 8 | SEAL-style | 建议由其他成员负责。在和 SGDiff 相近的包围子图上做判别式预测，可重训去 DRNL 角色标签、去节点属性两个版本，与路径模型及扩散模型形成对照。 |
 
-Lin 的三种模型与建议八模型按模型名称的交集为空。他的 Refined-GAE 改动了编码器/解码器设计，与普通 GAE、VGAE 分属不同配置。本组先前完成的普通 GAE 移入[观测缺失实验归档](../paired-reproduction/README.md)。两份名单分别描述研究分工和已完成实验，跨组对比共用同一评测协议。
+后三席是推荐选项，尚待组内认领。本次实验范围仅 Katz 和 SP4LP。普通 GAE 的既有结果保存在[观测缺失实验归档](../paired-reproduction/README.md)。仓库已有[SEAL-style 实现](../../sgdiff/models/baselines/seal.py)和[属性基线实现](../../sgdiff/engine/course_baselines.py)。
 
 ## Cora 与 CiteSeer 的横向比较
 

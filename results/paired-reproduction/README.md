@@ -1,6 +1,6 @@
 # 历史归档：GAE、SP4LP、Katz 的 21 条件评测
 
-当前分工为 **Katz（建议八模型中的主模型）和 SP4LP（扩展）**，横向比较采用 Lin Junxiong 的 14 条件评测。普通 GAE 已归档。[团队建议名单、评测对齐与新结果](../peer-protocol/README.md)。
+本组负责 **Katz 和 SP4LP 两个主模型**，横向比较采用 Lin Junxiong 的 14 条件评测。普通 GAE 已归档。[团队建议名单、评测对齐与新结果](../peer-protocol/README.md)。
 
 [统一协议与三组消融](../../docs/paired_reproduction.zh-CN.md)。本目录只收录从新训练权重或无参数方法得到的结果。历史值在表中使用 archived 字段。
 

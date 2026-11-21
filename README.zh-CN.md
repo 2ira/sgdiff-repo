@@ -1,6 +1,6 @@
 # SGDiff 复现仓库（中文说明）
 
-当前分工为 **Katz（建议八模型中的主模型）和 SP4LP（扩展）**，横向比较采用 Lin Junxiong 的 14 条件评测。普通 GAE 已归档。[团队建议名单、评测对齐与新结果](results/peer-protocol/README.md)。
+本组负责 **Katz 和 SP4LP 两个主模型**，横向比较采用 Lin Junxiong 的 14 条件评测。普通 GAE 已归档。[团队建议名单、评测对齐与新结果](results/peer-protocol/README.md)。
 
 旧版观测缺失实验、既有接口及归档结果见[统一实验协议](docs/paired_reproduction.zh-CN.md)。
 
