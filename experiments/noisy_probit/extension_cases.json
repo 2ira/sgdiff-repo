@@ -1,0 +1,119 @@
+{
+  "small_n30": {
+    "n": 30,
+    "beta": [
+      1.0,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.8,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.05,
+    "noise": "iid"
+  },
+  "larger_n120": {
+    "n": 120,
+    "beta": [
+      1.0,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.8,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.05,
+    "noise": "iid"
+  },
+  "sparse": {
+    "n": 60,
+    "beta": [
+      -2.5,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.8,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.05,
+    "noise": "iid"
+  },
+  "weak_reciprocity": {
+    "n": 60,
+    "beta": [
+      1.0,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.2,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.05,
+    "noise": "iid"
+  },
+  "strong_reciprocity": {
+    "n": 60,
+    "beta": [
+      1.0,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.95,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.05,
+    "noise": "iid"
+  },
+  "audit_one_percent": {
+    "n": 60,
+    "beta": [
+      1.0,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.8,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.01,
+    "noise": "iid"
+  },
+  "audit_ten_percent": {
+    "n": 60,
+    "beta": [
+      1.0,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.8,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.1,
+    "noise": "iid"
+  },
+  "heterogeneous_errors": {
+    "n": 60,
+    "beta": [
+      1.0,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.8,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.05,
+    "noise": "heterogeneous"
+  },
+  "correlated_errors": {
+    "n": 60,
+    "beta": [
+      1.0,
+      -0.5,
+      2.0
+    ],
+    "rho": 0.8,
+    "fp": 0.05,
+    "fn": 0.2,
+    "audit_fraction": 0.05,
+    "noise": "correlated"
+  }
+}

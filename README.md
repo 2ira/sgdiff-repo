@@ -431,3 +431,11 @@ their original licences (see `data/README.md`).
 ## GCN ablation integration
 
 The [GCN input ablations and cross-dataset transfer experiments](experiments/gcn_ablation/README.md) reuse this repository's GCN encoder and pair decoder while preserving their original experimental protocol. See the [overlap and protocol review](docs/gcn_ablation_integration.md) before comparing their archived results with the existing benchmark.
+
+## Reciprocal-probit measurement-error study
+
+The `yichao_dev` research extension separately studies conditional error channels
+in reciprocal-probit networks. It is not an SGDiff training benchmark. See the
+[six-parameter study and reproduction guide](experiments/noisy_probit/directional_channel/README.md),
+[English report](deliverables/noisy_probit_directional_english/report.pdf), and
+[slides](deliverables/noisy_probit_directional_english/slides.pdf).

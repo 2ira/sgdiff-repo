@@ -1,0 +1,156 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{amsmath,amssymb,array,booktabs,pgfplots}
+\pgfplotsset{compat=1.18}
+\definecolor{navy}{HTML}{18324B}
+\definecolor{teal}{HTML}{007F7A}
+\definecolor{orange}{HTML}{BB5C28}
+\definecolor{graytext}{HTML}{626F7C}
+\setbeamercolor{normal text}{fg=navy,bg=white}
+\setbeamercolor{structure}{fg=teal}
+\setbeamercolor{frametitle}{fg=navy}
+\setbeamercolor{alerted text}{fg=orange}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{\hfill\scriptsize\color{graytext}\insertframenumber/\inserttotalframenumber\hspace{5mm}\vspace{3mm}}
+\setbeamertemplate{frametitle}{\vspace{4mm}\insertframetitle\par\vspace{1mm}{\color{teal}\rule{\textwidth}{0.6pt}}}
+\setbeamersize{text margin left=8mm,text margin right=8mm}
+\pdfstringdefDisableCommands{\def\translate#1{#1}}
+\makeatletter\newcommand{\tableinput}[1]{\@@input #1 }\makeatother
+\newcommand{\source}[1]{\vfill{\scriptsize\color{graytext}#1}\par}
+\newcommand{\finding}[1]{\par\vspace{3mm}{\color{teal}\bfseries #1}\par}
+\input{data/macros.tex}
+\title{Directional Error Dependence in Reciprocal Probit Networks}
+\author{Independent simulation study}
+\date{22 November 2026}
+\begin{document}
+\begin{frame}[plain]
+\vspace{10mm}{\small\color{teal}SIX-PARAMETER MEASUREMENT CHANNEL}\par\vspace{6mm}
+{\LARGE\bfseries Directional Error Dependence\par in Reciprocal Probit Networks}\par\vspace{6mm}
+{\large Independent replication of the asymmetry stress test}\par
+\vfill\small 22 November 2026\hfill 800 fresh simulated networks
+\end{frame}
+
+\begin{frame}{Question and primary result}
+Does separating the error correlations of true states 01 and 10 improve the five-parameter model and retain Full-channel performance with fewer audits?
+\begin{itemize}
+\item Six measurement parameters, compared with five for the pooled model and twelve for Full.
+\item Equal-budget RMSE ratio: \textbf{\SameRatio}, 95\% paired interval \textbf{\SameCI}. Retention rule: \textbf{\SameResult}.
+\item Half-budget RMSE ratio: \textbf{\HalfRatio}, interval \textbf{\HalfCI}. Retention rule: \textbf{\HalfResult}.
+\end{itemize}
+\source{Primary estimand: structural latent correlation $\rho$. The frozen rule also requires a coverage lower bound of at least 90\% and empirical numerical failures at most 1\%. A passed tolerance rule does not establish exact equivalence or universal audit savings.}
+\end{frame}
+
+\begin{frame}{The six-parameter conditional error channel}
+For true state $t\in\{00,01,10,11\}$, let $r_0=\alpha$, $r_1=\gamma$ and
+\[
+E_k=\mathbf1\{Z_k\leq\Phi^{-1}(r_{t_k})\},\qquad
+Z\mid Y=t\sim N_2\!\left(0,\begin{bmatrix}1&\kappa_t\\\kappa_t&1\end{bmatrix}\right).
+\]
+With $a_k=2(t_k\oplus o_k)-1$, the channel is
+\[
+C_{t,o}=\Phi_2\!\left(a_1\Phi^{-1}(r_{t_1}),a_2\Phi^{-1}(r_{t_2});a_1a_2\kappa_t\right).
+\]
+\begin{itemize}
+\item Six parameters: $\alpha,\gamma,\kappa_{00},\kappa_{01},\kappa_{10},\kappa_{11}$.
+\item $\kappa_{01}=\kappa_{10}$ recovers Five exactly.
+\item Shared FP/FN margins remain a restriction. Four free row couplings span their interior binary distributions.
+\end{itemize}
+\source{Total fitted dimensions: Five 9, Six 10, Full 16. FP/FN rates lie in $(0,.5)$. Latent Gaussian $\kappa_t$ is not the binary error correlation.}
+\end{frame}
+
+\begin{frame}{Fresh paired validation and frozen criteria}
+\begin{center}\small
+\begin{tabular}{lcl}
+\toprule Truth & $(\kappa_{00},\kappa_{01},\kappa_{10},\kappa_{11})$ & Networks\\\midrule
+Asymmetric, primary & $(.75,-.65,.45,.20)$ & 400\\[2mm]
+Symmetric control & $(.75,-.25,-.25,.20)$ & 400\\\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item $n=90$, $\beta=(-.2,.6,1.1)$, $\rho=.5$, FP $=.06$, FN $=.22$.
+\item Nested random audits: 100 / 200 dyads, revealing 200 / 400 true directed labels. Methods share data and audits.
+\item Two primary claims: Six(200)/Full(200) and Six(100)/Full(200).
+\item Required: RMSE-ratio upper bound $\leq1.10$, coverage Wilson lower bound $\geq.90$, empirical failure rate $\leq1\%$.
+\end{itemize}
+\source{10,000 paired network bootstrap samples, one-sided .025 allocation per primary RMSE claim. Fresh seeds replicate earlier parameter settings intentionally. Internal prospective lock, not public preregistration. The 1,600 network-budget cells are not independent replicates.}
+\end{frame}
+
+\begin{frame}{Asymmetric truth: structural and channel recovery}
+\begin{center}\small\setlength{\tabcolsep}{5pt}
+\begin{tabular}{rlrrrrr}\tableinput{data/asymmetric.tex}\end{tabular}
+\end{center}
+\source{400 networks per row. Structural columns refer to $\rho=.5$, with nominal 95\% interval coverage. Channel RMSE pools squared error over all networks and all 16 channel entries. At 200 audits, structural RMSE MCSE: \FiveMCSE{} / \SixMCSE{} / \FullMCSE{} for Five / Six / Full.}
+\end{frame}
+
+\begin{frame}{Prespecified comparisons with Full}
+\begin{center}\small\setlength{\tabcolsep}{5pt}
+\begin{tabular}{rccrc}\tableinput{data/primary.tex}\end{tabular}
+\end{center}
+\vspace{3mm}
+Six coverage is \SameCoverage\% at 200 audits and \HalfCoverage\% at 100 audits.
+\begin{itemize}
+\item Measurement dimension decreases by 50\% relative to Full.
+\item The half-budget claim concerns gold-label counts, not monetary cost.
+\item Prior sensitivity and the symmetric control remain separate descriptive checks.
+\end{itemize}
+\source{Coverage LCB is the lower two-sided 95\% Wilson bound. Its values are \SameLowerCoverage\% and \HalfLowerCoverage\%. A rule that is not met precludes the specified retention claim without proving inferiority.}
+\end{frame}
+
+\begin{frame}{State-specific error estimates}
+\begin{center}\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrr}\tableinput{data/nuisance.tex}\end{tabular}
+\end{center}
+\vspace{3mm}
+The asymmetric design has $\kappa_{01}=-.65$ and $\kappa_{10}=.45$.
+Separating these parameters permits a conditional error mechanism that Five cannot represent.
+\source{Entries are means of mapped transformed-coordinate modes across 400 networks. True FP=.06 and FN=.22. Correlations near sparse error cells may remain weakly identified. Channel recovery is descriptive and separate from the prespecified structural retention claims.}
+\end{frame}
+
+\begin{frame}{Symmetric control: effect of extra flexibility}
+\begin{center}\small\setlength{\tabcolsep}{5pt}
+\begin{tabular}{rlrrrrr}\tableinput{data/symmetric.tex}\end{tabular}
+\end{center}
+\source{400 new networks per row. Five is correctly specified here. This control evaluates relaxing a true restriction. Five and Six induce different priors on pooled dependence. The same fitting settings and common-channel initialization apply in both scenarios.}
+\end{frame}
+
+\begin{frame}{Prespecified prior sensitivity}
+\begin{center}\small\setlength{\tabcolsep}{5pt}
+\begin{tabular}{rlrrrrr}\tableinput{data/sensitivity.tex}\end{tabular}
+\end{center}
+\source{Primary asymmetric scenario, 400 networks. Six-S: independent $(\kappa_t+1)/2\sim\mathrm{Beta}(2,2)$. Full-S: row $\mathrm{Dirichlet}(4C_{0,t})$, with independent FP=FN=.1. The main models use uniform correlations and Full row $\mathrm{Dirichlet}(.5,.5,.5,.5)$ priors. Priors are not information-equivalent.}
+\end{frame}
+
+\begin{frame}{Posterior and numerical diagnostics}
+\begin{center}\scriptsize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrr}\tableinput{data/mcmc.tex}\end{tabular}
+\end{center}
+\begin{itemize}
+\item Fixed first primary seed, 100 audited dyads, four chains.
+\item \Failures{} failed fits out of \Fits{}. Fitted-event probability-floor activations: \Floor.
+\item Median total fitting seconds at 200 audits: \FiveTime{} / \SixTime{} / \FullTime{} for Five / Six / Full.
+\end{itemize}
+\source{MCMC intervals refer to $\rho$. Diagnostics cover all unconstrained coordinates. The sampler evaluates the same density without computing unused gradients. Timings include common initialization and reflect concurrent CPU workloads. Expanded-domain sensitivity is documented in the report and archived diagnostics.}
+\end{frame}
+
+\begin{frame}{Interpretation and limits}
+\input{data/interpretation_slide.tex}
+\begin{itemize}
+\item Shared marginal error rates, homogeneous channels, and a meaningful fixed direction convention remain assumptions.
+\item Unordered dyads are independent, and audits are random and error-free.
+\item Fresh seeds test replication of these mechanisms, not external validity on real networks.
+\end{itemize}
+\source{Collapsed reciprocal-probit likelihood, mapped transformed-coordinate modes, and joint-Hessian intervals. No validation-driven estimator selection. All sensitivities and unsuccessful diagnostic attempts remain available.}
+\end{frame}
+
+\begin{frame}{Related work and reproducibility}
+\small
+Correlated misclassification and internal validation are established methods:
+\begin{itemize}
+\item Roy \& Banerjee (2009), \emph{Biometrical Journal} 51, 420--432. \href{https://doi.org/10.1002/bimj.200800127}{doi:10.1002/bimj.200800127}.
+\item Tang et al. (2015), \emph{JRSS C} 64, 433--449. \href{https://doi.org/10.1111/rssc.12081}{doi:10.1111/rssc.12081}.
+\item Newman (2018), \emph{Physical Review E} 98, 062321. \href{https://doi.org/10.1103/PhysRevE.98.062321}{doi:10.1103/PhysRevE.98.062321}.
+\end{itemize}
+\vspace{3mm}
+Code, the frozen protocol, compressed fit records, posterior checks, and editable sources accompany the study on the \texttt{yichao\_dev} branch.
+\source{The tested contribution is the six-parameter dyad channel and its empirical tradeoffs. This is a separate reciprocal-probit study, not an SGDiff benchmark.}
+\end{frame}
+\end{document}

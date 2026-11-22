@@ -1,0 +1,111 @@
+\documentclass[10pt]{article}
+\usepackage[letterpaper,margin=.74in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,xcolor,hyperref}
+\definecolor{navy}{HTML}{18324B}\definecolor{teal}{HTML}{007F7A}
+\hypersetup{colorlinks=true,linkcolor=teal,urlcolor=teal,citecolor=teal,pdftitle={Directional Error Dependence in Reciprocal Probit Networks}}
+\setlength{\parindent}{0pt}\setlength{\parskip}{4pt}\setlength{\tabcolsep}{6pt}\renewcommand{\arraystretch}{1.08}
+\makeatletter\newcommand{\tableinput}[1]{\@@input #1 }\makeatother
+\input{data/macros.tex}
+\begin{document}
+\begin{center}
+{\Large\bfseries\color{navy}Directional Error Dependence\\in Reciprocal Probit Networks}\\[4pt]
+{\normalsize A six-parameter channel and independent replication study}\\[5pt]
+{\small 22 November 2026}
+\end{center}
+\begin{abstract}\noindent
+We relax the equality of measurement-error correlations for true dyad states 01 and 10. The resulting channel has six measurement parameters, compared with five for the pooled model and twelve for an unrestricted channel. We evaluate 800 fresh simulated networks under asymmetric and symmetric dependence, using paired audit budgets. In the primary asymmetric scenario, the Six/Full RMSE ratio for structural reciprocity is \SameRatio{} \SameCI{} at equal budgets and \HalfRatio{} \HalfCI{} at half the audit budget. The respective prespecified retention rules are \SameResult{} and \HalfResult{}. We separately report channel recovery, prior sensitivity, and numerical diagnostics. The results concern the specified synthetic mechanisms and do not establish external validity on real networks.
+\end{abstract}
+\section{Model and prospective design}
+The earlier five-parameter channel pools dependence across true states 01 and 10. Directional asymmetry violates this restriction. The present study isolates the effect of removing it, while preserving the structural model, shared marginal error rates, and inference procedure. Correlated misclassification and internal validation have established precedents \cite{roy,tang}, as does inference from noisy network measurements \cite{newman}. We study a specific parameterization and its empirical tradeoffs.
+
+True labels in unordered dyad $d$ follow reciprocal probit:
+\[
+Y_{dk}=\mathbf1\{x_{dk}^{\mathsf T}\beta+\epsilon_{dk}>0\},\qquad
+\epsilon_d\sim N_2(0,R_\rho),\qquad R_c=\begin{pmatrix}1&c\\c&1\end{pmatrix}.
+\]
+For $t\in\{00,01,10,11\}$, measurement flips satisfy $E_k=\mathbf1\{Z_k\leq\Phi^{-1}(r_{t_k})\}$, with $Z\mid Y=t\sim N_2(0,R_{\kappa_t})$, $r_0=\alpha$, and $r_1=\gamma$. Observations are $O=Y\oplus E$. With $a_k=2(t_k\oplus o_k)-1$,
+\begin{equation}
+C_{t,o}=\Phi_2\!\left(a_1\Phi^{-1}(r_{t_1}),a_2\Phi^{-1}(r_{t_2});a_1a_2\kappa_t\right).
+\end{equation}
+\emph{Six} has parameters $(\alpha,\gamma,\kappa_{00},\kappa_{01},\kappa_{10},\kappa_{11})$. Setting $\kappa_{01}=\kappa_{10}$ nests \emph{Five}. \emph{Full} has twelve free row probabilities. Including three regression coefficients and $\rho$, total dimensions are 10, 9, and 16, respectively. For fixed binary margins, each row has one coupling degree of freedom. The Gaussian copula spans its interior Fr\'echet range, giving the six-dimensional family with shared FP/FN margins. It does not permit direction-dependent marginal error rates. Unequal discordant correlations require a fixed direction convention.
+
+For random gold-label audits $A$, we use the collapsed likelihood
+\[
+L=\prod_{d\notin A}\sum_t p_d(t;\beta,\rho)C_{t,O_d}\prod_{d\in A}p_d(Y_d;\beta,\rho)C_{Y_d,O_d}.
+\]
+We optimize the joint posterior in transformed coordinates, including Jacobians, and map the joint-Hessian marginal intervals back to native scales. These are mapped modes, not posterior means. Priors are $\rho,\kappa_t\sim U(-1,1)$, $\alpha,\gamma\sim .5\,\mathrm{Beta}(2,8)$, and $\beta\sim N(0,(X^{\mathsf T}X/(2m))^{-1})$, where $X$ stacks both directed covariate rows and $m$ is the dyad count. Full rows use $\mathrm{Dirichlet}(.5,.5,.5,.5)$. Priors are not information-equivalent.
+
+\textbf{Independent replication.} Each case contains 400 new networks with $n=90$, $m=4{,}005$, $\beta=(-.2,.6,1.1)$, $\rho=.5$, FP $=.06$, and FN $=.22$. Two non-intercept covariates are independent standard normals. Asymmetric truth uses $(.75,-.65,.45,.20)$, seeds 1010000--1010399; symmetric truth uses $(.75,-.25,-.25,.20)$, seeds 1020000--1020399. Reusing earlier parameter settings deliberately tests replication of the identified mechanism with fresh data. Independent RNG streams generate covariates, structural truth, measurement errors, and audit order. The generator uses normal draws independently of the fitted CDF.
+
+Audits reveal 100 or 200 dyads (200 or 400 directed gold labels), with nested subsets and identical data across methods. There are 800 independent networks, not 1,600 independent network-budget replicates. The protocol and source hashes froze before generation. This is an internal prospective plan, not public preregistration. No fitting initialization uses unaudited truth.
+
+\newpage
+\section{Structural performance and audit burden}
+Two primary contrasts compare Six(200) and Six(100) with Full(200), under asymmetric truth. Retention requires an upper 97.5th percentile of the paired RMSE ratio $\leq1.10$, a lower two-sided 95\% Wilson coverage bound $\geq.90$, and empirical numerical failure rate $\leq1\%$. Nominal coverage is 95\%. We use 10,000 paired network bootstrap samples with seed 132017. The one-sided $.025$ allocation to each primary RMSE claim gives an approximate Bonferroni allocation across both claims. Failed fits count as noncoverage, and finite estimates remain in RMSE. The coverage gate is a practical tolerance rather than a test of exact 95\% calibration.
+
+\begin{center}\small
+\textbf{Table 1. Asymmetric truth: $\rho=.5$ and conditional channel recovery.}\par\vspace{3pt}
+\begin{tabular}{rlrrrrr}\tableinput{data/asymmetric.tex}\end{tabular}
+\end{center}
+Bias, RMSE, coverage, and interval width refer to $\rho$. Channel RMSE is $\{(16R)^{-1}\sum_{r,t,o}(\widehat C^{(r)}_{t,o}-C_{t,o})^2\}^{1/2}$, with $R=400$ networks. At 200 audits, structural RMSE Monte Carlo standard errors are \FiveMCSE{}, \SixMCSE{}, and \FullMCSE{} for Five, Six, and Full. Channel recovery is descriptive and does not substitute for a structural performance claim.
+
+\begin{center}\small
+\textbf{Table 2. Prespecified paired comparisons with Full.}\par\vspace{3pt}
+\begin{tabular}{rccrc}\tableinput{data/primary.tex}\end{tabular}
+\end{center}
+Six coverage is \SameCoverage\% at 200 audits and \HalfCoverage\% at 100 audits. Its Wilson lower bounds are \SameLowerCoverage\% and \HalfLowerCoverage\%. Measurement parameters decrease by 50\% relative to Full (12 to 6), and total dimension decreases by 37.5\% (16 to 10). Audit counts measure gold-label burden, not monetary cost. A rule that is not met precludes the specified retention claim without establishing inferiority.
+
+\begin{center}\small
+\textbf{Table 3. Symmetric control, with Five correctly specified.}\par\vspace{3pt}
+\begin{tabular}{rlrrrrr}\tableinput{data/symmetric.tex}\end{tabular}
+\end{center}
+The symmetric control evaluates an additional dependence parameter when equality is true. Every model uses the same common-channel initialization and fixed optimization settings in both scenarios. All comparisons outside the two primary contrasts are descriptive. Machine-readable summaries retain every coefficient, budget, confidence bound, and numerical failure.
+
+\input{data/primary_interpretation.tex}
+
+\newpage
+\section{Sensitivity and posterior diagnostics}
+\begin{center}\small
+\textbf{Table 4. Prespecified prior sensitivity under asymmetric truth.}\par\vspace{3pt}
+\begin{tabular}{rlrrrrr}\tableinput{data/sensitivity.tex}\end{tabular}
+\end{center}
+Six-S uses independent $(\kappa_t+1)/2\sim\mathrm{Beta}(2,2)$ priors. Full-S uses row $\mathrm{Dirichlet}(4C_{0,t})$ priors, where $C_0$ has independent FP=FN=.1. All 400 primary networks contribute at both budgets. These alternatives assess sensitivity without selecting a replacement primary estimator or matching prior information between models.
+
+\input{data/prior_interpretation.tex}
+
+\begin{center}\small
+\textbf{Table 5. Fixed-data posterior check: first primary seed, 100 audits.}\par\vspace{3pt}
+\begin{tabular}{lrrrrr}\tableinput{data/mcmc.tex}\end{tabular}
+\end{center}
+Intervals refer to $\rho$. Four Metropolis chains use 4,000 warmup iterations each, with scale adaptation only during warmup. The frozen rule extends retained draws from 12,000 to 48,000 and then 96,000 if maximum rank-split $\widehat R\geq1.01$ or minimum bulk ESS $\leq400$. Diagnostics cover every unconstrained coordinate. All attempts remain archived. A gradient-free implementation evaluates exactly the same density, verified against the analytic-gradient code. This fixed-data check does not establish general Laplace accuracy or replace the validation estimator.
+
+\input{data/domain_note.tex}
+
+\textbf{Numerical reliability.} There are \Failures{} failed fits among \Fits{} unique validation fits, including initializers and sensitivities, and \Floor{} fitted-event activations of the $10^{-14}$ probability floor. Success requires minimum Hessian eigenvalue $>10^{-7}$, maximum absolute gradient $<.005$, and no numerical-bound contact. Domains are $|\operatorname{atanh}\rho|\leq4$, $|\operatorname{atanh}\kappa_t|\leq6$, and absolute rate/row logits $\leq12$ in the main fits. Median fitting times at 200 audits, including common initialization, are \FiveTime{} / \SixTime{} / \FullTime{} seconds for Five / Six / Full. Concurrent CPU workloads limit timing comparisons.
+
+\begin{center}\small\setlength{\tabcolsep}{4pt}
+\textbf{Table 6. Mean Six-channel estimates across 400 networks.}\par\vspace{3pt}
+\begin{tabular}{lrrrrrrr}\tableinput{data/nuisance.tex}\end{tabular}
+\end{center}
+True FP/FN rates are .06/.22. True correlations appear in the scenario definitions. Sparse error cells can weaken identification of individual latent correlations even when structural recovery is acceptable. Archived summaries include nuisance-parameter standard deviations.
+
+\newpage
+\section{Additional outcomes and interpretation}
+\begin{center}\small
+\textbf{Table 7. Regression coefficients under asymmetric truth, 200 audits.}\par\vspace{3pt}
+\begin{tabular}{llrrr}\tableinput{data/beta.tex}\end{tabular}
+\end{center}
+\input{data/conclusion.tex}
+
+\textbf{Scope.} This model retains common directional FP/FN rates, covariate-homogeneous measurement channels, independent unordered dyads, and random error-free audits. It omits node effects, transitivity, and direction-dependent marginal errors. Six requires a scientifically meaningful orientation of the two directions; swapping directional labels while fixing parameters changes its error law. Gold-label audit strata identify conditional error probabilities in the population when true states have positive probability, without guaranteeing finite-sample precision. Four hundred replicates improve Monte Carlo resolution but cannot establish universal audit savings. Reusing parameter settings with independent seeds establishes replication within the simulated family, rather than external validation on a new domain. A single posterior diagnostic dataset cannot establish general calibration of approximate intervals.
+
+The contribution is the six-parameter channel and the measured cost--accuracy tradeoff. General correlated misclassification and internal validation predate this work. The implementation independently reconstructs the reciprocal-probit framework from a supplied group report; the original authors' source code was unavailable and their report is not redistributed.
+
+\textbf{Reproducibility.} The \texttt{yichao\_dev} branch contains the protocol, model and analysis code, source/design hashes, compressed per-network fit records, summaries, posterior draws and diagnostic attempts, editable \LaTeX{} sources, and build instructions. Numerical estimates and manuscript tables derive from those records. The study is separate from SGDiff training benchmarks. Source checks, numerical tests, and PDF render checks accompany the archived results.
+
+\begin{thebibliography}{9}\small\setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}
+\bibitem{roy} Roy, S., and Banerjee, T. (2009). Analysis of misclassified correlated binary data using a multivariate probit model when covariates are subject to measurement error. \emph{Biometrical Journal}, 51, 420--432. \href{https://doi.org/10.1002/bimj.200800127}{doi:10.1002/bimj.200800127}.
+\bibitem{tang} Tang, L., Lyles, R. H., King, C. C., Hogan, J. W., and Lo, Y. (2015). Regression analysis for differentially misclassified correlated binary outcomes. \emph{JRSS C}, 64, 433--449. \href{https://doi.org/10.1111/rssc.12081}{doi:10.1111/rssc.12081}.
+\bibitem{newman} Newman, M. E. J. (2018). Estimating network structure from unreliable measurements. \emph{Physical Review E}, 98, 062321. \href{https://doi.org/10.1103/PhysRevE.98.062321}{doi:10.1103/PhysRevE.98.062321}.
+\end{thebibliography}
+\end{document}

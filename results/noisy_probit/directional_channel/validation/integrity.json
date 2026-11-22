@@ -1,0 +1,13 @@
+{
+  "fits": 8000,
+  "failures": 0,
+  "probability_floor_events": 0,
+  "min_fitted_probability": 7.227708730844004e-06,
+  "min_hessian_eigenvalue": 0.03305979277763231,
+  "max_gradient": 9.997648665280301e-05,
+  "bound_contacts": 0,
+  "max_start_objective_spread": 3.7048448575660586e-07,
+  "source_and_data_hashes_verified": true,
+  "paired_nested_audits_verified": true,
+  "gradient_free_density_verified_at_modes": true
+}

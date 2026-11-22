@@ -1,0 +1,17 @@
+{
+  "slides": {
+    "pages": 12,
+    "out_of_page_words": [],
+    "overfull_boxes": 0,
+    "undefined_references": 0,
+    "sha256": "af121600f80fbf6c26572e0075227ac38198d4e9626b8d6c38a0e8ef09c0c118"
+  },
+  "report": {
+    "pages": 4,
+    "out_of_page_words": [],
+    "overfull_boxes": 0,
+    "undefined_references": 0,
+    "sha256": "65b9612e2cc83978052ff6ed5ac541f6562008207ea0b79c96a15fc972a0e4d7"
+  },
+  "visual_review": "Completed: all 12 slides and all 4 report pages inspected after final rendering; no clipping, overlap, or unresolved references."
+}
