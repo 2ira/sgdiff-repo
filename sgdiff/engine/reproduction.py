@@ -173,7 +173,7 @@ def restore(name, cfg, graph, ckpt, device, padded_limit):
     for section in ("data", "structure", "feature", "subgraph", "train", "model"):
         expected = vars(getattr(cfg, section)).copy()
         saved = vars(getattr(actual, section)).copy()
-        ignored = {"root"} if section == "data" else {"device", "run_name", "resume", "run_dir"} if section == "train" else set()
+        ignored = {"root"} if section == "data" else {"device", "run_name", "resume", "run_dir", "num_workers"} if section == "train" else set()
         for field in ignored:
             expected.pop(field, None)
             saved.pop(field, None)

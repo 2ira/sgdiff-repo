@@ -123,15 +123,24 @@ class Trainer:
             payload = _load_payload(cfg.train.resume, self.device)
             if "training_state" not in payload:
                 raise ValueError("resume requires last.pt, including optimizer and RNG states")
+            training = payload["training_state"]
             previous = ExperimentConfig.from_dict(payload["config"])
             old, new = previous.to_dict(), cfg.to_dict()
             for key in ("device", "resume", "run_dir", "run_name", "num_workers"):
                 old["train"].pop(key, None)
                 new["train"].pop(key, None)
+            # A stopped fusion run may be finalized at an explicitly shorter,
+            # already-completed budget. This changes no optimizer step or model
+            # state; it only lets the best saved validation state be published.
+            if training["stage"] == "finetune":
+                completed = int(training["next_epoch"])
+                old_budget = int(old["train"]["finetune_epochs"])
+                new_budget = int(new["train"]["finetune_epochs"])
+                if completed <= new_budget <= old_budget:
+                    old["train"]["finetune_epochs"] = new_budget
             if old != new:
-                raise ValueError("resume configuration differs; only device/run location/workers may change")
+                raise ValueError("resume configuration differs beyond device/run/workers or a completed fusion budget")
             self.model.load_state_dict(payload["model_state"])
-            training = payload["training_state"]
             main_opt.load_state_dict(training["main_optimizer"])
             if fusion_opt and training["fusion_optimizer"] is not None:
                 fusion_opt.load_state_dict(training["fusion_optimizer"])

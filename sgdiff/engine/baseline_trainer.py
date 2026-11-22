@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from functools import partial
 from typing import Optional
 
@@ -56,6 +57,7 @@ def train_node_pair_baseline(
     is_vgae: bool = False,
     kl_weight: float = 0.001,  # the raw ELBO KL term collapses the latent code
     patience: int = 30,
+    eval_every: int = 10,
     seed: int = 0,
     evaluation_pairs: Optional[dict] = None,
 ) -> dict:
@@ -100,7 +102,7 @@ def train_node_pair_baseline(
         loss.backward()
         optimizer.step()
 
-        if (epoch + 1) % 10 == 0 and len(val_pos):
+        if (epoch + 1) % eval_every == 0 and len(val_pos):
             metrics = evaluate_node_pair_baseline(
                 model, x_train, ei_train, train_graph.num_nodes, val_pos, val_neg, device
             )
@@ -109,7 +111,7 @@ def train_node_pair_baseline(
                 best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
             else:
                 bad += 1
-            if bad >= patience // 10:
+            if bad >= max(1, math.ceil(patience / eval_every)):
                 break
 
     if best_state is not None:

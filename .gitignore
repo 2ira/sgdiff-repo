@@ -42,3 +42,13 @@ results/observation_robustness_v2/**/*.pt
 # Working files. Publish compact result tables and verified per-seed archives.
 results/paired-reproduction/cora/
 results/paired-reproduction/citeseer/
+
+# Part 2 local smoke outputs and rendered working files.
+tmp/
+results/part2-peer-cn-gcn-sgdiff-smoke/
+results/part2-peer-cn-gcn-sgdiff-gcn-smoke/
+results/part2-peer-sgdiff-cora-s0/
+# Preserved local CN/GCN-only archive superseded by the audited two-dataset table.
+results/part2-peer-cn-gcn-sgdiff/
+deliverables/part2_report/*.log
+deliverables/part2_report/*.blg

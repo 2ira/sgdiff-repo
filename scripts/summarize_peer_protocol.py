@@ -8,14 +8,18 @@ import pandas as pd
 def summarize(table):
     df = pd.read_csv(table / "per_seed.csv")
     key = ["dataset", "model", "condition", "seed"]
-    datasets = set(df.dataset)
-    is_extension = datasets == {"pubmed"}
-    expected_cells = 252 if is_extension else 504
-    if not is_extension and datasets != {"cora", "citeseer"}:
-        raise ValueError("unexpected data sets")
-    if (len(df) != expected_cells or df.duplicated(key).any()
-            or df.groupby(key[:-1]).size().ne(3).any() or set(df.seed) != {0,1,2}):
+    expected_conditions = {
+        "clean", "rf_0.1", "rf_0.25", "rf_0.5", "dice_0.1", "dice_0.25", "dice_0.5",
+        "ea_0.1", "ea_0.25", "ea_0.5", "delete_0.5", "delete_hub_0.5", "insert_0.5",
+        "feature_shuffle",
+    }
+    if (df.empty or df.duplicated(key).any() or set(df.seed) != {0, 1, 2}
+            or set(df.condition) != expected_conditions
+            or df.groupby(key[:-1]).size().ne(3).any()):
         raise ValueError("incomplete or duplicated peer evaluation grid")
+    expected = len(set(df.dataset)) * len(set(df.model)) * 3 * len(expected_conditions)
+    if len(df) != expected:
+        raise ValueError("the data/model/seed/condition grid is not rectangular")
     metrics = ["auc", "ap", "hits100", "precision100"]
     full = df[df.model == df.family]
     paired = df.merge(full[["dataset", "family", "seed", "condition", *metrics]],
@@ -30,7 +34,7 @@ def summarize(table):
     groups = paired.groupby(["dataset","family","model","condition"])
     out = groups[fields].agg(["mean","std"])
     out.columns = ["_".join(k) for k in out.columns]
-    if not is_extension:
+    if "graph_hash_matches" in paired:
         out.insert(0, "matching_peer_graphs", groups.graph_hash_matches.sum())
     out.insert(0, "seeds", groups.seed.count())
     out.to_csv(table / "summary.csv")

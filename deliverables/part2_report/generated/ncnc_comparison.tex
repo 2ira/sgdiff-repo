@@ -1,0 +1,21 @@
+\subsection{CN compared with the team's NCNC result}
+Table~\ref{tab:cn-ncnc} uses Junxiong's full NCNC rows from the same pinned evaluator. The team reference covers Cora and CiteSeer, so PubMed is not extrapolated.
+\begin{table}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+Dataset & Model & Clean & RF 50\% & DICE 50\% & EA 50\% & Feature shuffle \\
+\midrule
+Cora & CN & 0.722 $\pm$ 0.004 & 0.642 $\pm$ 0.004 & 0.642 $\pm$ 0.008 & 0.732 $\pm$ 0.003 & 0.722 $\pm$ 0.004 \\
+Cora & NCNC & 0.959 $\pm$ 0.002 & 0.936 $\pm$ 0.006 & 0.934 $\pm$ 0.006 & 0.944 $\pm$ 0.003 & 0.692 $\pm$ 0.017 \\
+\addlinespace
+CiteSeer & CN & 0.669 $\pm$ 0.002 & 0.616 $\pm$ 0.004 & 0.604 $\pm$ 0.008 & 0.689 $\pm$ 0.007 & 0.669 $\pm$ 0.002 \\
+CiteSeer & NCNC & 0.968 $\pm$ 0.007 & 0.950 $\pm$ 0.003 & 0.945 $\pm$ 0.002 & 0.950 $\pm$ 0.006 & 0.637 $\pm$ 0.037 \\
+\bottomrule
+\end{tabular}
+}%
+\caption{AUROC for parameter-free CN and the team's learned NCNC model under matched data and perturbations.}
+\label{tab:cn-ncnc}
+\end{table}
+NCNC is substantially stronger on the clean graph and under structural edits. Feature shuffling removes much of that advantage because NCNC uses learned node representations, whereas CN ignores attributes and therefore reproduces its clean score exactly. This does not make CN the stronger overall predictor; it identifies the source of its invariance.

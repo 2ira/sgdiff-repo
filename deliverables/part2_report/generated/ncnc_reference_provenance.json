@@ -1,0 +1,7 @@
+{
+  "peer_commit": "95083da808e500c02da458e205f4b861ceb80871",
+  "source": "E:\\codex\\lin-eval\\experiments\\new_link_models\\benchmarks\\per_seed.csv",
+  "source_sha256": "dc87a95d897d72d6fd3e25ace142b93791985ba8eb1ae90622d00194c8f22f5d",
+  "selection": "model=ncnc, component=full, datasets=cora/citeseer",
+  "rows": 84
+}

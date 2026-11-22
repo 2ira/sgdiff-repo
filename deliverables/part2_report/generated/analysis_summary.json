@@ -1,0 +1,68 @@
+{
+  "clean": {
+    "cora": {
+      "cn": 0.7219379187497874,
+      "gcn": 0.8459930746862566,
+      "sgdiff": 0.8533371382171887
+    },
+    "citeseer": {
+      "cn": 0.6687696101444335,
+      "gcn": 0.8234963739766639,
+      "sgdiff": 0.8360400781154541
+    }
+  },
+  "worst": {
+    "cora:cn": {
+      "condition": "delete_hub_0.5",
+      "auc": 0.5637650176002449,
+      "drop": -0.15817290114954252
+    },
+    "cora:gcn": {
+      "condition": "feature_shuffle",
+      "auc": 0.6408038189130362,
+      "drop": -0.20518925577322045
+    },
+    "cora:sgdiff": {
+      "condition": "delete_hub_0.5",
+      "auc": 0.6668640848722919,
+      "drop": -0.18647305334489683
+    },
+    "citeseer:cn": {
+      "condition": "delete_hub_0.5",
+      "auc": 0.5395325506067667,
+      "drop": -0.12923705953766673
+    },
+    "citeseer:gcn": {
+      "condition": "feature_shuffle",
+      "auc": 0.6103716629259569,
+      "drop": -0.21312471105070696
+    },
+    "citeseer:sgdiff": {
+      "condition": "delete_hub_0.5",
+      "auc": 0.6229928965813413,
+      "drop": -0.21304718153411284
+    }
+  },
+  "ablations": {
+    "cora:gcn": {
+      "full": 0.8459930746862566,
+      "no_neighbors": 0.7842747763833623,
+      "no_attributes": 0.6761257354691699
+    },
+    "citeseer:gcn": {
+      "full": 0.8234963739766639,
+      "no_neighbors": 0.7865651708829148,
+      "no_attributes": 0.6434381803929639
+    },
+    "cora:sgdiff": {
+      "full": 0.8533371382171887,
+      "structure": 0.8076168885827976,
+      "feature": 0.7518423927830494
+    },
+    "citeseer:sgdiff": {
+      "full": 0.8360400781154541,
+      "structure": 0.8242995368951179,
+      "feature": 0.7271750602193551
+    }
+  }
+}

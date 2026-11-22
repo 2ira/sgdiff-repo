@@ -178,6 +178,7 @@ class NodePairLinkPredictor(nn.Module):
 
 
 GAE_ABLATIONS = ("gae_no_neighbors", "gae_no_attributes")
+GCN_ABLATIONS = ("gcn_no_neighbors", "gcn_no_attributes")
 
 
 class AblatedGAE(NodePairLinkPredictor):
@@ -192,6 +193,36 @@ class AblatedGAE(NodePairLinkPredictor):
 
     def encode(self, x, edge_index, num_nodes):
         if self.variant == "gae_no_neighbors":
+            return self.encoder.forward_preaggregated(x, normalized_adjacency=None)
+        return self.encoder(x.new_ones((num_nodes, 1)), edge_index, num_nodes)
+
+
+class AblatedGCN(NodePairLinkPredictor):
+    """Width-matched GCN input ablations for the Part-2 peer protocol.
+
+    ``gcn_no_neighbors`` replaces both graph-convolution steps with the same
+    learned linear transforms, while ``gcn_no_attributes`` keeps propagation
+    but supplies a constant scalar node feature.  Hidden/output widths,
+    layer count, dropout and dot-product decoding otherwise match the full GCN.
+    """
+
+    def __init__(
+        self,
+        in_dim: int,
+        variant: str,
+        hidden_dim: int = 64,
+        out_dim: int = 64,
+        num_layers: int = 2,
+        dropout: float = 0.5,
+    ) -> None:
+        if variant not in GCN_ABLATIONS:
+            raise ValueError(f"unknown GCN ablation: {variant}")
+        model_in = 1 if variant == "gcn_no_attributes" else in_dim
+        super().__init__(model_in, hidden_dim, out_dim, num_layers, arch="gcn", dropout=dropout)
+        self.variant = variant
+
+    def encode(self, x, edge_index, num_nodes):
+        if self.variant == "gcn_no_neighbors":
             return self.encoder.forward_preaggregated(x, normalized_adjacency=None)
         return self.encoder(x.new_ones((num_nodes, 1)), edge_index, num_nodes)
 

@@ -2,8 +2,10 @@
 import argparse
 import csv
 import json
+import os
 import subprocess
 import sys
+import types
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -25,6 +27,14 @@ def bind_peer(peer):
     rev = subprocess.check_output(["git", "-C", str(peer), "rev-parse", "HEAD"], text=True).strip()
     if rev != REVISION:
         raise ValueError(f"Expected peer checkout {REVISION}, found {rev}")
+    # The pinned evaluator uses POSIX flock only to serialize cache writers.
+    # Formal Windows runs are deliberately single-process; provide a no-op
+    # compatibility module without modifying the verified peer checkout.
+    if os.name == "nt" and "fcntl" not in sys.modules:
+        compat = types.ModuleType("fcntl")
+        compat.LOCK_EX, compat.LOCK_NB, compat.LOCK_UN = 1, 2, 8
+        compat.flock = lambda *_: None
+        sys.modules["fcntl"] = compat
     experiments.__path__.append(str((peer / "experiments").resolve()))
     from experiments.new_link_models import protocol, run
 
@@ -32,7 +42,10 @@ def bind_peer(peer):
         relative = f"experiments/new_link_models/{Path(module.__file__).name}"
         source = (peer / relative).resolve()
         original = subprocess.check_output(["git", "-C", str(peer), "show", f"{REVISION}:{relative}"])
-        if Path(module.__file__).resolve() != source or source.read_bytes() != original:
+        checked_out = source.read_bytes()
+        # Git for Windows may materialize the verified LF blob as CRLF.
+        same_blob = checked_out == original or checked_out.replace(b"\r\n", b"\n") == original
+        if Path(module.__file__).resolve() != source or not same_blob:
             raise ValueError(f"Evaluator does not match pinned peer source: {source}")
     return protocol, run
 
