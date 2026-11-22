@@ -6,10 +6,9 @@
 
 ## 当前定稿范围
 
-本次报告和 slides 只发布 Cora、CiteSeer：7 个配置 × 3 个 seed × 14 个条件，共 588 个
-完整单元，且所有攻击图 SHA-256 与 pinned evaluator 匹配。PubMed 的 CN/GCN 矩阵和 SGDiff
-训练权重已保留，但 SGDiff 的 14 条件评测尚未完成，因此当前报告不引用任何 PubMed 数字。
-两数据集定稿表位于 `results/part2-peer-cn-gcn-sgdiff-cora-citeseer/`。
+三数据集现已全部完成：7 个配置 × 3 个数据集 × 3 个 seed × 14 个条件，共 882 个
+完整单元，且所有攻击图 SHA-256 与 pinned evaluator 匹配。三数据集定稿表位于
+`results/part2-peer-cn-gcn-sgdiff-all/`。
 
 ## 正式矩阵
 

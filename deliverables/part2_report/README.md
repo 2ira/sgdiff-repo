@@ -6,8 +6,8 @@ From the repository root:
 
 ```powershell
 D:\Tools\Anaconda\anaconda3\python.exe scripts\build_part2_report_assets.py `
-  --results results\part2-peer-cn-gcn-sgdiff-cora-citeseer\per_seed.csv `
-  --datasets cora citeseer `
+  --results results\part2-peer-cn-gcn-sgdiff-all\per_seed.csv `
+  --datasets cora citeseer pubmed `
   --ncnc-results E:\codex\lin-eval\experiments\new_link_models\benchmarks\per_seed.csv `
   --report deliverables\part2_report
 

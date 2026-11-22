@@ -30,7 +30,7 @@ This report documents the Part~2 reproduction and robustness study for three
 complementary link predictors: the parameter-free Common Neighbors heuristic,
 a two-layer Graph Convolutional Network with a dot-product decoder, and SGDiff,
 a subgraph diffusion model with structure and attribute streams. We evaluate
-all methods on Cora and CiteSeer under one fixed team protocol. The
+all methods on Cora, CiteSeer, and PubMed under one fixed team protocol. The
 protocol uses identical edge splits, test pairs, attacked graphs, and metrics
 for every model, and includes clean evaluation, three structural attacks at
 three budgets, three additional 50\% structural perturbations, and a node
@@ -112,7 +112,7 @@ are not separately retrained single-stream models.
 
 \section{Experimental design}
 \subsection{Data and splits}
-We use the standard Planetoid versions of Cora and CiteSeer
+We use the standard Planetoid versions of Cora, CiteSeer, and PubMed
 \citep{yang2016planetoid}. For each dataset and seed $s\in\{0,1,2\}$, existing
 undirected edges are split into 80\% training, 5\% validation, and 15\% test
 positives. Each split receives an equal number of sampled non-edges, and the
@@ -132,8 +132,8 @@ epochs, and patience 30. The selected checkpoint minimizes validation loss.
 
 SGDiff uses the dataset-specific Table~4 architecture and diffusion steps from
 the original work: one-hop enclosing subgraphs; no per-hop cap for Cora and a
-20-node cap for CiteSeer; structural diffusion length 20; and feature
-diffusion length 100. Training uses the complete
+20-node cap for CiteSeer and PubMed; structural diffusion lengths 20, 20, and
+10; and feature diffusion lengths 100, 100, and 50. Training uses the complete
 training split, batch size 32, and all diffusion timesteps rather than a
 Monte-Carlo subset. Diffusion pretraining runs for at most 50 epochs with
 validation early stopping. The frozen-diffusion fusion stage runs for five
@@ -144,7 +144,10 @@ budget, not as a bitwise reproduction of a historical 20-epoch run.
 
 All trainable models run on an NVIDIA GeForce RTX 3060 Laptop GPU with 6~GiB
 memory, PyTorch 2.5.1+cu121, and CUDA 12.1. The Cora and CiteSeer EA graphs are
-the pinned CUDA assets from the team evaluator.
+the pinned CUDA assets from the team evaluator. PubMed EA generation exceeds
+local memory, so the experiment reads the team's published H200 graph assets
+rather than regenerating a different attack locally. This affects attack
+generation hardware, not the graph presented to each predictor.
 
 \subsection{Robustness conditions}
 Each seed has 14 test conditions:
@@ -235,9 +238,6 @@ the ranking. Third, the local EA implementation uses the team's fixed linear
 surrogate and is not guaranteed to reproduce an unreleased author attack.
 Fourth, SGDiff and CN/GCN use different method-appropriate training budgets,
 so the study should not be presented as an efficiency-normalized comparison.
-This report deliberately finalizes only Cora and CiteSeer. The preserved
-PubMed SGDiff evaluation is incomplete and contributes no number or conclusion
-to the present tables, figures, or discussion.
 
 \bibliographystyle{plainnat}
 \bibliography{references}

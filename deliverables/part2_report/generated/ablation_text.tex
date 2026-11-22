@@ -1,8 +1,10 @@
 \subsection{GCN inputs}
 For Cora, removing neighbor aggregation changes clean AUROC by -0.062, while removing node attributes changes it by -0.170.
 For CiteSeer, removing neighbor aggregation changes clean AUROC by -0.037, while removing node attributes changes it by -0.180.
+For PubMed, removing neighbor aggregation changes clean AUROC by -0.045, while removing node attributes changes it by -0.070.
 
 \subsection{SGDiff streams}
 For Cora, the stronger single SGDiff readout is structure-only (0.808 AUROC), compared with 0.853 for learned fusion.
 For CiteSeer, the stronger single SGDiff readout is structure-only (0.824 AUROC), compared with 0.836 for learned fusion.
+For PubMed, the stronger single SGDiff readout is feature-only (0.875 AUROC), compared with 0.904 for learned fusion.
 These readouts share one trained checkpoint and one set of diffusion evidence. They identify which stream the fitted model uses at test time; they do not estimate the performance of independently retrained single-stream models.

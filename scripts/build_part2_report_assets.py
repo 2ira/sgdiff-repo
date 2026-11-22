@@ -440,7 +440,13 @@ def ablation_plot(summary: pd.DataFrame, figures: Path) -> None:
             if col == 0:
                 ax.set_ylabel("AUROC")
             if col == len(DATASETS) - 1:
-                ax.legend(fontsize=8, frameon=False, loc="lower left")
+                ax.legend(
+                    fontsize=8,
+                    frameon=False,
+                    loc="upper left",
+                    bbox_to_anchor=(1.02, 1.0),
+                    borderaxespad=0.0,
+                )
     fig.tight_layout()
     for suffix in ("pdf", "png"):
         fig.savefig(figures / f"ablations.{suffix}", dpi=220, bbox_inches="tight")

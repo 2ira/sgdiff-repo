@@ -5,7 +5,7 @@ Audience: course-project group and instructors. The deck is an independent Part 
 ## Slide 1 — Robust link prediction baselines
 
 - Common Neighbors, GCN, and SGDiff
-- Cora and CiteSeer
+- Cora, CiteSeer, and PubMed
 - Presenter: Jiawei Li
 
 ## Slide 2 — Problem and model spectrum
@@ -43,15 +43,15 @@ Audience: course-project group and instructors. The deck is an independent Part 
 
 ## Slide 6 — Clean performance
 
-- Native grouped chart: clean AUROC for CN, GCN, and SGDiff across Cora and CiteSeer.
-- Editable table: SGDiff AUROC and its gain over GCN.
-- Takeaway: SGDiff leads GCN by 0.007 on Cora and 0.013 on CiteSeer.
+- Native grouped chart: clean AUROC for CN, GCN, and SGDiff across all three datasets.
+- Editable table: SGDiff AUROC and its difference from GCN.
+- Takeaway: SGDiff leads narrowly on Cora/CiteSeer, while GCN leads on PubMed.
 
 ## Slide 7 — Robustness by attack type
 
 - Editable table: RF, DICE, EA, and hub deletion at 50%, plus feature shuffle.
-- GCN leads RF and DICE at 50%; SGDiff leads CiteSeer EA and both feature-shuffle columns.
-- SGDiff has the higher worst-case AUROC across all 13 perturbations on both datasets.
+- GCN leads most structural conditions; SGDiff is much more stable under feature shuffle.
+- SGDiff has the higher worst-case AUROC across all 13 perturbations on all three datasets.
 
 ## Slide 8 — Component ablations
 
@@ -64,10 +64,10 @@ Audience: course-project group and instructors. The deck is an independent Part 
 
 - Editable CN-versus-NCNC table on matched Cora and CiteSeer graphs.
 - Distinguish CN's exact feature-shuffle invariance from NCNC's much stronger clean and structural-attack ranking.
-- State the finalized Cora/CiteSeer scope and that PubMed SGDiff remains pending.
+- State the finalized three-dataset, 882-cell scope.
 
 ## Speaker-note requirements
 
 - Each slide receives a 45–75 second plain-language narration.
 - Every external method or dataset claim carries a citation in the footer or speaker notes.
-- Numerical claims come from `results/part2-peer-cn-gcn-sgdiff-cora-citeseer/per_seed.csv` or the pinned full-NCNC reference extract.
+- Numerical claims come from `results/part2-peer-cn-gcn-sgdiff-all/per_seed.csv` or the pinned full-NCNC reference extract.
