@@ -1,0 +1,223 @@
+{
+  "archived_score_evaluations": 756,
+  "matched_files": 54,
+  "byte_identical": true,
+  "checks": [
+    {
+      "file": "hlgnn_citeseer_seed0/node_ranks.csv",
+      "sha256": "27b68961f95bcecedf22881c163546e5fb4dcd11bf40158dff4df36367244dd5"
+    },
+    {
+      "file": "hlgnn_citeseer_seed0/paired_deltas.csv",
+      "sha256": "44caab5f39d1a78af04387d54e2d70bafda62d0b7e0fdd27ba2fcb64701cee73"
+    },
+    {
+      "file": "hlgnn_citeseer_seed0/per_seed_curves.csv",
+      "sha256": "08704b43813524184db27f270cdd7631bc48fcace3e2de0d8b9b3c9f46e0aca3"
+    },
+    {
+      "file": "hlgnn_citeseer_seed1/node_ranks.csv",
+      "sha256": "220626a01db54a3cbfc3e7430db500b2b0e5b8a7288f683aab964fa8cb1a42e4"
+    },
+    {
+      "file": "hlgnn_citeseer_seed1/paired_deltas.csv",
+      "sha256": "f8a3413cb23d0a5652082ec4056feb209991bb895dc1432190505aa38dc553fd"
+    },
+    {
+      "file": "hlgnn_citeseer_seed1/per_seed_curves.csv",
+      "sha256": "8922e70124ba166b919563e79455d5b211a53bb605f2f6f1836f4ff6eb8fff87"
+    },
+    {
+      "file": "hlgnn_citeseer_seed2/node_ranks.csv",
+      "sha256": "1e9f428840d8cbf8f12fe9b24c5d5fd69e239f3fc9b01d117ce22945c394b409"
+    },
+    {
+      "file": "hlgnn_citeseer_seed2/paired_deltas.csv",
+      "sha256": "63391655025634297dc81f672356eee0ba77c47ad5df33aa86fcd3149925194a"
+    },
+    {
+      "file": "hlgnn_citeseer_seed2/per_seed_curves.csv",
+      "sha256": "a8365188d07067caef185f57839ae30b410fbda87f8dd11345df68b17fc81f9e"
+    },
+    {
+      "file": "hlgnn_cora_seed0/node_ranks.csv",
+      "sha256": "adf2a578259f9f938d8209480e0f162f771f0974eafc6efbf645f6aec47f3646"
+    },
+    {
+      "file": "hlgnn_cora_seed0/paired_deltas.csv",
+      "sha256": "3b9135942bdc34573f5f169c4438ab14560fde869d230bbc226e5d48d89633ec"
+    },
+    {
+      "file": "hlgnn_cora_seed0/per_seed_curves.csv",
+      "sha256": "b114acd3faffc43248bd13721e5970104ffd4363993445a150ec2c7292ca7eac"
+    },
+    {
+      "file": "hlgnn_cora_seed1/node_ranks.csv",
+      "sha256": "80d5a8466d8838c49ddbe3458a63e5e1087154ede00dd2e7a0571dfaaa710d44"
+    },
+    {
+      "file": "hlgnn_cora_seed1/paired_deltas.csv",
+      "sha256": "f16ebbe7d6996a57b2407b3f23edbfc714da56f5a2401dd0bf72937738fdfe60"
+    },
+    {
+      "file": "hlgnn_cora_seed1/per_seed_curves.csv",
+      "sha256": "257f663d9feddf70d22499b861cd2553595bca7e906f9ae64f92a7f70d5daac7"
+    },
+    {
+      "file": "hlgnn_cora_seed2/node_ranks.csv",
+      "sha256": "26b497a41baf11bc5873893a7e0aa7863a33754deef1142ec0696d74addd689e"
+    },
+    {
+      "file": "hlgnn_cora_seed2/paired_deltas.csv",
+      "sha256": "0e2c405a9b5c325d69e4e93d77ddd6a8e952b3fa159cb8d6cdb728c24aef18b7"
+    },
+    {
+      "file": "hlgnn_cora_seed2/per_seed_curves.csv",
+      "sha256": "6a92d55be0bfcd63cea8735b697e07da876217adcd21d3230372971f1b0f801f"
+    },
+    {
+      "file": "hlgnn_pubmed_seed0/node_ranks.csv",
+      "sha256": "031b203e108120712ef8bab0d41609ea5e811537502a70f96f5aead322d1a006"
+    },
+    {
+      "file": "hlgnn_pubmed_seed0/paired_deltas.csv",
+      "sha256": "9653aeb21ab795a44e1c94ef6773663d5fc78de01ea68bf3b915c439a2f650e1"
+    },
+    {
+      "file": "hlgnn_pubmed_seed0/per_seed_curves.csv",
+      "sha256": "58a6595ac6a0b2208e8e95d9a0944f0f3b0416a9b7e5c28733764295422f7319"
+    },
+    {
+      "file": "hlgnn_pubmed_seed1/node_ranks.csv",
+      "sha256": "f7dbdc906cb74fd71ce03b5b4c67492b03c986a801f485325ba4280a428ad71f"
+    },
+    {
+      "file": "hlgnn_pubmed_seed1/paired_deltas.csv",
+      "sha256": "f80ec92234f9d040f2984b3f87257b7a36e016c0dccd5e6cf9545f2760163f5a"
+    },
+    {
+      "file": "hlgnn_pubmed_seed1/per_seed_curves.csv",
+      "sha256": "0c380a29e88d9467b6efccbe40f04d518e6d99d9c88140961b8f9f945946724a"
+    },
+    {
+      "file": "hlgnn_pubmed_seed2/node_ranks.csv",
+      "sha256": "b60d86d69cfa8fd1565171456163ec934152c4b1a7d58d864779eb64e41e49f0"
+    },
+    {
+      "file": "hlgnn_pubmed_seed2/paired_deltas.csv",
+      "sha256": "4ab75bfee99ab7645c2e0d4d6798ae9033e156bb07d913bf8c660f9902f81a13"
+    },
+    {
+      "file": "hlgnn_pubmed_seed2/per_seed_curves.csv",
+      "sha256": "ffee6a5ab7c8c0a51565153164ea6b6b2eecb6e669dff2233f08073c15d8639c"
+    },
+    {
+      "file": "katz_citeseer_seed0/node_ranks.csv",
+      "sha256": "27b68961f95bcecedf22881c163546e5fb4dcd11bf40158dff4df36367244dd5"
+    },
+    {
+      "file": "katz_citeseer_seed0/paired_deltas.csv",
+      "sha256": "106d713c02a82a0b77e88e3ba4e3f10394e6aa88131b3c0c7122477fc1fd431b"
+    },
+    {
+      "file": "katz_citeseer_seed0/per_seed_curves.csv",
+      "sha256": "e2b8598760ef0687152ee6c8a60938d1220114bdf2f921f80c05770bc96f6c0c"
+    },
+    {
+      "file": "katz_citeseer_seed1/node_ranks.csv",
+      "sha256": "220626a01db54a3cbfc3e7430db500b2b0e5b8a7288f683aab964fa8cb1a42e4"
+    },
+    {
+      "file": "katz_citeseer_seed1/paired_deltas.csv",
+      "sha256": "8775a258773ec86e3c965da5dde3d5b383562a3395c8868708cf6400400ac3c7"
+    },
+    {
+      "file": "katz_citeseer_seed1/per_seed_curves.csv",
+      "sha256": "1f49457d689fa1d04adc2923db2387ffcdd5316c0da89527969575b95fb159c1"
+    },
+    {
+      "file": "katz_citeseer_seed2/node_ranks.csv",
+      "sha256": "1e9f428840d8cbf8f12fe9b24c5d5fd69e239f3fc9b01d117ce22945c394b409"
+    },
+    {
+      "file": "katz_citeseer_seed2/paired_deltas.csv",
+      "sha256": "44950ea319fc660220e3cae400a6827a35babce359139580599fa7a1e9c772e1"
+    },
+    {
+      "file": "katz_citeseer_seed2/per_seed_curves.csv",
+      "sha256": "d44642646b8510eae419cfd7947aea916cc6551b6e89675d6f1af040087df79d"
+    },
+    {
+      "file": "katz_cora_seed0/node_ranks.csv",
+      "sha256": "adf2a578259f9f938d8209480e0f162f771f0974eafc6efbf645f6aec47f3646"
+    },
+    {
+      "file": "katz_cora_seed0/paired_deltas.csv",
+      "sha256": "e36ec6169868e01e60de73cc41839d4ce062a69d9e7121377c12915d438880ee"
+    },
+    {
+      "file": "katz_cora_seed0/per_seed_curves.csv",
+      "sha256": "c49d8eb349eca800347718840b21628b2d8894e9c7911468c073b92a21a12645"
+    },
+    {
+      "file": "katz_cora_seed1/node_ranks.csv",
+      "sha256": "80d5a8466d8838c49ddbe3458a63e5e1087154ede00dd2e7a0571dfaaa710d44"
+    },
+    {
+      "file": "katz_cora_seed1/paired_deltas.csv",
+      "sha256": "eb7e3e5a307af04629790ab73a05cfc5695209bfc8ccf1db0173e247cf628d03"
+    },
+    {
+      "file": "katz_cora_seed1/per_seed_curves.csv",
+      "sha256": "f2df8927950932d1a6b7a17b73eac8ce73ca177bc5568347982672afb2934fd2"
+    },
+    {
+      "file": "katz_cora_seed2/node_ranks.csv",
+      "sha256": "26b497a41baf11bc5873893a7e0aa7863a33754deef1142ec0696d74addd689e"
+    },
+    {
+      "file": "katz_cora_seed2/paired_deltas.csv",
+      "sha256": "4bd06da6658d033e19ee2c42eb254dc1737fb8988a8a220a713d245737f180c9"
+    },
+    {
+      "file": "katz_cora_seed2/per_seed_curves.csv",
+      "sha256": "92d26408413e649ff6c185242440de3eafcab5f28bc188af196f2f87ec538d84"
+    },
+    {
+      "file": "katz_pubmed_seed0/node_ranks.csv",
+      "sha256": "031b203e108120712ef8bab0d41609ea5e811537502a70f96f5aead322d1a006"
+    },
+    {
+      "file": "katz_pubmed_seed0/paired_deltas.csv",
+      "sha256": "fcfab6a39fbf4225e39f6bc7eda147b8fd5493a855db9a521dfaa2241136c9e6"
+    },
+    {
+      "file": "katz_pubmed_seed0/per_seed_curves.csv",
+      "sha256": "2b11c8f6222e3ae47d49ae4390148b251f93cf3e071c976d81d865b18fd23a7f"
+    },
+    {
+      "file": "katz_pubmed_seed1/node_ranks.csv",
+      "sha256": "f7dbdc906cb74fd71ce03b5b4c67492b03c986a801f485325ba4280a428ad71f"
+    },
+    {
+      "file": "katz_pubmed_seed1/paired_deltas.csv",
+      "sha256": "e3aa01790bc8284a0f0418a550d2b7fd6e7bffc168e284268f4dbad2f00f488d"
+    },
+    {
+      "file": "katz_pubmed_seed1/per_seed_curves.csv",
+      "sha256": "4dae17c4454bb713e1347d7121dc7229f32a24005e919ab3d66afc7a45988c2d"
+    },
+    {
+      "file": "katz_pubmed_seed2/node_ranks.csv",
+      "sha256": "b60d86d69cfa8fd1565171456163ec934152c4b1a7d58d864779eb64e41e49f0"
+    },
+    {
+      "file": "katz_pubmed_seed2/paired_deltas.csv",
+      "sha256": "248ff8479b1b5fcb543aeea081c2bafa8ec8521de76deae2e74fa260ed5ecabd"
+    },
+    {
+      "file": "katz_pubmed_seed2/per_seed_curves.csv",
+      "sha256": "8819f211baab455b4769668168661ebf716c6a5820724d598b5519649e242b50"
+    }
+  ]
+}

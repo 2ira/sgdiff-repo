@@ -1,0 +1,15 @@
+{
+  "new_evaluations": 378,
+  "checkpoints": 27,
+  "historical_graphs_match": true,
+  "max_historical_auc_difference": {
+    "dataset": "cora",
+    "seed": 2,
+    "variant": "fixed_weights",
+    "condition": "feature_shuffle",
+    "old_auc": 0.6510847107438017,
+    "new_auc": 0.7091878379757167,
+    "delta_auc": 0.05810312723191502
+  },
+  "paired_ablation_cells": 84
+}

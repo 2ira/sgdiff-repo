@@ -1,0 +1,110 @@
+{
+  "cora": {
+    "profile": "readme_exact",
+    "selection_metric": "seed0 clean validation AUROC",
+    "candidates": [
+      {
+        "run": "cora_readme_exact_full_s0",
+        "profile": "readme_exact",
+        "best_epoch": 5,
+        "epochs_run": 80,
+        "updates": 720,
+        "best_validation": {
+          "auc": 0.9527519513314968,
+          "ap": 0.9615508672124223,
+          "hits100": 0.9734848484848485,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "checkpoint_sha256": "a82cff50b9e4a69ebff3bd021db14ae3366796ce4ecc6e4e375490ecbea75702"
+      },
+      {
+        "run": "cora_compact512_full_s0",
+        "profile": "compact512",
+        "best_epoch": 70,
+        "epochs_run": 145,
+        "updates": 1305,
+        "best_validation": {
+          "auc": 0.9497819100091828,
+          "ap": 0.9624977118150814,
+          "hits100": 0.9545454545454546,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "checkpoint_sha256": "3a0dccff5880b9003bc56ab6b52c0cb45b0bbcfc615a24db1decea2aa463c6b8"
+      }
+    ]
+  },
+  "citeseer": {
+    "profile": "readme_exact",
+    "selection_metric": "seed0 clean validation AUROC",
+    "candidates": [
+      {
+        "run": "citeseer_readme_exact_full_s0",
+        "profile": "readme_exact",
+        "best_epoch": 25,
+        "epochs_run": 100,
+        "updates": 800,
+        "best_validation": {
+          "auc": 0.9581217297630039,
+          "ap": 0.9643029498800497,
+          "hits100": 0.9824561403508771,
+          "precision100": 0.99,
+          "hits100_trivial": false
+        },
+        "checkpoint_sha256": "c6b4d289b335a6aa02fb538695ed5634a844597826c1413777c3e47f27026ec9"
+      },
+      {
+        "run": "citeseer_compact512_full_s0",
+        "profile": "compact512",
+        "best_epoch": 25,
+        "epochs_run": 100,
+        "updates": 800,
+        "best_validation": {
+          "auc": 0.9522545398584179,
+          "ap": 0.9597062209509271,
+          "hits100": 0.9736842105263158,
+          "precision100": 0.99,
+          "hits100_trivial": false
+        },
+        "checkpoint_sha256": "71730afec69d7de06c55baf823e85a7035ba615e015f2ed1158c70f762b579eb"
+      }
+    ]
+  },
+  "pubmed": {
+    "profile": "readme_exact",
+    "selection_metric": "seed0 clean validation AUROC",
+    "candidates": [
+      {
+        "run": "pubmed_readme_exact_full_s0",
+        "profile": "readme_exact",
+        "best_epoch": 95,
+        "epochs_run": 150,
+        "updates": 10500,
+        "best_validation": {
+          "auc": 0.9892262866712715,
+          "ap": 0.98840808840138,
+          "hits100": 0.9517148014440433,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "checkpoint_sha256": "c406691e0e854fce8e6798ea92e7ea30dc41178cc315cf2579e8d288bfd7279c"
+      },
+      {
+        "run": "pubmed_compact512_full_s0",
+        "profile": "compact512",
+        "best_epoch": 130,
+        "epochs_run": 150,
+        "updates": 10500,
+        "best_validation": {
+          "auc": 0.9887731903843398,
+          "ap": 0.9882422890619915,
+          "hits100": 0.9490072202166066,
+          "precision100": 1.0,
+          "hits100_trivial": false
+        },
+        "checkpoint_sha256": "63c296073a0c64c13712a2b513f8791d6c0c547373a47a7bda718090ec936d74"
+      }
+    ]
+  }
+}

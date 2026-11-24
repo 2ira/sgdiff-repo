@@ -1,0 +1,93 @@
+{
+  "evaluations": 756,
+  "curve_rows": 152712,
+  "datasets": [
+    "cora",
+    "citeseer",
+    "pubmed"
+  ],
+  "checks": [
+    {
+      "dataset": "cora",
+      "seed": 0,
+      "node_rank_csv_sha256": "adf2a578259f9f938d8209480e0f162f771f0974eafc6efbf645f6aec47f3646",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    },
+    {
+      "dataset": "cora",
+      "seed": 1,
+      "node_rank_csv_sha256": "80d5a8466d8838c49ddbe3458a63e5e1087154ede00dd2e7a0571dfaaa710d44",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    },
+    {
+      "dataset": "cora",
+      "seed": 2,
+      "node_rank_csv_sha256": "26b497a41baf11bc5873893a7e0aa7863a33754deef1142ec0696d74addd689e",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 0,
+      "node_rank_csv_sha256": "27b68961f95bcecedf22881c163546e5fb4dcd11bf40158dff4df36367244dd5",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 1,
+      "node_rank_csv_sha256": "220626a01db54a3cbfc3e7430db500b2b0e5b8a7288f683aab964fa8cb1a42e4",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 2,
+      "node_rank_csv_sha256": "1e9f428840d8cbf8f12fe9b24c5d5fd69e239f3fc9b01d117ce22945c394b409",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 0,
+      "node_rank_csv_sha256": "031b203e108120712ef8bab0d41609ea5e811537502a70f96f5aead322d1a006",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 1,
+      "node_rank_csv_sha256": "f7dbdc906cb74fd71ce03b5b4c67492b03c986a801f485325ba4280a428ad71f",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 2,
+      "node_rank_csv_sha256": "b60d86d69cfa8fd1565171456163ec934152c4b1a7d58d864779eb64e41e49f0",
+      "same_rankings": true,
+      "same_queries": true,
+      "same_14_graphs": true,
+      "katz_feature_shuffle_exactly_clean": true
+    }
+  ],
+  "max_auc_recompute_error": 2.220446049250313e-16
+}

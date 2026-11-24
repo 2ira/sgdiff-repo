@@ -1,0 +1,137 @@
+[
+  {
+    "run": "citeseer_readme_exact_fixed_weights_s0",
+    "checkpoint_sha256": "7afd3ff7260455a87360aca688f7a5b4a541efe8a4ee547856ba93ca4a8fdeae",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_fixed_weights_s0/best.pt"
+  },
+  {
+    "run": "citeseer_readme_exact_fixed_weights_s1",
+    "checkpoint_sha256": "44189744bd61d1195907d177360676a4e9db395cf50e1a06a6416d72e668126f",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_fixed_weights_s1/best.pt"
+  },
+  {
+    "run": "citeseer_readme_exact_fixed_weights_s2",
+    "checkpoint_sha256": "16218885ef652a3155c0bdb0ecb97481f66d8463e77921ab822eab5415dd81d3",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_fixed_weights_s2/best.pt"
+  },
+  {
+    "run": "citeseer_readme_exact_full_s0",
+    "checkpoint_sha256": "74b9a8337b3b0018e8555028ba355dfc3b271143c7ddb31f3d4a9b0d9edc75a8",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_full_s0/best.pt"
+  },
+  {
+    "run": "citeseer_readme_exact_full_s1",
+    "checkpoint_sha256": "065fbd93737de37326064d7a84613a360a6b0b6cecb623ec4e95336619da0770",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_full_s1/best.pt"
+  },
+  {
+    "run": "citeseer_readme_exact_full_s2",
+    "checkpoint_sha256": "8a433b2004e843f1ec74b6d26876c4ded6031db1023775a1f67054ed3199aa35",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_full_s2/best.pt"
+  },
+  {
+    "run": "citeseer_readme_exact_shallow_k2_s0",
+    "checkpoint_sha256": "05730482cddf65e300bc05849549b1be1d156225ed6a0bb58ba95cc17ea09d4b",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_shallow_k2_s0/best.pt"
+  },
+  {
+    "run": "citeseer_readme_exact_shallow_k2_s1",
+    "checkpoint_sha256": "dd8b528ea677c1069a6897cf43135b65fb09c25830428aa4e2cbcad7927c1cf3",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_shallow_k2_s1/best.pt"
+  },
+  {
+    "run": "citeseer_readme_exact_shallow_k2_s2",
+    "checkpoint_sha256": "419ffb7a8f1ad9fe1cc7369b8db1876247972fe65f812bff597c2b562a9cd292",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/citeseer_readme_exact_shallow_k2_s2/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_fixed_weights_s0",
+    "checkpoint_sha256": "7ffb6d49feaee4969037423d92bb6f2d2ec49b49ec1600be480e32c0b4c8d459",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_fixed_weights_s0/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_fixed_weights_s1",
+    "checkpoint_sha256": "0a14ec334cffefec0152ee7a3af816e943efd7718122b669b7f87d9da1b06532",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_fixed_weights_s1/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_fixed_weights_s2",
+    "checkpoint_sha256": "66762a19abae9f55a9c743394ac3354256c834516eb78f39515c892059c43127",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_fixed_weights_s2/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_full_s0",
+    "checkpoint_sha256": "0fdf1389a1163ac6f31d3528f9767e8794b7b3050f3dc77353ff7d07e6522b4d",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_full_s0/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_full_s1",
+    "checkpoint_sha256": "a1eb8caf2646058f26b285f84e95af6ff6404b16e486c2bea7104947cff381b2",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_full_s1/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_full_s2",
+    "checkpoint_sha256": "b195f701d97e2b71e453cb0ca05e01cdc2b7560e5c15c93032a88090b83f3478",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_full_s2/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_shallow_k2_s0",
+    "checkpoint_sha256": "db6ccac149dc1ed45383b74914d4094d76860776b4dffb0afe823f9fd189a1d7",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_shallow_k2_s0/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_shallow_k2_s1",
+    "checkpoint_sha256": "a68f145d304038b97e17191565e515299cdc2c56432c9cd59a756f43203fe31a",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_shallow_k2_s1/best.pt"
+  },
+  {
+    "run": "cora_readme_exact_shallow_k2_s2",
+    "checkpoint_sha256": "e7cb83a77cca899202a73511f15c93e939c0481340cc836e26bcfcd216320dd1",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/cora_readme_exact_shallow_k2_s2/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_fixed_weights_s0",
+    "checkpoint_sha256": "911801164f53596b3f0132c90ed7d1d7bf9dd74bfde1c3cbd94a722c5b29a742",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_fixed_weights_s0/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_fixed_weights_s1",
+    "checkpoint_sha256": "b964e70743d94256f21bb542bd5def40dbe28a6154d4da5ab89f66622d01dc5f",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_fixed_weights_s1/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_fixed_weights_s2",
+    "checkpoint_sha256": "d57a3cfabfaf17ad0e831f69ccd625df3a8416b0d55320b0e4c604567dbf451e",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_fixed_weights_s2/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_full_s0",
+    "checkpoint_sha256": "ce1584c53a4ba7349e97c19e066fb678acdd7cb50dcddfc04b576fbcfbee0f17",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_full_s0/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_full_s1",
+    "checkpoint_sha256": "297ed818bdc800f20b0deb5ff48f6ee7bc1e821819fc191b7e152139db36e711",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_full_s1/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_full_s2",
+    "checkpoint_sha256": "be290619fc18621dda0e9aec7af8b36560abe9256ed36f4662684d9e41c0f014",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_full_s2/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_shallow_k2_s0",
+    "checkpoint_sha256": "e9ffeaf444cbab4ed0096f19f52932e52feba01ab3ee300eb15cead2a552e524",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_shallow_k2_s0/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_shallow_k2_s1",
+    "checkpoint_sha256": "d2812afa4bd96d8038bc328012f617d27f88fb12cf1b56af9962b16480df3bb5",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_shallow_k2_s1/best.pt"
+  },
+  {
+    "run": "pubmed_readme_exact_shallow_k2_s2",
+    "checkpoint_sha256": "97b808499ce0b792a0ad55a8139af6ea42fb3b45c59927b204cb0e6131918593",
+    "nas_path": "/nas/jiatong/data8002/hlgnn_retrain_20261124/training/models/pubmed_readme_exact_shallow_k2_s2/best.pt"
+  }
+]

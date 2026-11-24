@@ -1,6 +1,6 @@
 # SGDiff — Sub-graph Based Diffusion Model for Link Prediction
 
-**Course project delivery:** [Katz and SP4LP robustness results, attack graphs, and reproducible evaluation](results/peer-protocol/README.md). This branch uses Lin Junxiong’s pinned native evaluator for Cora, CiteSeer, and PubMed. The SGDiff reproduction below retains its historical protocol.
+**Latest course delivery (2026-11-24):** [Retrained HL-GNN: full robustness and component ablations](results/hlgnn-retrained/report.md), and [Katz + HL-GNN: Top-k% important-node AUROC](results/node-rank-auc/README.md). These use Lin Junxiong’s pinned native evaluator on Cora, CiteSeer, and PubMed. The rank metric is an additional scoring layer over the same original test queries. HL-GNN training additionally uses PyG; score-only replay needs no GPU. Earlier [SP4LP results](results/peer-protocol/README.md) and the SGDiff reproduction below remain historical records. [Environment and reproduction guide](docs/hlgnn_retraining_20261124.md).
 
 An independent, self-contained reproduction of
 

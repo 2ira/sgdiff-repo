@@ -1,0 +1,6 @@
+{
+  "training_routine_matches_restored_source": true,
+  "training_function_ast_sha256": "eb2920e7bd62a29fbf007f89873b6f9480dc08a6375f8ceb53869c31e8fa036e",
+  "model_matches_restored_source": true,
+  "orchestration_change": "Per-fit locking around CLI entry only, bounded independent GPU workers after all seed-0 gates passed. No training-function changes."
+}
