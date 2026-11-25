@@ -15,3 +15,5 @@ tectonic --outdir deliverables\part2_report deliverables\part2_report\main.tex
 ```
 
 `main.tex` and `references.bib` are the editable sources. The generated TeX fragments, source data extract, figures, and final PDF are retained so that the submitted version can be inspected without rerunning training.
+
+The additional node-rank AUROC section uses the exact teammate evaluator on saved per-pair scores. See [aligned results](../../results/part2-node-rank-aligned/README.md), its replay inputs, and scripts/part2_peer_rank_report.py.

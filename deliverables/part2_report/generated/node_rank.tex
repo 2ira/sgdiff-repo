@@ -1,0 +1,81 @@
+\subsection{Node-importance-conditioned AUROC}
+
+To align with the team's node-rank AUROC protocol, we used the same pinned evaluator on our saved predictions. For each dataset and seed, Degree and PageRank are computed on the clean training-positive graph; tied ranks are resolved by SHA256 of the dataset, seed and node ID. At each integer $k=0,\ldots,100$, we retain original test pairs with at least one endpoint among the top $\lceil Nk/100\rceil$ nodes. All models and perturbations use the same fixed cohort. AUROC is pooled over retained positive and negative pairs; $k=0$ is undefined and $k=100$ exactly reproduces the original test AUROC. Three seed estimates are summarized with their sample standard deviation. Points with fewer than 20 positives or 20 negatives are flagged as low support.
+
+\begin{table}[H]
+
+\centering
+
+\small
+
+\begin{tabular}{llccc}
+
+\toprule
+
+Dataset & Model & Degree Top 10\% & PageRank Top 10\% & All nodes \\
+
+\midrule
+
+Cora & CN & 0.750 & 0.752 & 0.722 \\
+
+Cora & GCN & 0.848 & 0.844 & 0.846 \\
+
+Cora & SGDiff & 0.836 & 0.835 & 0.853 \\
+
+\midrule
+
+Citeseer & CN & 0.733 & 0.715 & 0.669 \\
+
+Citeseer & GCN & 0.841 & 0.829 & 0.823 \\
+
+Citeseer & SGDiff & 0.864 & 0.846 & 0.836 \\
+
+\midrule
+
+Pubmed & CN & 0.666 & 0.656 & 0.642 \\
+
+Pubmed & GCN & 0.946 & 0.942 & 0.954 \\
+
+Pubmed & SGDiff & 0.804 & 0.782 & 0.904 \\
+
+\bottomrule
+
+\end{tabular}
+
+\caption{Clean AUROC conditioned on high-importance nodes, averaged over three seeds. The full-test column is the original AUROC.}
+
+\label{tab:noderank}
+
+\end{table}
+
+\begin{figure}[H]
+
+\centering
+
+\includegraphics[width=0.94\linewidth]{clean_node_rank_auc.pdf}
+
+\caption{Clean AUROC by Degree and PageRank cohort. Shading is the sample SD across seeds; dots denote any low-support seed.}
+
+\end{figure}
+
+\begin{figure}[H]
+
+\centering
+
+\includegraphics[width=0.94\linewidth]{hub_delete_50_node_rank_auc.pdf}
+
+\caption{50\% hub-priority edge deletion AUROC by Degree and PageRank cohort. Shading is the sample SD across seeds; dots denote any low-support seed.}
+
+\end{figure}
+
+\begin{figure}[H]
+
+\centering
+
+\includegraphics[width=\linewidth]{test_pair_coverage.pdf}
+
+\caption{Positive and negative test-pair coverage at each node-percentile cutoff. Different class coverage changes the selected cohort's difficulty.}
+
+\end{figure}
+
+These are degree- or PageRank-conditioned results, not model-score top-$k$ precision. Subset AUROC changes with the test cohort and its positive/negative composition; it does not by itself show that a predictor improved. Full per-seed curves, paired attack-minus-clean differences, support counts and audit records accompany the report.

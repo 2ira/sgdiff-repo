@@ -1,3 +1,5 @@
+Superseded by [the fully aligned Degree and PageRank analysis](../part2-node-rank-aligned/README.md).
+
 # Part 2: Top-degree node cohorts
 
 This is a post-hoc analysis of the **saved** Part 2 peer-protocol predictions. No model was retrained. It covers CN, the three GCN configurations, and SGDiff fusion/structure/feature readouts on Cora, CiteSeer, and PubMed, with seeds 0–2 and all 14 conditions.

@@ -1,0 +1,6 @@
+{
+  "records_recomputed": 882,
+  "summary_rows": 59388,
+  "max_published_global_auc_error": 2.220446049250313e-16,
+  "seed_dispersion": "sample standard deviation ddof=1; not a confidence interval"
+}
