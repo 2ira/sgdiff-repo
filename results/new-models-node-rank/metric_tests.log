@@ -1,0 +1,13 @@
+.........                                                                [100%]
+=============================== warnings summary ===============================
+experiments/node_rank_auc/test_evaluate.py::test_node_ranking_is_input_order_invariant
+experiments/node_rank_auc/test_evaluate.py::test_node_ranking_is_input_order_invariant
+experiments/node_rank_auc/test_evaluate.py::test_full_pipeline_boundaries_and_frozen_masks
+experiments/node_rank_auc/test_evaluate.py::test_query_reordering_is_rejected
+experiments/new_models_rank/test_frozen_rank.py::test_shared_orders_and_auc_are_identical
+experiments/new_models_rank/test_frozen_rank.py::test_shared_orders_and_auc_are_identical
+experiments/new_models_rank/test_frozen_rank.py::test_changed_training_graph_rejects_frozen_rank
+  /usr/local/lib/python3.10/dist-packages/networkx/algorithms/link_analysis/pagerank_alg.py:107: DeprecationWarning: networkx.pagerank_scipy is deprecated and will be removed in NetworkX 3.0, use networkx.pagerank instead.
+    return pagerank_scipy(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

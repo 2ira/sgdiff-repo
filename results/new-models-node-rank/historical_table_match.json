@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "reused_evaluations": 756,
+  "all_four_metrics_match": true,
+  "max_metric_error": 0,
+  "source": "results/peer-protocol/five-models/per_seed.csv",
+  "source_sha256": "7112c70d72efdabf90043c656fe0aecbe61e691d61ea0e8b28679266cc5a91ea"
+}

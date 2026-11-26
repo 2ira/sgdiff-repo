@@ -1,0 +1,2515 @@
+\documentclass[UTF8,a4paper,11pt,fontset=fandol]{ctexart}
+\usepackage[margin=22mm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,graphicx,booktabs,longtable,array,float,pdflscape,xcolor,xurl}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[unicode,colorlinks=true,linkcolor=blue!45!black,citecolor=green!40!black,urlcolor=blue!50!black]{hyperref}
+\usepackage{fancyhdr}\pagestyle{fancy}\fancyhf{}\fancyhead[L]{\small 三模型统一鲁棒性与重要节点AUROC}\fancyhead[R]{\small xiaoming}\fancyfoot[C]{\thepage}
+\setlength{\emergencystretch}{3em}\setlength{\LTcapwidth}{\textwidth}
+\newcommand{\code}[1]{{\small\nolinkurl{#1}}}
+\hypersetup{pdftitle={三个模型：统一鲁棒性、组件消融与重要节点AUROC},pdfauthor={xiaoming}}
+\title{\textbf{NCNC、LPFormer、Refined-GAE}\\统一鲁棒性、组件消融与重要节点AUROC\\\large 对2026年11月24日分支交付的补充}
+\author{xiaoming}\date{2026年11月26日}
+\begin{document}\maketitle
+\begin{abstract}
+本报告对齐统一分支已发布的Katz、重训HL-GNN实验，为三个作者架构补充相同的Degree/PageRank Top-k\%节点相关测试边AUROC。Cora/Citeseer复用54份既有权重和756组真实逐边预测；PubMed按共享候选保护协议新增27次训练与378组评估。共有81份模型、1134组原生14条件评估、229068行逐种子条件曲线。所有模型使用相同117张图、9份划分、查询顺序和冻结节点排名。此为附加计分层：不根据预测分数选择测试边，不对每个k重新攻击，不将k=0填为虚构AUC。完整全局结果及逐种子表在附录展开，所有k和条件的原始数值随归档提供。
+\end{abstract}
+\noindent\textbf{提交状态：}本轮实验更新发布至 \code{feat/ncnc-lpformer-refined-gae}；协议与对照来源为统一分支11月24日交付。
+\tableofcontents\clearpage
+\section{数据、训练与协议对齐}
+协议基准为统一分支提交 \code{bef9674}，原生评测器固定到 \code{95083da808e500c02da458e205f4b861ceb80871}。数据采用Planetoid引用网络\cite{yang2016planetoid}；Cora/Citeseer/PubMed分别为2708/3327/19717节点，5278/4552/44324无向边，1433/3703/500维属性。每seed正边80/5/15划分，训练、验证、测试各配等量且互不重叠负例，保留原完整测试集：每类792/683/6649条边。
+
+输入为原始属性，训练移除当前正例批次；验证只使用训练图，测试图使用训练加验证边。PubMed作者专属配方沿用已固定配置，batch512、最多100epoch、每5轮按干净验证AUC选点、30轮无提升停止、梯度裁剪1，不用测试集调参。Cora/Citeseer旧54次拟合未重做；PubMed27次是全新模型。LPFormer训练PPR沿用作者完整训练图缓存，可能包含批次训练目标信息，推理时则为每个不同受扰图重算PPR。
+
+\begin{itemize}
+\item NCNC：hidden256，GCN dropout0.1，属性dropout0.3，预测器dropout0.05；编码器/预测器学习率0.0097/0.002；pt0.5、scale5.3、offset0.5、alpha0.3。
+\item LPFormer：hidden128，dropout0.3，Adam学习率0.001、weight decay0.0001；PPR alpha0.15、eps$10^{-5}$、候选阈值0.01。
+\item Refined-GAE：hidden512，2步传播，dropout0.4，学习率0.001，GELU两层预测器；深度混合参数初始化$[1,0.5]$后可学习。
+\end{itemize}
+
+\begin{center}\small\begin{tabular}{lrrrr}\toprule
+数据&训练模型&其中新训练&原生评估&条件曲线行数\\\midrule
+Cora&27&0&378&76356\\
+Citeseer&27&0&378&76356\\
+PubMed&27&27&378&76356\\\bottomrule\end{tabular}\end{center}
+
+原生14条件为clean、RF/DICE/EA各10/25/50\%、随机删边50\%、高度相关删边50\%、纯插边50\%与属性行打乱。117张结构缓存直接导入已发布图并核验，不生成新EA；所有测试候选受保护。这里的EA是可见图线性代理梯度迁移攻击，不等价于原论文DeepRobust谱攻击或逐模型白盒最强攻击。实际27张EA图全部为插边，删边机制依据独立delete与delete\_hub条件解释。RF/DICE的50\%混合编辑预算不等于删除一半边。
+
+与此前main补实验不同，本轮PubMed不是列标准化属性、500+500候选或验证正边可见的设置；它使用本分支原始属性、完整6649+6649候选及训练图验证。新PubMed EA能够评测，是因为现有H200图已归档，不需本机重新执行密集攻击，也没有擅自改变main的4000节点限制。
+
+\section{三个模型的机制与组件}
+三种模型均用于链路预测，但结构证据的处理不同：GCN\cite{kipf2017gcn}通过邻接传播编码节点；GAE/VGAE\cite{kipf2016vgae}提供编码器--解码器框架，GCN可以作为其编码器。子图方法SEAL\cite{zhang2018seal}与结构草图BUDDY\cite{chamberlain2023buddy}是相关结构学习路线，未作为本轮新增训练对象。LPFormer的个性化PageRank候选与局部图划分中的PPR思想相关\cite{andersen2006ppr}；LayerNorm\cite{ba2016layernorm}作为归一化组件被单独消融。这里的组件对照均按原作者实现定义，不能等同于结构-only/特征-only控制实验。
+
+NCNC\cite{wang2024ncnc}先用GCN编码，再聚合共同邻居并对单侧邻居缺失连接作概率补全。noCNC关闭补全、保留NCN；noCN用作者端点预测器，仍含GCN$(A,X)$，不是特征-only。补全概率与训练正则化共同影响受扰表现，不能仅凭完整模型排名归因。
+
+LPFormer\cite{shomer2024lpformer}用PPR选候选、点对注意力与位置编码形成链路表示。Uniform固定候选内均匀注意力但保留值投影；noPE只将位置编码置零，保留PPR筛选和结构计数。本报告的全局PageRank节点中心性不同于模型内部的个性化PPR，不把新指标当作模型自带重要性分数。
+
+Refined-GAE\cite{ma2025refined}使用属性输入、可学习传播深度混合和Hadamard-MLP解码。Cora/Citeseer为4步1024维，PubMed为2步512维、GELU两层解码器；PubMed深度参数从$[1,0.5]$初始化后可学习。noLN只删除网络内LayerNorm，保留dropout和邻接归一化；本协议输入没有列标准化。Dot改成点积预测器后独立重训。组件效应同时包含参数量、非线性、正则化与训练轨迹的改变，不是冻结编码器后的孤立替换。
+
+\section{Top-k\%节点相关边AUROC的定义}
+协议原文见\href{https://github.com/2ira/sgdiff-repo/blob/unified-robustness-ablation/results/node-rank-auc/PROTOCOL.zh-CN.md}{统一节点重要性评测协议}，对照工作见\href{https://github.com/2ira/sgdiff-repo/blob/unified-robustness-ablation/results/hlgnn-retrained/report.md}{HL-GNN重训报告}。\par
+每dataset/seed仅用干净训练正边计算节点Degree和PageRank（alpha0.85，均匀teleport/dangling、tol$10^{-12}$、maxiter1000）。排名不使用验证或测试正边，不读取类别或预测，不在攻击后重算。按冻结排序取$m(k)=\lceil Nk/100\rceil$个节点，选原正负测试边中至少一端命中的边：
+\[
+\mathcal Q_k=\{(u,v)\in\mathcal Q_{\rm test}:u\in S_k\lor v\in S_k\}.
+\]
+两端均命中的边只计一次，正负类使用同一规则，不重采负例或重新平衡。
+\[
+\operatorname{AUC}_k=\frac{\sum_{p\in P_k,n\in N_k}(\mathbf1[s_p>s_n]+0.5\mathbf1[s_p=s_n])}{|P_k||N_k|}.
+\]
+$k=0$无样本、AUC为NA；$k=100$必须还原原全局AUC。任一类为空为NA，少于20正或20负为低支持。主图纵轴固定0--1，低支持用空心点，不连接成同样强证据的曲线。阴影为3seed样本SD（ddof1），不是置信区间。Top10\%节点通常覆盖远多于10\%正边，且正负覆盖率不等，因此曲线上升本身不代表模型增强。
+
+本机依赖版本会使少量近并列PageRank节点换序。适配层验证训练图指纹、Degree、PageRank数值及tie key，随后复用发布的排名CSV，要求输出与Katz、HL-GNN逐字节一致；原计分逻辑不变。复用冻结排名保证跨模型的子集完全相同，不对某模型挑有利排序。
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{robustness_all.pdf}\caption{全部14条件、三个模型及两个独立重训消融的全局AUROC。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{test_edge_coverage.pdf}\caption{原固定候选的正负边覆盖率。所有模型、消融和攻击共用相同子集。}\end{figure}
+\end{landscape}
+\section{五模型比较与代表发现}
+Katz和HL-GNN直接引用本分支已发布分数，不重新训练。下图展示四个代表条件；全部14条件和所有k保留在CSV及逐seed归档。
+\begin{figure}[H]\centering\includegraphics[width=\linewidth,height=.82\textheight,keepaspectratio]{rank_auc_clean.pdf}\caption{clean：同图、同查询、同节点子集的五模型AUROC，三seed均值与样本SD。}\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\linewidth,height=.82\textheight,keepaspectratio]{rank_auc_ea_0.5.pdf}\caption{ea\_0.5：同图、同查询、同节点子集的五模型AUROC，三seed均值与样本SD。}\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\linewidth,height=.82\textheight,keepaspectratio]{rank_auc_delete_hub_0.5.pdf}\caption{delete\_hub\_0.5：同图、同查询、同节点子集的五模型AUROC，三seed均值与样本SD。}\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\linewidth,height=.82\textheight,keepaspectratio]{rank_auc_feature_shuffle.pdf}\caption{feature\_shuffle：同图、同查询、同节点子集的五模型AUROC，三seed均值与样本SD。}\end{figure}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrr rr}
+\caption{cora完整模型关键比较}\\
+\toprule
+模型 & 条件 & Degree10 & PageRank10 & 全局AUC & 最少正 & 最少负 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{cora完整模型关键比较（续）}\\
+\toprule
+模型 & 条件 & Degree10 & PageRank10 & 全局AUC & 最少正 & 最少负 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & clean & $0.9497\pm0.0045$ & $0.9510\pm0.0031$ & $0.9592\pm0.0019$ & 359 & 144 \\
+NCNC & ea\_0.5 & $0.9380\pm0.0056$ & $0.9417\pm0.0035$ & $0.9435\pm0.0026$ & 359 & 144 \\
+NCNC & delete\_hub\_0.5 & $0.9265\pm0.0162$ & $0.9251\pm0.0115$ & $0.9477\pm0.0031$ & 359 & 144 \\
+NCNC & feature\_shuffle & $0.6583\pm0.0099$ & $0.6652\pm0.0032$ & $0.6916\pm0.0169$ & 359 & 144 \\
+LPFormer & clean & $0.9338\pm0.0054$ & $0.9369\pm0.0076$ & $0.9361\pm0.0008$ & 359 & 144 \\
+LPFormer & ea\_0.5 & $0.9218\pm0.0116$ & $0.9268\pm0.0157$ & $0.9158\pm0.0017$ & 359 & 144 \\
+LPFormer & delete\_hub\_0.5 & $0.8632\pm0.0073$ & $0.8700\pm0.0042$ & $0.8870\pm0.0012$ & 359 & 144 \\
+LPFormer & feature\_shuffle & $0.8455\pm0.0078$ & $0.8381\pm0.0057$ & $0.8263\pm0.0058$ & 359 & 144 \\
+Refined-GAE & clean & $0.9548\pm0.0050$ & $0.9558\pm0.0049$ & $0.9616\pm0.0035$ & 359 & 144 \\
+Refined-GAE & ea\_0.5 & $0.9409\pm0.0085$ & $0.9423\pm0.0042$ & $0.9452\pm0.0014$ & 359 & 144 \\
+Refined-GAE & delete\_hub\_0.5 & $0.9345\pm0.0127$ & $0.9349\pm0.0111$ & $0.9443\pm0.0025$ & 359 & 144 \\
+Refined-GAE & feature\_shuffle & $0.7395\pm0.0217$ & $0.7413\pm0.0205$ & $0.7652\pm0.0164$ & 359 & 144 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrr rr}
+\caption{citeseer完整模型关键比较}\\
+\toprule
+模型 & 条件 & Degree10 & PageRank10 & 全局AUC & 最少正 & 最少负 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{citeseer完整模型关键比较（续）}\\
+\toprule
+模型 & 条件 & Degree10 & PageRank10 & 全局AUC & 最少正 & 最少负 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & clean & $0.9745\pm0.0140$ & $0.9710\pm0.0145$ & $0.9683\pm0.0067$ & 295 & 128 \\
+NCNC & ea\_0.5 & $0.9583\pm0.0135$ & $0.9596\pm0.0159$ & $0.9500\pm0.0062$ & 295 & 128 \\
+NCNC & delete\_hub\_0.5 & $0.9641\pm0.0079$ & $0.9605\pm0.0115$ & $0.9627\pm0.0077$ & 295 & 128 \\
+NCNC & feature\_shuffle & $0.6388\pm0.0167$ & $0.6320\pm0.0207$ & $0.6369\pm0.0374$ & 295 & 128 \\
+LPFormer & clean & $0.9646\pm0.0139$ & $0.9608\pm0.0121$ & $0.9435\pm0.0055$ & 295 & 128 \\
+LPFormer & ea\_0.5 & $0.9632\pm0.0112$ & $0.9586\pm0.0092$ & $0.9317\pm0.0068$ & 295 & 128 \\
+LPFormer & delete\_hub\_0.5 & $0.9170\pm0.0194$ & $0.9120\pm0.0190$ & $0.9193\pm0.0152$ & 295 & 128 \\
+LPFormer & feature\_shuffle & $0.8491\pm0.0073$ & $0.8234\pm0.0085$ & $0.7434\pm0.0039$ & 295 & 128 \\
+Refined-GAE & clean & $0.9717\pm0.0109$ & $0.9696\pm0.0111$ & $0.9651\pm0.0073$ & 295 & 128 \\
+Refined-GAE & ea\_0.5 & $0.9707\pm0.0111$ & $0.9685\pm0.0125$ & $0.9533\pm0.0105$ & 295 & 128 \\
+Refined-GAE & delete\_hub\_0.5 & $0.9579\pm0.0169$ & $0.9548\pm0.0173$ & $0.9575\pm0.0080$ & 295 & 128 \\
+Refined-GAE & feature\_shuffle & $0.7568\pm0.0237$ & $0.7263\pm0.0316$ & $0.6980\pm0.0072$ & 295 & 128 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrr rr}
+\caption{pubmed完整模型关键比较}\\
+\toprule
+模型 & 条件 & Degree10 & PageRank10 & 全局AUC & 最少正 & 最少负 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{pubmed完整模型关键比较（续）}\\
+\toprule
+模型 & 条件 & Degree10 & PageRank10 & 全局AUC & 最少正 & 最少负 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & clean & $0.9707\pm0.0018$ & $0.9681\pm0.0001$ & $0.9872\pm0.0008$ & 4769 & 1184 \\
+NCNC & ea\_0.5 & $0.9616\pm0.0027$ & $0.9615\pm0.0023$ & $0.9828\pm0.0005$ & 4769 & 1184 \\
+NCNC & delete\_hub\_0.5 & $0.9579\pm0.0019$ & $0.9545\pm0.0025$ & $0.9809\pm0.0015$ & 4769 & 1184 \\
+NCNC & feature\_shuffle & $0.6438\pm0.0003$ & $0.6254\pm0.0061$ & $0.8391\pm0.0027$ & 4769 & 1184 \\
+LPFormer & clean & $0.9659\pm0.0030$ & $0.9600\pm0.0027$ & $0.9801\pm0.0011$ & 4769 & 1184 \\
+LPFormer & ea\_0.5 & $0.9613\pm0.0024$ & $0.9564\pm0.0021$ & $0.9774\pm0.0010$ & 4769 & 1184 \\
+LPFormer & delete\_hub\_0.5 & $0.9538\pm0.0031$ & $0.9487\pm0.0013$ & $0.9721\pm0.0016$ & 4769 & 1184 \\
+LPFormer & feature\_shuffle & $0.7799\pm0.0012$ & $0.7578\pm0.0025$ & $0.8975\pm0.0033$ & 4769 & 1184 \\
+Refined-GAE & clean & $0.9737\pm0.0025$ & $0.9718\pm0.0020$ & $0.9871\pm0.0003$ & 4769 & 1184 \\
+Refined-GAE & ea\_0.5 & $0.9616\pm0.0027$ & $0.9621\pm0.0024$ & $0.9822\pm0.0005$ & 4769 & 1184 \\
+Refined-GAE & delete\_hub\_0.5 & $0.9630\pm0.0010$ & $0.9604\pm0.0018$ & $0.9782\pm0.0011$ & 4769 & 1184 \\
+Refined-GAE & feature\_shuffle & $0.7180\pm0.0083$ & $0.6966\pm0.0089$ & $0.8573\pm0.0042$ & 4769 & 1184 \\
+\end{longtable}
+}
+Citeseer EA50下，NCNC与LPFormer全局AUC分别为$0.9500\pm0.0062$、$0.9317\pm0.0068$；Degree Top10分别为$0.9583\pm0.0135$、$0.9632\pm0.0112$。均值排序反转提示全局成绩可能掩盖特定子集差异，但不是显著性或因果泛化结论。
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrrr}
+\caption{PubMed属性错配：相同测试子集的五模型比较}\\
+\toprule
+模型 & Degree10 & PageRank10 & 全局AUC \\
+\midrule
+\endfirsthead
+\multicolumn{4}{l}{PubMed属性错配：相同测试子集的五模型比较（续）}\\
+\toprule
+模型 & Degree10 & PageRank10 & 全局AUC \\
+\midrule
+\endhead
+\midrule\multicolumn{4}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Katz H5 & $0.8295\pm0.0033$ & $0.8061\pm0.0030$ & $0.8256\pm0.0021$ \\
+HL-GNN & $0.6965\pm0.0067$ & $0.6816\pm0.0030$ & $0.8691\pm0.0015$ \\
+NCNC & $0.6438\pm0.0003$ & $0.6254\pm0.0061$ & $0.8391\pm0.0027$ \\
+LPFormer & $0.7799\pm0.0012$ & $0.7578\pm0.0025$ & $0.8975\pm0.0033$ \\
+Refined-GAE & $0.7180\pm0.0083$ & $0.6966\pm0.0089$ & $0.8573\pm0.0042$ \\
+\end{longtable}
+}
+三个新模型的全局AUROC均值都高于Katz，但Degree Top10均值都低于Katz；该结果与重训HL-GNN的观察呼应。每seed该子集至少4769条正边、1184条负边，并非极小类别数。结论仅限固定负例与属性错配的三seed结果，不代表统计显著性或所有扰动的总体排序。
+\subsection{固定节点子集的配对扰动变化}
+差值为扰动−clean，单位pp，负值代表退化；先逐seed相减，再汇总，不从两组SD相减。全部k与14条件在delta\_summary.csv中保存。
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrr}
+\caption{cora固定子集的扰动−clean}\\
+\toprule
+模型 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endfirsthead
+\multicolumn{5}{l}{cora固定子集的扰动−clean（续）}\\
+\toprule
+模型 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endhead
+\midrule\multicolumn{5}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & ea\_0.5 & $-1.17\pm0.11$ & $-0.93\pm0.05$ & $-1.56\pm0.36$ \\
+NCNC & delete\_hub\_0.5 & $-2.33\pm1.35$ & $-2.58\pm1.27$ & $-1.15\pm0.12$ \\
+NCNC & feature\_shuffle & $-29.14\pm1.01$ & $-28.57\pm0.40$ & $-26.76\pm1.65$ \\
+LPFormer & ea\_0.5 & $-1.20\pm0.77$ & $-1.01\pm0.81$ & $-2.03\pm0.09$ \\
+LPFormer & delete\_hub\_0.5 & $-7.05\pm0.48$ & $-6.69\pm0.47$ & $-4.91\pm0.20$ \\
+LPFormer & feature\_shuffle & $-8.82\pm0.30$ & $-9.88\pm0.94$ & $-10.98\pm0.51$ \\
+Refined-GAE & ea\_0.5 & $-1.39\pm0.50$ & $-1.35\pm0.32$ & $-1.64\pm0.23$ \\
+Refined-GAE & delete\_hub\_0.5 & $-2.02\pm1.15$ & $-2.09\pm1.29$ & $-1.73\pm0.13$ \\
+Refined-GAE & feature\_shuffle & $-21.53\pm2.61$ & $-21.45\pm2.43$ & $-19.64\pm1.99$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrr}
+\caption{citeseer固定子集的扰动−clean}\\
+\toprule
+模型 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endfirsthead
+\multicolumn{5}{l}{citeseer固定子集的扰动−clean（续）}\\
+\toprule
+模型 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endhead
+\midrule\multicolumn{5}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & ea\_0.5 & $-1.62\pm0.06$ & $-1.13\pm0.15$ & $-1.82\pm0.21$ \\
+NCNC & delete\_hub\_0.5 & $-1.05\pm0.68$ & $-1.05\pm0.48$ & $-0.55\pm0.36$ \\
+NCNC & feature\_shuffle & $-33.57\pm2.15$ & $-33.89\pm3.15$ & $-33.14\pm4.21$ \\
+LPFormer & ea\_0.5 & $-0.14\pm0.35$ & $-0.21\pm0.30$ & $-1.18\pm0.47$ \\
+LPFormer & delete\_hub\_0.5 & $-4.76\pm2.06$ & $-4.88\pm2.30$ & $-2.42\pm0.97$ \\
+LPFormer & feature\_shuffle & $-11.55\pm1.95$ & $-13.73\pm2.03$ & $-20.01\pm0.61$ \\
+Refined-GAE & ea\_0.5 & $-0.10\pm0.17$ & $-0.11\pm0.37$ & $-1.18\pm0.32$ \\
+Refined-GAE & delete\_hub\_0.5 & $-1.37\pm0.68$ & $-1.48\pm0.64$ & $-0.76\pm0.07$ \\
+Refined-GAE & feature\_shuffle & $-21.48\pm3.42$ & $-24.33\pm4.25$ & $-26.71\pm1.45$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrr}
+\caption{pubmed固定子集的扰动−clean}\\
+\toprule
+模型 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endfirsthead
+\multicolumn{5}{l}{pubmed固定子集的扰动−clean（续）}\\
+\toprule
+模型 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endhead
+\midrule\multicolumn{5}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & ea\_0.5 & $-0.91\pm0.27$ & $-0.66\pm0.23$ & $-0.44\pm0.12$ \\
+NCNC & delete\_hub\_0.5 & $-1.28\pm0.23$ & $-1.36\pm0.26$ & $-0.63\pm0.09$ \\
+NCNC & feature\_shuffle & $-32.69\pm0.15$ & $-34.26\pm0.61$ & $-14.81\pm0.27$ \\
+LPFormer & ea\_0.5 & $-0.46\pm0.07$ & $-0.35\pm0.07$ & $-0.27\pm0.02$ \\
+LPFormer & delete\_hub\_0.5 & $-1.22\pm0.41$ & $-1.13\pm0.30$ & $-0.81\pm0.14$ \\
+LPFormer & feature\_shuffle & $-18.60\pm0.39$ & $-20.22\pm0.26$ & $-8.26\pm0.26$ \\
+Refined-GAE & ea\_0.5 & $-1.22\pm0.20$ & $-0.97\pm0.16$ & $-0.49\pm0.08$ \\
+Refined-GAE & delete\_hub\_0.5 & $-1.07\pm0.15$ & $-1.14\pm0.17$ & $-0.88\pm0.13$ \\
+Refined-GAE & feature\_shuffle & $-25.57\pm1.07$ & $-27.52\pm1.04$ & $-12.98\pm0.43$ \\
+\end{longtable}
+}
+\section{组件贡献依赖条件和节点子集}
+以下差值均先按同seed计算，再汇总为Full−Variant，单位百分点。完整−noLN在属性置换下的差异不能定位编码器或解码器单独作用。
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lllrr}
+\caption{特征打乱下条件与全局的配对组件效应}\\
+\toprule
+数据 & 模型 & 对照 & Degree10 pp & 全局 pp \\
+\midrule
+\endfirsthead
+\multicolumn{5}{l}{特征打乱下条件与全局的配对组件效应（续）}\\
+\toprule
+数据 & 模型 & 对照 & Degree10 pp & 全局 pp \\
+\midrule
+\endhead
+\midrule\multicolumn{5}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+cora & NCNC & noCNC & $-10.54\pm2.90$ & $-5.83\pm3.06$ \\
+cora & NCNC & noCN & $1.30\pm0.85$ & $2.10\pm2.32$ \\
+cora & LPFormer & Uniform & $0.83\pm2.67$ & $0.56\pm1.19$ \\
+cora & LPFormer & noPE & $-0.06\pm0.19$ & $-0.34\pm0.63$ \\
+cora & Refined-GAE & noLN & $6.35\pm5.43$ & $8.22\pm6.68$ \\
+cora & Refined-GAE & Dot & $-6.79\pm1.51$ & $-3.17\pm1.48$ \\
+citeseer & NCNC & noCNC & $-9.28\pm2.95$ & $-3.06\pm2.89$ \\
+citeseer & NCNC & noCN & $-1.38\pm5.06$ & $1.95\pm3.74$ \\
+citeseer & LPFormer & Uniform & $-0.46\pm0.38$ & $-0.42\pm1.93$ \\
+citeseer & LPFormer & noPE & $-0.37\pm0.88$ & $-0.63\pm1.36$ \\
+citeseer & Refined-GAE & noLN & $22.06\pm3.30$ & $15.46\pm1.99$ \\
+citeseer & Refined-GAE & Dot & $-10.20\pm2.78$ & $-5.97\pm0.13$ \\
+pubmed & NCNC & noCNC & $-8.09\pm0.64$ & $-2.71\pm0.16$ \\
+pubmed & NCNC & noCN & $-1.39\pm0.91$ & $-0.35\pm0.21$ \\
+pubmed & LPFormer & Uniform & $0.31\pm1.06$ & $-0.03\pm0.08$ \\
+pubmed & LPFormer & noPE & $0.19\pm0.56$ & $-0.14\pm0.26$ \\
+pubmed & Refined-GAE & noLN & $8.12\pm0.73$ & $12.39\pm0.53$ \\
+pubmed & Refined-GAE & Dot & $3.52\pm0.39$ & $18.23\pm0.42$ \\
+\end{longtable}
+}
+PubMed属性错配下，NCNC Full−noCNC在Degree Top10与全局分别为$-8.09\pm0.64$、$-2.71\pm0.16$ pp，与Cora/Citeseer的均值方向一致。
+LPFormer Full−Uniform在PubMed属性错配下，Degree Top10为$0.31\pm1.06$ pp，全局为$-0.03\pm0.08$ pp。
+LPFormer Full−noPE在PubMed属性错配下，Degree Top10为$0.19\pm0.56$ pp，全局为$-0.14\pm0.26$ pp。
+这些三seed差值不支持将LPFormer此条件的较高绝对AUC直接归因为可学习注意力或位置编码；两个变体均保留PPR候选和值投影。
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{conditional_component_effects.pdf}\caption{特征打乱：Top10与全局组件效应。误差为配对差的样本SD，不是显著性检验。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{components_clean_degree.pdf}\caption{degree / clean：三个模型的完整与组件版本，全部独立训练。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{components_clean_pagerank.pdf}\caption{pagerank / clean：三个模型的完整与组件版本，全部独立训练。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{components_ea_0.5_degree.pdf}\caption{degree / ea\_0.5：三个模型的完整与组件版本，全部独立训练。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{components_ea_0.5_pagerank.pdf}\caption{pagerank / ea\_0.5：三个模型的完整与组件版本，全部独立训练。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{components_feature_shuffle_degree.pdf}\caption{degree / feature\_shuffle：三个模型的完整与组件版本，全部独立训练。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{components_feature_shuffle_pagerank.pdf}\caption{pagerank / feature\_shuffle：三个模型的完整与组件版本，全部独立训练。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{refined_depth_weights.pdf}\caption{Refined-GAE学到的传播深度softmax混合。系数不是因果重要性，PubMed使用2步，其余4步。}\end{figure}
+\end{landscape}
+\section{核验、训练记录与解释边界}
+九份划分与原始特征已与重训HL-GNN匹配，117图已核验历史哈希。每组AUC/AP/严格负池Hits100及并列平均Precision100由真实逐边分数复算，k100逐组匹配全局AUC；无定义和低支持状态显式保存。新增27份检查点独立重载核验，逐seed曲线归档再通过无GPU复算。详细误差与阈值见随附审计JSON；逐边分数与训练记录分别见\code{predictions.zip}、\code{training_records.zip}，\code{report_sources.zip}仅用于独立编译报告。
+
+本报告是统一协议下的作者架构复现，不复刻三篇论文原表；负例、评价指标与训练预算存在差异。只有三个既定seed，未进行强显著性声明。所有模型保留自己的训练配方，不能将跨模型差异完全归因于架构。冻结hub子集不消除原随机负例的度偏差；不同k还改变测试人群。较大注意力、传播系数或配对差值不等于单个因果机制已被隔离。模型权重与原图不因k改变，PubMed旧main与本轮结果也不混在同表。
+
+全部81条干净验证曲线在下图；Cora/Citeseer是已保存历史，PubMed是新增拟合。训练图使用标注的放大纵轴，主要条件AUC仍固定0--1。达到100epoch上限不等于已证明收敛。独立训练中不重抽测试seed、不为迎合历史均值选择重训次数。
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{training_cora.pdf}\caption{cora：27条验证历史与所选检查点（星号），验证上下文仅含训练图。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{training_citeseer.pdf}\caption{citeseer：27条验证历史与所选检查点（星号），验证上下文仅含训练图。}\end{figure}
+\end{landscape}
+\clearpage
+\begin{landscape}
+\begin{figure}[H]\centering\includegraphics[width=23cm,height=14cm,keepaspectratio]{training_pubmed.pdf}\caption{pubmed：27条验证历史与所选检查点（星号），验证上下文仅含训练图。}\end{figure}
+\end{landscape}
+\bibliographystyle{plainnat}\bibliography{references}
+\clearpage\appendix
+\section{全部378行原生跨seed汇总}
+分数为0--1。Strict Hits100使用固定全局负池，Precision100对截止并列组平均；它们不是将main误命名的hit100原样移入本表。降幅为clean−perturbed，百分点。
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{cora / NCNC：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{cora / NCNC：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9592\pm0.0019$ & $0.9578\pm0.0013$ & $0.9141\pm0.0055$ & $0.9867\pm0.0115$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9548\pm0.0038$ & $0.9524\pm0.0031$ & $0.9082\pm0.0077$ & $0.9833\pm0.0058$ & $0.43\pm0.19$ \\
+Full & rf\_0.25 & $0.9507\pm0.0017$ & $0.9511\pm0.0014$ & $0.8885\pm0.0084$ & $0.9867\pm0.0153$ & $0.85\pm0.03$ \\
+Full & rf\_0.5 & $0.9361\pm0.0056$ & $0.9391\pm0.0076$ & $0.8577\pm0.0077$ & $0.9900\pm0.0100$ & $2.31\pm0.50$ \\
+Full & dice\_0.1 & $0.9556\pm0.0023$ & $0.9541\pm0.0013$ & $0.9028\pm0.0058$ & $0.9833\pm0.0115$ & $0.36\pm0.07$ \\
+Full & dice\_0.25 & $0.9496\pm0.0034$ & $0.9498\pm0.0026$ & $0.8876\pm0.0141$ & $0.9867\pm0.0153$ & $0.95\pm0.16$ \\
+Full & dice\_0.5 & $0.9342\pm0.0057$ & $0.9366\pm0.0068$ & $0.8535\pm0.0153$ & $0.9933\pm0.0058$ & $2.50\pm0.50$ \\
+Full & ea\_0.1 & $0.9552\pm0.0006$ & $0.9545\pm0.0014$ & $0.9028\pm0.0067$ & $0.9900\pm0.0100$ & $0.39\pm0.22$ \\
+Full & ea\_0.25 & $0.9512\pm0.0015$ & $0.9509\pm0.0032$ & $0.8948\pm0.0053$ & $0.9933\pm0.0058$ & $0.80\pm0.34$ \\
+Full & ea\_0.5 & $0.9435\pm0.0026$ & $0.9444\pm0.0008$ & $0.8801\pm0.0143$ & $0.9933\pm0.0058$ & $1.56\pm0.36$ \\
+Full & delete\_0.5 & $0.9547\pm0.0014$ & $0.9526\pm0.0028$ & $0.8965\pm0.0088$ & $0.9867\pm0.0058$ & $0.44\pm0.15$ \\
+Full & delete\_hub\_0.5 & $0.9477\pm0.0031$ & $0.9479\pm0.0047$ & $0.8767\pm0.0139$ & $0.9867\pm0.0058$ & $1.15\pm0.12$ \\
+Full & insert\_0.5 & $0.9292\pm0.0055$ & $0.9317\pm0.0028$ & $0.8338\pm0.0096$ & $0.9900\pm0.0100$ & $3.00\pm0.36$ \\
+Full & feature\_shuffle & $0.6916\pm0.0169$ & $0.7114\pm0.0159$ & $0.3981\pm0.0179$ & $0.8867\pm0.0473$ & $26.76\pm1.65$ \\
+noCNC & clean & $0.9586\pm0.0027$ & $0.9604\pm0.0034$ & $0.9141\pm0.0154$ & $0.9933\pm0.0058$ & $0.00\pm0.00$ \\
+noCNC & rf\_0.1 & $0.9540\pm0.0034$ & $0.9563\pm0.0031$ & $0.9032\pm0.0158$ & $0.9967\pm0.0058$ & $0.46\pm0.14$ \\
+noCNC & rf\_0.25 & $0.9500\pm0.0032$ & $0.9531\pm0.0046$ & $0.8931\pm0.0135$ & $0.9933\pm0.0058$ & $0.85\pm0.09$ \\
+noCNC & rf\_0.5 & $0.9340\pm0.0039$ & $0.9392\pm0.0034$ & $0.8485\pm0.0051$ & $0.9967\pm0.0058$ & $2.46\pm0.60$ \\
+noCNC & dice\_0.1 & $0.9549\pm0.0038$ & $0.9562\pm0.0049$ & $0.9028\pm0.0120$ & $0.9933\pm0.0058$ & $0.36\pm0.12$ \\
+noCNC & dice\_0.25 & $0.9495\pm0.0038$ & $0.9541\pm0.0033$ & $0.8906\pm0.0168$ & $1.0000\pm0.0000$ & $0.91\pm0.13$ \\
+noCNC & dice\_0.5 & $0.9326\pm0.0058$ & $0.9368\pm0.0022$ & $0.8527\pm0.0136$ & $0.9867\pm0.0058$ & $2.60\pm0.83$ \\
+noCNC & ea\_0.1 & $0.9552\pm0.0038$ & $0.9577\pm0.0040$ & $0.9082\pm0.0158$ & $0.9933\pm0.0058$ & $0.34\pm0.20$ \\
+noCNC & ea\_0.25 & $0.9511\pm0.0024$ & $0.9543\pm0.0030$ & $0.8952\pm0.0108$ & $0.9933\pm0.0058$ & $0.75\pm0.11$ \\
+noCNC & ea\_0.5 & $0.9442\pm0.0031$ & $0.9486\pm0.0035$ & $0.8830\pm0.0202$ & $0.9933\pm0.0058$ & $1.44\pm0.06$ \\
+noCNC & delete\_0.5 & $0.9502\pm0.0037$ & $0.9513\pm0.0045$ & $0.8956\pm0.0102$ & $0.9933\pm0.0058$ & $0.83\pm0.11$ \\
+noCNC & delete\_hub\_0.5 & $0.9438\pm0.0038$ & $0.9455\pm0.0021$ & $0.8695\pm0.0151$ & $0.9967\pm0.0058$ & $1.47\pm0.25$ \\
+noCNC & insert\_0.5 & $0.9340\pm0.0038$ & $0.9390\pm0.0039$ & $0.8493\pm0.0081$ & $0.9900\pm0.0100$ & $2.45\pm0.13$ \\
+noCNC & feature\_shuffle & $0.7499\pm0.0270$ & $0.8055\pm0.0272$ & $0.5526\pm0.0435$ & $0.9867\pm0.0153$ & $20.87\pm2.58$ \\
+noCN & clean & $0.9579\pm0.0025$ & $0.9590\pm0.0008$ & $0.9150\pm0.0081$ & $0.9933\pm0.0058$ & $0.00\pm0.00$ \\
+noCN & rf\_0.1 & $0.9532\pm0.0043$ & $0.9544\pm0.0023$ & $0.9024\pm0.0158$ & $0.9967\pm0.0058$ & $0.47\pm0.19$ \\
+noCN & rf\_0.25 & $0.9503\pm0.0019$ & $0.9526\pm0.0025$ & $0.8939\pm0.0067$ & $0.9933\pm0.0058$ & $0.76\pm0.11$ \\
+noCN & rf\_0.5 & $0.9365\pm0.0052$ & $0.9404\pm0.0065$ & $0.8649\pm0.0191$ & $0.9967\pm0.0058$ & $2.14\pm0.52$ \\
+noCN & dice\_0.1 & $0.9547\pm0.0041$ & $0.9563\pm0.0021$ & $0.9074\pm0.0084$ & $0.9967\pm0.0058$ & $0.32\pm0.21$ \\
+noCN & dice\_0.25 & $0.9507\pm0.0029$ & $0.9538\pm0.0011$ & $0.8931\pm0.0084$ & $0.9967\pm0.0058$ & $0.72\pm0.13$ \\
+noCN & dice\_0.5 & $0.9341\pm0.0053$ & $0.9381\pm0.0058$ & $0.8523\pm0.0158$ & $0.9933\pm0.0058$ & $2.38\pm0.64$ \\
+noCN & ea\_0.1 & $0.9541\pm0.0019$ & $0.9557\pm0.0006$ & $0.9045\pm0.0057$ & $0.9933\pm0.0058$ & $0.38\pm0.14$ \\
+noCN & ea\_0.25 & $0.9495\pm0.0008$ & $0.9515\pm0.0011$ & $0.8969\pm0.0107$ & $0.9933\pm0.0058$ & $0.84\pm0.22$ \\
+noCN & ea\_0.5 & $0.9402\pm0.0031$ & $0.9447\pm0.0021$ & $0.8775\pm0.0158$ & $0.9967\pm0.0058$ & $1.77\pm0.25$ \\
+noCN & delete\_0.5 & $0.9510\pm0.0035$ & $0.9526\pm0.0035$ & $0.8939\pm0.0134$ & $0.9933\pm0.0058$ & $0.69\pm0.10$ \\
+noCN & delete\_hub\_0.5 & $0.9429\pm0.0055$ & $0.9456\pm0.0045$ & $0.8716\pm0.0192$ & $0.9967\pm0.0058$ & $1.50\pm0.32$ \\
+noCN & insert\_0.5 & $0.9318\pm0.0055$ & $0.9356\pm0.0033$ & $0.8468\pm0.0070$ & $0.9833\pm0.0058$ & $2.62\pm0.30$ \\
+noCN & feature\_shuffle & $0.6706\pm0.0135$ & $0.6990\pm0.0186$ & $0.3817\pm0.0247$ & $0.8967\pm0.0252$ & $28.73\pm1.10$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{cora / LPFormer：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{cora / LPFormer：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9361\pm0.0008$ & $0.9438\pm0.0019$ & $0.8674\pm0.0112$ & $0.9967\pm0.0058$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9269\pm0.0026$ & $0.9355\pm0.0022$ & $0.8422\pm0.0161$ & $0.9967\pm0.0058$ & $0.92\pm0.24$ \\
+Full & rf\_0.25 & $0.9155\pm0.0038$ & $0.9266\pm0.0044$ & $0.8085\pm0.0201$ & $0.9967\pm0.0058$ & $2.06\pm0.31$ \\
+Full & rf\_0.5 & $0.8941\pm0.0071$ & $0.9070\pm0.0042$ & $0.7609\pm0.0106$ & $0.9967\pm0.0058$ & $4.21\pm0.78$ \\
+Full & dice\_0.1 & $0.9289\pm0.0029$ & $0.9368\pm0.0018$ & $0.8392\pm0.0221$ & $0.9967\pm0.0058$ & $0.72\pm0.29$ \\
+Full & dice\_0.25 & $0.9165\pm0.0022$ & $0.9272\pm0.0010$ & $0.8215\pm0.0146$ & $0.9967\pm0.0058$ & $1.96\pm0.21$ \\
+Full & dice\_0.5 & $0.8848\pm0.0099$ & $0.8989\pm0.0068$ & $0.7370\pm0.0191$ & $0.9967\pm0.0058$ & $5.13\pm1.05$ \\
+Full & ea\_0.1 & $0.9306\pm0.0034$ & $0.9396\pm0.0035$ & $0.8586\pm0.0109$ & $0.9967\pm0.0058$ & $0.55\pm0.28$ \\
+Full & ea\_0.25 & $0.9244\pm0.0044$ & $0.9348\pm0.0046$ & $0.8418\pm0.0026$ & $0.9967\pm0.0058$ & $1.17\pm0.42$ \\
+Full & ea\_0.5 & $0.9158\pm0.0017$ & $0.9264\pm0.0006$ & $0.8253\pm0.0136$ & $0.9867\pm0.0115$ & $2.03\pm0.09$ \\
+Full & delete\_0.5 & $0.8967\pm0.0023$ & $0.9024\pm0.0060$ & $0.7723\pm0.0158$ & $0.9900\pm0.0000$ & $3.94\pm0.25$ \\
+Full & delete\_hub\_0.5 & $0.8870\pm0.0012$ & $0.8969\pm0.0040$ & $0.7471\pm0.0039$ & $0.9967\pm0.0058$ & $4.91\pm0.20$ \\
+Full & insert\_0.5 & $0.8982\pm0.0025$ & $0.9120\pm0.0030$ & $0.7736\pm0.0162$ & $0.9967\pm0.0058$ & $3.79\pm0.19$ \\
+Full & feature\_shuffle & $0.8263\pm0.0058$ & $0.8669\pm0.0039$ & $0.6932\pm0.0203$ & $0.9933\pm0.0058$ & $10.98\pm0.51$ \\
+Uniform & clean & $0.9330\pm0.0067$ & $0.9414\pm0.0068$ & $0.8418\pm0.0172$ & $0.9967\pm0.0058$ & $0.00\pm0.00$ \\
+Uniform & rf\_0.1 & $0.9237\pm0.0057$ & $0.9334\pm0.0067$ & $0.8253\pm0.0184$ & $0.9967\pm0.0058$ & $0.92\pm0.23$ \\
+Uniform & rf\_0.25 & $0.9130\pm0.0124$ & $0.9230\pm0.0112$ & $0.8001\pm0.0278$ & $0.9967\pm0.0058$ & $1.99\pm0.59$ \\
+Uniform & rf\_0.5 & $0.8882\pm0.0075$ & $0.9015\pm0.0092$ & $0.7311\pm0.0272$ & $1.0000\pm0.0000$ & $4.48\pm0.40$ \\
+Uniform & dice\_0.1 & $0.9254\pm0.0048$ & $0.9347\pm0.0060$ & $0.8182\pm0.0186$ & $0.9967\pm0.0058$ & $0.76\pm0.20$ \\
+Uniform & dice\_0.25 & $0.9127\pm0.0091$ & $0.9223\pm0.0077$ & $0.7950\pm0.0109$ & $0.9967\pm0.0058$ & $2.03\pm0.24$ \\
+Uniform & dice\_0.5 & $0.8812\pm0.0074$ & $0.8947\pm0.0078$ & $0.7243\pm0.0084$ & $1.0000\pm0.0000$ & $5.17\pm0.73$ \\
+Uniform & ea\_0.1 & $0.9282\pm0.0069$ & $0.9381\pm0.0073$ & $0.8342\pm0.0168$ & $0.9967\pm0.0058$ & $0.47\pm0.03$ \\
+Uniform & ea\_0.25 & $0.9217\pm0.0061$ & $0.9323\pm0.0074$ & $0.8178\pm0.0251$ & $0.9967\pm0.0058$ & $1.13\pm0.07$ \\
+Uniform & ea\_0.5 & $0.9132\pm0.0053$ & $0.9249\pm0.0058$ & $0.7980\pm0.0211$ & $0.9933\pm0.0058$ & $1.98\pm0.17$ \\
+Uniform & delete\_0.5 & $0.8929\pm0.0083$ & $0.8999\pm0.0117$ & $0.7496\pm0.0181$ & $0.9933\pm0.0058$ & $4.01\pm0.17$ \\
+Uniform & delete\_hub\_0.5 & $0.8812\pm0.0139$ & $0.8921\pm0.0098$ & $0.7142\pm0.0265$ & $0.9967\pm0.0058$ & $5.17\pm0.96$ \\
+Uniform & insert\_0.5 & $0.8983\pm0.0065$ & $0.9105\pm0.0066$ & $0.7521\pm0.0247$ & $1.0000\pm0.0000$ & $3.46\pm0.22$ \\
+Uniform & feature\_shuffle & $0.8207\pm0.0114$ & $0.8665\pm0.0119$ & $0.6776\pm0.0401$ & $1.0000\pm0.0000$ & $11.22\pm0.99$ \\
+noPE & clean & $0.9263\pm0.0117$ & $0.9371\pm0.0107$ & $0.8396\pm0.0329$ & $0.9967\pm0.0058$ & $0.00\pm0.00$ \\
+noPE & rf\_0.1 & $0.9175\pm0.0127$ & $0.9285\pm0.0111$ & $0.8148\pm0.0344$ & $0.9967\pm0.0058$ & $0.88\pm0.25$ \\
+noPE & rf\_0.25 & $0.9031\pm0.0133$ & $0.9166\pm0.0107$ & $0.7854\pm0.0504$ & $0.9967\pm0.0058$ & $2.32\pm0.17$ \\
+noPE & rf\_0.5 & $0.8774\pm0.0047$ & $0.8940\pm0.0056$ & $0.7159\pm0.0207$ & $0.9967\pm0.0058$ & $4.89\pm0.70$ \\
+noPE & dice\_0.1 & $0.9171\pm0.0120$ & $0.9284\pm0.0105$ & $0.8253\pm0.0399$ & $0.9967\pm0.0058$ & $0.92\pm0.45$ \\
+noPE & dice\_0.25 & $0.9021\pm0.0125$ & $0.9167\pm0.0101$ & $0.7883\pm0.0360$ & $0.9967\pm0.0058$ & $2.42\pm0.23$ \\
+noPE & dice\_0.5 & $0.8681\pm0.0033$ & $0.8853\pm0.0030$ & $0.6982\pm0.0110$ & $0.9967\pm0.0058$ & $5.82\pm1.06$ \\
+noPE & ea\_0.1 & $0.9223\pm0.0125$ & $0.9338\pm0.0110$ & $0.8300\pm0.0310$ & $0.9967\pm0.0058$ & $0.40\pm0.12$ \\
+noPE & ea\_0.25 & $0.9158\pm0.0089$ & $0.9290\pm0.0080$ & $0.8178\pm0.0204$ & $0.9967\pm0.0058$ & $1.05\pm0.28$ \\
+noPE & ea\_0.5 & $0.9079\pm0.0100$ & $0.9233\pm0.0073$ & $0.8030\pm0.0191$ & $0.9933\pm0.0115$ & $1.84\pm0.74$ \\
+noPE & delete\_0.5 & $0.8778\pm0.0119$ & $0.8893\pm0.0128$ & $0.7180\pm0.0640$ & $0.9933\pm0.0058$ & $4.85\pm0.47$ \\
+noPE & delete\_hub\_0.5 & $0.8701\pm0.0179$ & $0.8816\pm0.0162$ & $0.6902\pm0.0575$ & $0.9967\pm0.0058$ & $5.62\pm1.15$ \\
+noPE & insert\_0.5 & $0.8894\pm0.0139$ & $0.9057\pm0.0101$ & $0.7567\pm0.0236$ & $0.9967\pm0.0058$ & $3.69\pm0.22$ \\
+noPE & feature\_shuffle & $0.8297\pm0.0053$ & $0.8743\pm0.0049$ & $0.7054\pm0.0168$ & $0.9967\pm0.0058$ & $9.66\pm0.64$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{cora / Refined-GAE：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{cora / Refined-GAE：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9616\pm0.0035$ & $0.9597\pm0.0041$ & $0.9116\pm0.0110$ & $0.9867\pm0.0153$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9538\pm0.0047$ & $0.9523\pm0.0020$ & $0.8973\pm0.0158$ & $0.9867\pm0.0153$ & $0.78\pm0.21$ \\
+Full & rf\_0.25 & $0.9482\pm0.0047$ & $0.9484\pm0.0036$ & $0.8859\pm0.0172$ & $0.9933\pm0.0058$ & $1.34\pm0.12$ \\
+Full & rf\_0.5 & $0.9230\pm0.0040$ & $0.9272\pm0.0070$ & $0.8291\pm0.0170$ & $0.9867\pm0.0153$ & $3.86\pm0.75$ \\
+Full & dice\_0.1 & $0.9554\pm0.0038$ & $0.9541\pm0.0014$ & $0.9024\pm0.0159$ & $0.9933\pm0.0058$ & $0.62\pm0.18$ \\
+Full & dice\_0.25 & $0.9452\pm0.0028$ & $0.9466\pm0.0025$ & $0.8826\pm0.0141$ & $0.9900\pm0.0100$ & $1.64\pm0.24$ \\
+Full & dice\_0.5 & $0.9185\pm0.0060$ & $0.9225\pm0.0063$ & $0.8220\pm0.0087$ & $0.9900\pm0.0100$ & $4.31\pm0.95$ \\
+Full & ea\_0.1 & $0.9580\pm0.0042$ & $0.9568\pm0.0043$ & $0.9028\pm0.0165$ & $0.9867\pm0.0153$ & $0.36\pm0.07$ \\
+Full & ea\_0.25 & $0.9533\pm0.0021$ & $0.9526\pm0.0048$ & $0.8931\pm0.0076$ & $0.9900\pm0.0100$ & $0.83\pm0.19$ \\
+Full & ea\_0.5 & $0.9452\pm0.0014$ & $0.9460\pm0.0042$ & $0.8763\pm0.0055$ & $0.9900\pm0.0100$ & $1.64\pm0.23$ \\
+Full & delete\_0.5 & $0.9480\pm0.0042$ & $0.9498\pm0.0007$ & $0.8838\pm0.0122$ & $0.9900\pm0.0000$ & $1.36\pm0.09$ \\
+Full & delete\_hub\_0.5 & $0.9443\pm0.0025$ & $0.9480\pm0.0030$ & $0.8708\pm0.0091$ & $0.9967\pm0.0058$ & $1.73\pm0.13$ \\
+Full & insert\_0.5 & $0.9070\pm0.0158$ & $0.9097\pm0.0166$ & $0.7980\pm0.0364$ & $0.9767\pm0.0115$ & $5.46\pm1.92$ \\
+Full & feature\_shuffle & $0.7652\pm0.0164$ & $0.7863\pm0.0103$ & $0.5404\pm0.0275$ & $0.9267\pm0.0153$ & $19.64\pm1.99$ \\
+noLN & clean & $0.9520\pm0.0030$ & $0.9580\pm0.0033$ & $0.8960\pm0.0121$ & $0.9967\pm0.0058$ & $0.00\pm0.00$ \\
+noLN & rf\_0.1 & $0.9444\pm0.0023$ & $0.9511\pm0.0029$ & $0.8758\pm0.0158$ & $0.9967\pm0.0058$ & $0.75\pm0.29$ \\
+noLN & rf\_0.25 & $0.9382\pm0.0036$ & $0.9453\pm0.0038$ & $0.8704\pm0.0123$ & $1.0000\pm0.0000$ & $1.38\pm0.06$ \\
+noLN & rf\_0.5 & $0.9200\pm0.0047$ & $0.9287\pm0.0050$ & $0.8161\pm0.0141$ & $1.0000\pm0.0000$ & $3.19\pm0.20$ \\
+noLN & dice\_0.1 & $0.9456\pm0.0015$ & $0.9523\pm0.0022$ & $0.8868\pm0.0109$ & $0.9967\pm0.0058$ & $0.64\pm0.30$ \\
+noLN & dice\_0.25 & $0.9383\pm0.0038$ & $0.9460\pm0.0036$ & $0.8788\pm0.0224$ & $0.9967\pm0.0058$ & $1.37\pm0.18$ \\
+noLN & dice\_0.5 & $0.9158\pm0.0055$ & $0.9246\pm0.0052$ & $0.8211\pm0.0190$ & $0.9967\pm0.0058$ & $3.62\pm0.27$ \\
+noLN & ea\_0.1 & $0.9483\pm0.0015$ & $0.9550\pm0.0024$ & $0.8897\pm0.0084$ & $0.9967\pm0.0058$ & $0.37\pm0.15$ \\
+noLN & ea\_0.25 & $0.9431\pm0.0031$ & $0.9505\pm0.0035$ & $0.8809\pm0.0064$ & $0.9967\pm0.0058$ & $0.89\pm0.12$ \\
+noLN & ea\_0.5 & $0.9347\pm0.0031$ & $0.9429\pm0.0030$ & $0.8624\pm0.0066$ & $0.9967\pm0.0058$ & $1.72\pm0.13$ \\
+noLN & delete\_0.5 & $0.9356\pm0.0023$ & $0.9422\pm0.0045$ & $0.8594\pm0.0084$ & $0.9933\pm0.0115$ & $1.64\pm0.17$ \\
+noLN & delete\_hub\_0.5 & $0.9304\pm0.0086$ & $0.9375\pm0.0086$ & $0.8430\pm0.0146$ & $0.9967\pm0.0058$ & $2.15\pm0.60$ \\
+noLN & insert\_0.5 & $0.9197\pm0.0029$ & $0.9288\pm0.0008$ & $0.8241\pm0.0053$ & $0.9967\pm0.0058$ & $3.23\pm0.42$ \\
+noLN & feature\_shuffle & $0.6830\pm0.0609$ & $0.7066\pm0.0369$ & $0.4158\pm0.0530$ & $0.8633\pm0.0231$ & $26.90\pm6.21$ \\
+Dot & clean & $0.9459\pm0.0015$ & $0.9559\pm0.0021$ & $0.8906\pm0.0007$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+Dot & rf\_0.1 & $0.9387\pm0.0015$ & $0.9500\pm0.0017$ & $0.8758\pm0.0032$ & $1.0000\pm0.0000$ & $0.71\pm0.13$ \\
+Dot & rf\_0.25 & $0.9319\pm0.0024$ & $0.9435\pm0.0029$ & $0.8506\pm0.0135$ & $1.0000\pm0.0000$ & $1.39\pm0.20$ \\
+Dot & rf\_0.5 & $0.9092\pm0.0113$ & $0.9262\pm0.0090$ & $0.8093\pm0.0091$ & $0.9967\pm0.0058$ & $3.67\pm0.98$ \\
+Dot & dice\_0.1 & $0.9387\pm0.0014$ & $0.9498\pm0.0010$ & $0.8746\pm0.0048$ & $1.0000\pm0.0000$ & $0.72\pm0.17$ \\
+Dot & dice\_0.25 & $0.9298\pm0.0014$ & $0.9432\pm0.0025$ & $0.8430\pm0.0098$ & $1.0000\pm0.0000$ & $1.60\pm0.10$ \\
+Dot & dice\_0.5 & $0.9051\pm0.0073$ & $0.9234\pm0.0045$ & $0.8043\pm0.0076$ & $1.0000\pm0.0000$ & $4.08\pm0.57$ \\
+Dot & ea\_0.1 & $0.9445\pm0.0007$ & $0.9544\pm0.0019$ & $0.8851\pm0.0033$ & $1.0000\pm0.0000$ & $0.14\pm0.12$ \\
+Dot & ea\_0.25 & $0.9421\pm0.0014$ & $0.9522\pm0.0027$ & $0.8771\pm0.0072$ & $1.0000\pm0.0000$ & $0.37\pm0.09$ \\
+Dot & ea\_0.5 & $0.9368\pm0.0014$ & $0.9474\pm0.0015$ & $0.8666\pm0.0057$ & $1.0000\pm0.0000$ & $0.91\pm0.17$ \\
+Dot & delete\_0.5 & $0.9134\pm0.0043$ & $0.9306\pm0.0030$ & $0.8220\pm0.0088$ & $1.0000\pm0.0000$ & $3.24\pm0.51$ \\
+Dot & delete\_hub\_0.5 & $0.8947\pm0.0022$ & $0.9172\pm0.0035$ & $0.7748\pm0.0090$ & $1.0000\pm0.0000$ & $5.11\pm0.13$ \\
+Dot & insert\_0.5 & $0.9130\pm0.0025$ & $0.9292\pm0.0024$ & $0.8110\pm0.0127$ & $0.9967\pm0.0058$ & $3.28\pm0.19$ \\
+Dot & feature\_shuffle & $0.7969\pm0.0162$ & $0.8501\pm0.0125$ & $0.6435\pm0.0293$ & $0.9967\pm0.0058$ & $14.89\pm1.55$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{citeseer / NCNC：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{citeseer / NCNC：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9683\pm0.0067$ & $0.9697\pm0.0050$ & $0.9449\pm0.0176$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9640\pm0.0057$ & $0.9658\pm0.0044$ & $0.9385\pm0.0089$ & $1.0000\pm0.0000$ & $0.42\pm0.12$ \\
+Full & rf\_0.25 & $0.9602\pm0.0079$ & $0.9618\pm0.0063$ & $0.9258\pm0.0133$ & $0.9967\pm0.0058$ & $0.80\pm0.12$ \\
+Full & rf\_0.5 & $0.9497\pm0.0029$ & $0.9528\pm0.0022$ & $0.8956\pm0.0108$ & $0.9967\pm0.0058$ & $1.86\pm0.39$ \\
+Full & dice\_0.1 & $0.9641\pm0.0058$ & $0.9661\pm0.0043$ & $0.9336\pm0.0157$ & $1.0000\pm0.0000$ & $0.41\pm0.09$ \\
+Full & dice\_0.25 & $0.9598\pm0.0072$ & $0.9616\pm0.0054$ & $0.9258\pm0.0131$ & $0.9933\pm0.0058$ & $0.85\pm0.06$ \\
+Full & dice\_0.5 & $0.9449\pm0.0017$ & $0.9492\pm0.0022$ & $0.8897\pm0.0136$ & $0.9967\pm0.0058$ & $2.33\pm0.54$ \\
+Full & ea\_0.1 & $0.9638\pm0.0065$ & $0.9658\pm0.0047$ & $0.9380\pm0.0171$ & $1.0000\pm0.0000$ & $0.44\pm0.04$ \\
+Full & ea\_0.25 & $0.9591\pm0.0057$ & $0.9611\pm0.0041$ & $0.9336\pm0.0103$ & $0.9967\pm0.0058$ & $0.91\pm0.11$ \\
+Full & ea\_0.5 & $0.9500\pm0.0062$ & $0.9528\pm0.0052$ & $0.9161\pm0.0142$ & $0.9933\pm0.0058$ & $1.82\pm0.21$ \\
+Full & delete\_0.5 & $0.9640\pm0.0060$ & $0.9648\pm0.0048$ & $0.9390\pm0.0141$ & $0.9933\pm0.0058$ & $0.43\pm0.07$ \\
+Full & delete\_hub\_0.5 & $0.9627\pm0.0077$ & $0.9635\pm0.0050$ & $0.9312\pm0.0173$ & $0.9933\pm0.0058$ & $0.55\pm0.36$ \\
+Full & insert\_0.5 & $0.9362\pm0.0048$ & $0.9429\pm0.0043$ & $0.8736\pm0.0051$ & $0.9933\pm0.0058$ & $3.20\pm0.78$ \\
+Full & feature\_shuffle & $0.6369\pm0.0374$ & $0.6488\pm0.0415$ & $0.3509\pm0.0657$ & $0.7933\pm0.0651$ & $33.14\pm4.21$ \\
+noCNC & clean & $0.9683\pm0.0053$ & $0.9701\pm0.0047$ & $0.9419\pm0.0185$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+noCNC & rf\_0.1 & $0.9644\pm0.0054$ & $0.9667\pm0.0047$ & $0.9302\pm0.0170$ & $1.0000\pm0.0000$ & $0.39\pm0.05$ \\
+noCNC & rf\_0.25 & $0.9613\pm0.0058$ & $0.9635\pm0.0052$ & $0.9214\pm0.0191$ & $0.9967\pm0.0058$ & $0.70\pm0.05$ \\
+noCNC & rf\_0.5 & $0.9504\pm0.0071$ & $0.9549\pm0.0057$ & $0.9009\pm0.0219$ & $1.0000\pm0.0000$ & $1.79\pm0.68$ \\
+noCNC & dice\_0.1 & $0.9645\pm0.0052$ & $0.9668\pm0.0044$ & $0.9327\pm0.0216$ & $1.0000\pm0.0000$ & $0.38\pm0.07$ \\
+noCNC & dice\_0.25 & $0.9601\pm0.0053$ & $0.9620\pm0.0046$ & $0.9214\pm0.0229$ & $0.9933\pm0.0058$ & $0.82\pm0.18$ \\
+noCNC & dice\_0.5 & $0.9469\pm0.0062$ & $0.9514\pm0.0045$ & $0.8912\pm0.0222$ & $0.9933\pm0.0058$ & $2.14\pm0.66$ \\
+noCNC & ea\_0.1 & $0.9645\pm0.0065$ & $0.9674\pm0.0053$ & $0.9351\pm0.0202$ & $1.0000\pm0.0000$ & $0.38\pm0.14$ \\
+noCNC & ea\_0.25 & $0.9594\pm0.0058$ & $0.9633\pm0.0053$ & $0.9229\pm0.0147$ & $1.0000\pm0.0000$ & $0.89\pm0.10$ \\
+noCNC & ea\_0.5 & $0.9508\pm0.0079$ & $0.9566\pm0.0077$ & $0.9068\pm0.0200$ & $1.0000\pm0.0000$ & $1.75\pm0.34$ \\
+noCNC & delete\_0.5 & $0.9646\pm0.0047$ & $0.9653\pm0.0050$ & $0.9336\pm0.0205$ & $0.9900\pm0.0100$ & $0.37\pm0.09$ \\
+noCNC & delete\_hub\_0.5 & $0.9635\pm0.0070$ & $0.9660\pm0.0045$ & $0.9351\pm0.0216$ & $0.9967\pm0.0058$ & $0.48\pm0.26$ \\
+noCNC & insert\_0.5 & $0.9400\pm0.0026$ & $0.9477\pm0.0004$ & $0.8731\pm0.0133$ & $1.0000\pm0.0000$ & $2.84\pm0.62$ \\
+noCNC & feature\_shuffle & $0.6675\pm0.0085$ & $0.7201\pm0.0036$ & $0.4456\pm0.0474$ & $0.9000\pm0.0889$ & $30.08\pm1.35$ \\
+noCN & clean & $0.9663\pm0.0057$ & $0.9687\pm0.0036$ & $0.9322\pm0.0142$ & $0.9967\pm0.0058$ & $0.00\pm0.00$ \\
+noCN & rf\_0.1 & $0.9625\pm0.0048$ & $0.9652\pm0.0028$ & $0.9268\pm0.0088$ & $0.9967\pm0.0058$ & $0.38\pm0.15$ \\
+noCN & rf\_0.25 & $0.9592\pm0.0070$ & $0.9609\pm0.0040$ & $0.9161\pm0.0249$ & $0.9967\pm0.0058$ & $0.71\pm0.14$ \\
+noCN & rf\_0.5 & $0.9474\pm0.0053$ & $0.9519\pm0.0020$ & $0.8931\pm0.0173$ & $0.9967\pm0.0058$ & $1.89\pm0.65$ \\
+noCN & dice\_0.1 & $0.9629\pm0.0047$ & $0.9656\pm0.0027$ & $0.9204\pm0.0171$ & $0.9967\pm0.0058$ & $0.34\pm0.13$ \\
+noCN & dice\_0.25 & $0.9588\pm0.0065$ & $0.9612\pm0.0041$ & $0.9141\pm0.0176$ & $0.9967\pm0.0058$ & $0.75\pm0.17$ \\
+noCN & dice\_0.5 & $0.9430\pm0.0040$ & $0.9502\pm0.0038$ & $0.8814\pm0.0153$ & $1.0000\pm0.0000$ & $2.33\pm0.65$ \\
+noCN & ea\_0.1 & $0.9622\pm0.0067$ & $0.9652\pm0.0044$ & $0.9263\pm0.0138$ & $0.9967\pm0.0058$ & $0.41\pm0.10$ \\
+noCN & ea\_0.25 & $0.9568\pm0.0064$ & $0.9603\pm0.0043$ & $0.9175\pm0.0108$ & $0.9967\pm0.0058$ & $0.95\pm0.12$ \\
+noCN & ea\_0.5 & $0.9478\pm0.0073$ & $0.9519\pm0.0061$ & $0.8980\pm0.0148$ & $0.9967\pm0.0058$ & $1.85\pm0.30$ \\
+noCN & delete\_0.5 & $0.9638\pm0.0037$ & $0.9655\pm0.0022$ & $0.9341\pm0.0116$ & $0.9967\pm0.0058$ & $0.25\pm0.20$ \\
+noCN & delete\_hub\_0.5 & $0.9617\pm0.0078$ & $0.9636\pm0.0039$ & $0.9253\pm0.0154$ & $0.9967\pm0.0058$ & $0.46\pm0.30$ \\
+noCN & insert\_0.5 & $0.9351\pm0.0020$ & $0.9439\pm0.0010$ & $0.8658\pm0.0170$ & $1.0000\pm0.0000$ & $3.12\pm0.76$ \\
+noCN & feature\_shuffle & $0.6174\pm0.0059$ & $0.6342\pm0.0144$ & $0.3075\pm0.0417$ & $0.7867\pm0.0379$ & $34.89\pm1.04$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{citeseer / LPFormer：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{citeseer / LPFormer：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9435\pm0.0055$ & $0.9488\pm0.0044$ & $0.8887\pm0.0082$ & $0.9900\pm0.0000$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9392\pm0.0060$ & $0.9446\pm0.0048$ & $0.8790\pm0.0128$ & $0.9900\pm0.0000$ & $0.43\pm0.33$ \\
+Full & rf\_0.25 & $0.9352\pm0.0065$ & $0.9396\pm0.0061$ & $0.8726\pm0.0039$ & $0.9833\pm0.0058$ & $0.83\pm0.14$ \\
+Full & rf\_0.5 & $0.9235\pm0.0080$ & $0.9301\pm0.0062$ & $0.8516\pm0.0097$ & $0.9833\pm0.0058$ & $2.00\pm0.71$ \\
+Full & dice\_0.1 & $0.9394\pm0.0051$ & $0.9450\pm0.0040$ & $0.8760\pm0.0111$ & $0.9867\pm0.0058$ & $0.40\pm0.17$ \\
+Full & dice\_0.25 & $0.9341\pm0.0056$ & $0.9405\pm0.0043$ & $0.8609\pm0.0076$ & $0.9900\pm0.0100$ & $0.94\pm0.09$ \\
+Full & dice\_0.5 & $0.9198\pm0.0091$ & $0.9276\pm0.0072$ & $0.8389\pm0.0163$ & $0.9933\pm0.0058$ & $2.37\pm0.92$ \\
+Full & ea\_0.1 & $0.9408\pm0.0064$ & $0.9472\pm0.0058$ & $0.8834\pm0.0086$ & $0.9867\pm0.0058$ & $0.26\pm0.14$ \\
+Full & ea\_0.25 & $0.9384\pm0.0056$ & $0.9449\pm0.0051$ & $0.8780\pm0.0059$ & $0.9833\pm0.0058$ & $0.51\pm0.24$ \\
+Full & ea\_0.5 & $0.9317\pm0.0068$ & $0.9401\pm0.0051$ & $0.8668\pm0.0140$ & $0.9833\pm0.0058$ & $1.18\pm0.47$ \\
+Full & delete\_0.5 & $0.9320\pm0.0071$ & $0.9374\pm0.0078$ & $0.8594\pm0.0240$ & $1.0000\pm0.0000$ & $1.15\pm0.44$ \\
+Full & delete\_hub\_0.5 & $0.9193\pm0.0152$ & $0.9272\pm0.0140$ & $0.8414\pm0.0351$ & $0.9933\pm0.0115$ & $2.42\pm0.97$ \\
+Full & insert\_0.5 & $0.9217\pm0.0030$ & $0.9306\pm0.0006$ & $0.8375\pm0.0088$ & $0.9900\pm0.0000$ & $2.18\pm0.81$ \\
+Full & feature\_shuffle & $0.7434\pm0.0039$ & $0.8218\pm0.0027$ & $0.6066\pm0.0232$ & $0.9933\pm0.0115$ & $20.01\pm0.61$ \\
+Uniform & clean & $0.9409\pm0.0084$ & $0.9479\pm0.0068$ & $0.8746\pm0.0246$ & $0.9967\pm0.0058$ & $0.00\pm0.00$ \\
+Uniform & rf\_0.1 & $0.9378\pm0.0086$ & $0.9446\pm0.0066$ & $0.8702\pm0.0220$ & $0.9933\pm0.0058$ & $0.31\pm0.02$ \\
+Uniform & rf\_0.25 & $0.9333\pm0.0121$ & $0.9399\pm0.0096$ & $0.8604\pm0.0297$ & $0.9900\pm0.0000$ & $0.76\pm0.47$ \\
+Uniform & rf\_0.5 & $0.9184\pm0.0134$ & $0.9278\pm0.0120$ & $0.8243\pm0.0278$ & $0.9933\pm0.0058$ & $2.24\pm0.63$ \\
+Uniform & dice\_0.1 & $0.9378\pm0.0084$ & $0.9451\pm0.0071$ & $0.8702\pm0.0251$ & $0.9967\pm0.0058$ & $0.31\pm0.13$ \\
+Uniform & dice\_0.25 & $0.9312\pm0.0087$ & $0.9395\pm0.0061$ & $0.8546\pm0.0213$ & $0.9933\pm0.0058$ & $0.97\pm0.20$ \\
+Uniform & dice\_0.5 & $0.9134\pm0.0100$ & $0.9241\pm0.0093$ & $0.8121\pm0.0266$ & $0.9967\pm0.0058$ & $2.74\pm0.19$ \\
+Uniform & ea\_0.1 & $0.9376\pm0.0097$ & $0.9454\pm0.0082$ & $0.8726\pm0.0259$ & $0.9967\pm0.0058$ & $0.33\pm0.21$ \\
+Uniform & ea\_0.25 & $0.9348\pm0.0101$ & $0.9427\pm0.0089$ & $0.8658\pm0.0199$ & $0.9867\pm0.0058$ & $0.61\pm0.33$ \\
+Uniform & ea\_0.5 & $0.9284\pm0.0100$ & $0.9373\pm0.0095$ & $0.8511\pm0.0309$ & $0.9833\pm0.0115$ & $1.25\pm0.39$ \\
+Uniform & delete\_0.5 & $0.9305\pm0.0099$ & $0.9381\pm0.0087$ & $0.8599\pm0.0237$ & $1.0000\pm0.0000$ & $1.04\pm0.62$ \\
+Uniform & delete\_hub\_0.5 & $0.9134\pm0.0174$ & $0.9266\pm0.0131$ & $0.8331\pm0.0349$ & $0.9967\pm0.0058$ & $2.75\pm0.92$ \\
+Uniform & insert\_0.5 & $0.9151\pm0.0041$ & $0.9282\pm0.0029$ & $0.8253\pm0.0186$ & $0.9933\pm0.0058$ & $2.57\pm0.51$ \\
+Uniform & feature\_shuffle & $0.7476\pm0.0219$ & $0.8198\pm0.0141$ & $0.6027\pm0.0220$ & $0.9900\pm0.0000$ & $19.33\pm2.88$ \\
+noPE & clean & $0.9378\pm0.0091$ & $0.9448\pm0.0072$ & $0.8721\pm0.0158$ & $0.9900\pm0.0000$ & $0.00\pm0.00$ \\
+noPE & rf\_0.1 & $0.9334\pm0.0071$ & $0.9402\pm0.0050$ & $0.8629\pm0.0142$ & $0.9900\pm0.0000$ & $0.44\pm0.25$ \\
+noPE & rf\_0.25 & $0.9283\pm0.0089$ & $0.9342\pm0.0069$ & $0.8526\pm0.0291$ & $0.9900\pm0.0000$ & $0.95\pm0.14$ \\
+noPE & rf\_0.5 & $0.9111\pm0.0050$ & $0.9211\pm0.0020$ & $0.8102\pm0.0327$ & $0.9933\pm0.0115$ & $2.67\pm0.43$ \\
+noPE & dice\_0.1 & $0.9340\pm0.0071$ & $0.9411\pm0.0060$ & $0.8629\pm0.0163$ & $0.9900\pm0.0000$ & $0.38\pm0.21$ \\
+noPE & dice\_0.25 & $0.9275\pm0.0083$ & $0.9348\pm0.0060$ & $0.8458\pm0.0197$ & $0.9933\pm0.0058$ & $1.03\pm0.08$ \\
+noPE & dice\_0.5 & $0.9091\pm0.0024$ & $0.9182\pm0.0022$ & $0.8082\pm0.0144$ & $0.9933\pm0.0058$ & $2.87\pm0.69$ \\
+noPE & ea\_0.1 & $0.9361\pm0.0080$ & $0.9439\pm0.0061$ & $0.8687\pm0.0150$ & $0.9900\pm0.0000$ & $0.17\pm0.22$ \\
+noPE & ea\_0.25 & $0.9340\pm0.0074$ & $0.9419\pm0.0050$ & $0.8658\pm0.0157$ & $0.9900\pm0.0000$ & $0.38\pm0.32$ \\
+noPE & ea\_0.5 & $0.9266\pm0.0075$ & $0.9365\pm0.0057$ & $0.8516\pm0.0155$ & $0.9900\pm0.0000$ & $1.12\pm0.44$ \\
+noPE & delete\_0.5 & $0.9236\pm0.0079$ & $0.9287\pm0.0061$ & $0.8453\pm0.0138$ & $1.0000\pm0.0000$ & $1.42\pm0.18$ \\
+noPE & delete\_hub\_0.5 & $0.9118\pm0.0118$ & $0.9190\pm0.0101$ & $0.8287\pm0.0198$ & $1.0000\pm0.0000$ & $2.60\pm0.69$ \\
+noPE & insert\_0.5 & $0.9099\pm0.0077$ & $0.9230\pm0.0066$ & $0.8072\pm0.0167$ & $0.9933\pm0.0058$ & $2.79\pm0.64$ \\
+noPE & feature\_shuffle & $0.7497\pm0.0162$ & $0.8254\pm0.0125$ & $0.6081\pm0.0330$ & $0.9967\pm0.0058$ & $18.81\pm2.52$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{citeseer / Refined-GAE：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{citeseer / Refined-GAE：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9651\pm0.0073$ & $0.9663\pm0.0066$ & $0.9356\pm0.0183$ & $0.9967\pm0.0058$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9596\pm0.0069$ & $0.9617\pm0.0063$ & $0.9204\pm0.0147$ & $0.9967\pm0.0058$ & $0.55\pm0.04$ \\
+Full & rf\_0.25 & $0.9558\pm0.0087$ & $0.9588\pm0.0067$ & $0.9146\pm0.0110$ & $0.9933\pm0.0058$ & $0.93\pm0.14$ \\
+Full & rf\_0.5 & $0.9416\pm0.0037$ & $0.9453\pm0.0036$ & $0.8878\pm0.0132$ & $0.9933\pm0.0058$ & $2.35\pm0.46$ \\
+Full & dice\_0.1 & $0.9602\pm0.0060$ & $0.9626\pm0.0058$ & $0.9224\pm0.0128$ & $0.9967\pm0.0058$ & $0.49\pm0.19$ \\
+Full & dice\_0.25 & $0.9556\pm0.0096$ & $0.9577\pm0.0077$ & $0.9136\pm0.0140$ & $0.9933\pm0.0058$ & $0.95\pm0.24$ \\
+Full & dice\_0.5 & $0.9365\pm0.0048$ & $0.9431\pm0.0070$ & $0.8824\pm0.0161$ & $0.9933\pm0.0058$ & $2.86\pm0.33$ \\
+Full & ea\_0.1 & $0.9628\pm0.0078$ & $0.9643\pm0.0066$ & $0.9317\pm0.0168$ & $0.9967\pm0.0058$ & $0.24\pm0.05$ \\
+Full & ea\_0.25 & $0.9600\pm0.0074$ & $0.9618\pm0.0068$ & $0.9273\pm0.0147$ & $0.9967\pm0.0058$ & $0.51\pm0.03$ \\
+Full & ea\_0.5 & $0.9533\pm0.0105$ & $0.9564\pm0.0094$ & $0.9165\pm0.0183$ & $0.9967\pm0.0058$ & $1.18\pm0.32$ \\
+Full & delete\_0.5 & $0.9590\pm0.0060$ & $0.9619\pm0.0050$ & $0.9214\pm0.0081$ & $1.0000\pm0.0000$ & $0.61\pm0.20$ \\
+Full & delete\_hub\_0.5 & $0.9575\pm0.0080$ & $0.9613\pm0.0069$ & $0.9258\pm0.0173$ & $1.0000\pm0.0000$ & $0.76\pm0.07$ \\
+Full & insert\_0.5 & $0.9327\pm0.0067$ & $0.9392\pm0.0057$ & $0.8736\pm0.0147$ & $0.9900\pm0.0000$ & $3.24\pm1.02$ \\
+Full & feature\_shuffle & $0.6980\pm0.0072$ & $0.7223\pm0.0101$ & $0.4021\pm0.0308$ & $0.9433\pm0.0115$ & $26.71\pm1.45$ \\
+noLN & clean & $0.9639\pm0.0067$ & $0.9669\pm0.0066$ & $0.9322\pm0.0138$ & $0.9933\pm0.0058$ & $0.00\pm0.00$ \\
+noLN & rf\_0.1 & $0.9569\pm0.0074$ & $0.9614\pm0.0071$ & $0.9161\pm0.0185$ & $0.9933\pm0.0058$ & $0.70\pm0.20$ \\
+noLN & rf\_0.25 & $0.9513\pm0.0098$ & $0.9560\pm0.0094$ & $0.9039\pm0.0197$ & $0.9967\pm0.0058$ & $1.26\pm0.36$ \\
+noLN & rf\_0.5 & $0.9376\pm0.0034$ & $0.9446\pm0.0046$ & $0.8755\pm0.0197$ & $0.9967\pm0.0058$ & $2.63\pm0.46$ \\
+noLN & dice\_0.1 & $0.9583\pm0.0065$ & $0.9623\pm0.0066$ & $0.9219\pm0.0161$ & $0.9933\pm0.0058$ & $0.56\pm0.13$ \\
+noLN & dice\_0.25 & $0.9502\pm0.0087$ & $0.9550\pm0.0093$ & $0.9000\pm0.0175$ & $0.9933\pm0.0058$ & $1.37\pm0.27$ \\
+noLN & dice\_0.5 & $0.9318\pm0.0029$ & $0.9401\pm0.0041$ & $0.8668\pm0.0140$ & $0.9933\pm0.0058$ & $3.21\pm0.78$ \\
+noLN & ea\_0.1 & $0.9603\pm0.0068$ & $0.9643\pm0.0065$ & $0.9297\pm0.0163$ & $0.9933\pm0.0058$ & $0.36\pm0.13$ \\
+noLN & ea\_0.25 & $0.9555\pm0.0056$ & $0.9603\pm0.0064$ & $0.9239\pm0.0158$ & $0.9933\pm0.0058$ & $0.84\pm0.22$ \\
+noLN & ea\_0.5 & $0.9482\pm0.0071$ & $0.9542\pm0.0086$ & $0.9107\pm0.0198$ & $1.0000\pm0.0000$ & $1.57\pm0.43$ \\
+noLN & delete\_0.5 & $0.9598\pm0.0036$ & $0.9622\pm0.0042$ & $0.9253\pm0.0073$ & $1.0000\pm0.0000$ & $0.41\pm0.31$ \\
+noLN & delete\_hub\_0.5 & $0.9571\pm0.0025$ & $0.9594\pm0.0017$ & $0.9200\pm0.0008$ & $0.9967\pm0.0058$ & $0.68\pm0.48$ \\
+noLN & insert\_0.5 & $0.9258\pm0.0069$ & $0.9355\pm0.0071$ & $0.8492\pm0.0183$ & $0.9933\pm0.0115$ & $3.81\pm0.16$ \\
+noLN & feature\_shuffle & $0.5433\pm0.0127$ & $0.6121\pm0.0060$ & $0.3080\pm0.0142$ & $0.8333\pm0.0115$ & $42.05\pm0.86$ \\
+Dot & clean & $0.9613\pm0.0054$ & $0.9685\pm0.0047$ & $0.9224\pm0.0144$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+Dot & rf\_0.1 & $0.9570\pm0.0055$ & $0.9651\pm0.0044$ & $0.9126\pm0.0112$ & $1.0000\pm0.0000$ & $0.44\pm0.06$ \\
+Dot & rf\_0.25 & $0.9526\pm0.0041$ & $0.9618\pm0.0036$ & $0.9107\pm0.0096$ & $1.0000\pm0.0000$ & $0.87\pm0.16$ \\
+Dot & rf\_0.5 & $0.9380\pm0.0058$ & $0.9496\pm0.0041$ & $0.8712\pm0.0130$ & $1.0000\pm0.0000$ & $2.33\pm0.21$ \\
+Dot & dice\_0.1 & $0.9565\pm0.0040$ & $0.9648\pm0.0037$ & $0.9151\pm0.0102$ & $1.0000\pm0.0000$ & $0.48\pm0.23$ \\
+Dot & dice\_0.25 & $0.9515\pm0.0052$ & $0.9603\pm0.0049$ & $0.9048\pm0.0125$ & $1.0000\pm0.0000$ & $0.99\pm0.02$ \\
+Dot & dice\_0.5 & $0.9344\pm0.0070$ & $0.9475\pm0.0057$ & $0.8668\pm0.0191$ & $1.0000\pm0.0000$ & $2.69\pm0.51$ \\
+Dot & ea\_0.1 & $0.9593\pm0.0067$ & $0.9670\pm0.0057$ & $0.9214\pm0.0165$ & $1.0000\pm0.0000$ & $0.20\pm0.13$ \\
+Dot & ea\_0.25 & $0.9572\pm0.0073$ & $0.9651\pm0.0060$ & $0.9200\pm0.0141$ & $1.0000\pm0.0000$ & $0.41\pm0.21$ \\
+Dot & ea\_0.5 & $0.9518\pm0.0075$ & $0.9604\pm0.0066$ & $0.9068\pm0.0205$ & $1.0000\pm0.0000$ & $0.95\pm0.27$ \\
+Dot & delete\_0.5 & $0.9486\pm0.0064$ & $0.9584\pm0.0052$ & $0.9014\pm0.0177$ & $1.0000\pm0.0000$ & $1.28\pm0.27$ \\
+Dot & delete\_hub\_0.5 & $0.9305\pm0.0088$ & $0.9453\pm0.0072$ & $0.8692\pm0.0191$ & $1.0000\pm0.0000$ & $3.09\pm0.50$ \\
+Dot & insert\_0.5 & $0.9343\pm0.0045$ & $0.9470\pm0.0036$ & $0.8663\pm0.0097$ & $1.0000\pm0.0000$ & $2.70\pm0.79$ \\
+Dot & feature\_shuffle & $0.7577\pm0.0074$ & $0.8248\pm0.0052$ & $0.5964\pm0.0122$ & $1.0000\pm0.0000$ & $20.36\pm1.26$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{pubmed / NCNC：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{pubmed / NCNC：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9872\pm0.0008$ & $0.9856\pm0.0006$ & $0.8102\pm0.0030$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9842\pm0.0008$ & $0.9829\pm0.0006$ & $0.7895\pm0.0029$ & $1.0000\pm0.0000$ & $0.30\pm0.02$ \\
+Full & rf\_0.25 & $0.9793\pm0.0011$ & $0.9784\pm0.0010$ & $0.7523\pm0.0173$ & $1.0000\pm0.0000$ & $0.79\pm0.07$ \\
+Full & rf\_0.5 & $0.9696\pm0.0008$ & $0.9694\pm0.0003$ & $0.6833\pm0.0130$ & $1.0000\pm0.0000$ & $1.76\pm0.01$ \\
+Full & dice\_0.1 & $0.9835\pm0.0006$ & $0.9820\pm0.0004$ & $0.7781\pm0.0103$ & $1.0000\pm0.0000$ & $0.36\pm0.02$ \\
+Full & dice\_0.25 & $0.9786\pm0.0011$ & $0.9776\pm0.0006$ & $0.7449\pm0.0105$ & $1.0000\pm0.0000$ & $0.86\pm0.04$ \\
+Full & dice\_0.5 & $0.9672\pm0.0005$ & $0.9668\pm0.0006$ & $0.6655\pm0.0101$ & $0.9967\pm0.0058$ & $2.00\pm0.05$ \\
+Full & ea\_0.1 & $0.9861\pm0.0005$ & $0.9845\pm0.0003$ & $0.7997\pm0.0035$ & $1.0000\pm0.0000$ & $0.11\pm0.03$ \\
+Full & ea\_0.25 & $0.9852\pm0.0001$ & $0.9835\pm0.0003$ & $0.7841\pm0.0065$ & $1.0000\pm0.0000$ & $0.20\pm0.06$ \\
+Full & ea\_0.5 & $0.9828\pm0.0005$ & $0.9812\pm0.0009$ & $0.7579\pm0.0172$ & $1.0000\pm0.0000$ & $0.44\pm0.12$ \\
+Full & delete\_0.5 & $0.9802\pm0.0004$ & $0.9782\pm0.0003$ & $0.7351\pm0.0049$ & $1.0000\pm0.0000$ & $0.70\pm0.04$ \\
+Full & delete\_hub\_0.5 & $0.9809\pm0.0015$ & $0.9788\pm0.0011$ & $0.7277\pm0.0014$ & $1.0000\pm0.0000$ & $0.63\pm0.09$ \\
+Full & insert\_0.5 & $0.9634\pm0.0021$ & $0.9644\pm0.0019$ & $0.6574\pm0.0085$ & $1.0000\pm0.0000$ & $2.38\pm0.15$ \\
+Full & feature\_shuffle & $0.8391\pm0.0027$ & $0.7986\pm0.0038$ & $0.0933\pm0.0148$ & $0.8900\pm0.0173$ & $14.81\pm0.27$ \\
+noCNC & clean & $0.9865\pm0.0005$ & $0.9850\pm0.0007$ & $0.8116\pm0.0098$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+noCNC & rf\_0.1 & $0.9842\pm0.0004$ & $0.9830\pm0.0007$ & $0.7938\pm0.0066$ & $1.0000\pm0.0000$ & $0.23\pm0.03$ \\
+noCNC & rf\_0.25 & $0.9802\pm0.0009$ & $0.9792\pm0.0012$ & $0.7544\pm0.0150$ & $1.0000\pm0.0000$ & $0.63\pm0.05$ \\
+noCNC & rf\_0.5 & $0.9720\pm0.0010$ & $0.9720\pm0.0005$ & $0.6955\pm0.0006$ & $1.0000\pm0.0000$ & $1.45\pm0.06$ \\
+noCNC & dice\_0.1 & $0.9836\pm0.0005$ & $0.9822\pm0.0007$ & $0.7819\pm0.0111$ & $1.0000\pm0.0000$ & $0.29\pm0.00$ \\
+noCNC & dice\_0.25 & $0.9791\pm0.0012$ & $0.9780\pm0.0011$ & $0.7424\pm0.0105$ & $1.0000\pm0.0000$ & $0.73\pm0.07$ \\
+noCNC & dice\_0.5 & $0.9688\pm0.0016$ & $0.9680\pm0.0017$ & $0.6664\pm0.0050$ & $0.9967\pm0.0058$ & $1.76\pm0.15$ \\
+noCNC & ea\_0.1 & $0.9854\pm0.0003$ & $0.9840\pm0.0006$ & $0.8033\pm0.0099$ & $1.0000\pm0.0000$ & $0.11\pm0.02$ \\
+noCNC & ea\_0.25 & $0.9838\pm0.0006$ & $0.9823\pm0.0006$ & $0.7843\pm0.0190$ & $1.0000\pm0.0000$ & $0.27\pm0.07$ \\
+noCNC & ea\_0.5 & $0.9795\pm0.0011$ & $0.9784\pm0.0009$ & $0.7529\pm0.0188$ & $1.0000\pm0.0000$ & $0.69\pm0.11$ \\
+noCNC & delete\_0.5 & $0.9753\pm0.0001$ & $0.9731\pm0.0004$ & $0.6855\pm0.0095$ & $1.0000\pm0.0000$ & $1.12\pm0.04$ \\
+noCNC & delete\_hub\_0.5 & $0.9765\pm0.0015$ & $0.9736\pm0.0012$ & $0.6975\pm0.0174$ & $1.0000\pm0.0000$ & $1.00\pm0.11$ \\
+noCNC & insert\_0.5 & $0.9683\pm0.0015$ & $0.9689\pm0.0012$ & $0.6941\pm0.0075$ & $1.0000\pm0.0000$ & $1.82\pm0.10$ \\
+noCNC & feature\_shuffle & $0.8662\pm0.0026$ & $0.8580\pm0.0032$ & $0.2598\pm0.0292$ & $0.9733\pm0.0208$ & $12.03\pm0.27$ \\
+noCN & clean & $0.9865\pm0.0011$ & $0.9846\pm0.0017$ & $0.8095\pm0.0159$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+noCN & rf\_0.1 & $0.9841\pm0.0009$ & $0.9821\pm0.0013$ & $0.7859\pm0.0078$ & $1.0000\pm0.0000$ & $0.25\pm0.02$ \\
+noCN & rf\_0.25 & $0.9805\pm0.0012$ & $0.9788\pm0.0014$ & $0.7652\pm0.0169$ & $1.0000\pm0.0000$ & $0.61\pm0.04$ \\
+noCN & rf\_0.5 & $0.9721\pm0.0012$ & $0.9715\pm0.0012$ & $0.6969\pm0.0070$ & $1.0000\pm0.0000$ & $1.44\pm0.02$ \\
+noCN & dice\_0.1 & $0.9837\pm0.0010$ & $0.9820\pm0.0013$ & $0.7705\pm0.0146$ & $1.0000\pm0.0000$ & $0.28\pm0.01$ \\
+noCN & dice\_0.25 & $0.9795\pm0.0016$ & $0.9781\pm0.0017$ & $0.7563\pm0.0253$ & $1.0000\pm0.0000$ & $0.70\pm0.05$ \\
+noCN & dice\_0.5 & $0.9693\pm0.0024$ & $0.9679\pm0.0028$ & $0.6834\pm0.0252$ & $0.9967\pm0.0058$ & $1.73\pm0.14$ \\
+noCN & ea\_0.1 & $0.9852\pm0.0007$ & $0.9834\pm0.0013$ & $0.7951\pm0.0162$ & $1.0000\pm0.0000$ & $0.13\pm0.04$ \\
+noCN & ea\_0.25 & $0.9831\pm0.0011$ & $0.9813\pm0.0013$ & $0.7687\pm0.0290$ & $1.0000\pm0.0000$ & $0.34\pm0.13$ \\
+noCN & ea\_0.5 & $0.9773\pm0.0019$ & $0.9765\pm0.0016$ & $0.7317\pm0.0249$ & $1.0000\pm0.0000$ & $0.92\pm0.24$ \\
+noCN & delete\_0.5 & $0.9763\pm0.0014$ & $0.9738\pm0.0026$ & $0.6988\pm0.0205$ & $1.0000\pm0.0000$ & $1.02\pm0.07$ \\
+noCN & delete\_hub\_0.5 & $0.9774\pm0.0025$ & $0.9747\pm0.0032$ & $0.7240\pm0.0347$ & $0.9967\pm0.0058$ & $0.91\pm0.14$ \\
+noCN & insert\_0.5 & $0.9680\pm0.0023$ & $0.9676\pm0.0019$ & $0.6708\pm0.0132$ & $1.0000\pm0.0000$ & $1.85\pm0.13$ \\
+noCN & feature\_shuffle & $0.8426\pm0.0009$ & $0.8044\pm0.0069$ & $0.0951\pm0.0289$ & $0.8533\pm0.0666$ & $14.40\pm0.11$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{pubmed / LPFormer：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{pubmed / LPFormer：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9801\pm0.0011$ & $0.9800\pm0.0012$ & $0.7727\pm0.0122$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9773\pm0.0014$ & $0.9775\pm0.0012$ & $0.7456\pm0.0193$ & $1.0000\pm0.0000$ & $0.28\pm0.02$ \\
+Full & rf\_0.25 & $0.9719\pm0.0015$ & $0.9728\pm0.0014$ & $0.7077\pm0.0143$ & $1.0000\pm0.0000$ & $0.82\pm0.04$ \\
+Full & rf\_0.5 & $0.9604\pm0.0020$ & $0.9628\pm0.0018$ & $0.6637\pm0.0215$ & $1.0000\pm0.0000$ & $1.97\pm0.11$ \\
+Full & dice\_0.1 & $0.9767\pm0.0017$ & $0.9768\pm0.0016$ & $0.7387\pm0.0244$ & $1.0000\pm0.0000$ & $0.34\pm0.05$ \\
+Full & dice\_0.25 & $0.9708\pm0.0020$ & $0.9714\pm0.0017$ & $0.7000\pm0.0224$ & $1.0000\pm0.0000$ & $0.93\pm0.09$ \\
+Full & dice\_0.5 & $0.9573\pm0.0010$ & $0.9594\pm0.0005$ & $0.6412\pm0.0126$ & $1.0000\pm0.0000$ & $2.28\pm0.07$ \\
+Full & ea\_0.1 & $0.9791\pm0.0014$ & $0.9790\pm0.0013$ & $0.7679\pm0.0094$ & $1.0000\pm0.0000$ & $0.10\pm0.02$ \\
+Full & ea\_0.25 & $0.9785\pm0.0011$ & $0.9781\pm0.0007$ & $0.7518\pm0.0154$ & $1.0000\pm0.0000$ & $0.16\pm0.01$ \\
+Full & ea\_0.5 & $0.9774\pm0.0010$ & $0.9769\pm0.0008$ & $0.7331\pm0.0198$ & $1.0000\pm0.0000$ & $0.27\pm0.02$ \\
+Full & delete\_0.5 & $0.9681\pm0.0009$ & $0.9687\pm0.0009$ & $0.6905\pm0.0082$ & $1.0000\pm0.0000$ & $1.20\pm0.03$ \\
+Full & delete\_hub\_0.5 & $0.9721\pm0.0016$ & $0.9715\pm0.0016$ & $0.6958\pm0.0071$ & $0.9967\pm0.0058$ & $0.81\pm0.14$ \\
+Full & insert\_0.5 & $0.9546\pm0.0021$ & $0.9572\pm0.0018$ & $0.6232\pm0.0210$ & $1.0000\pm0.0000$ & $2.55\pm0.09$ \\
+Full & feature\_shuffle & $0.8975\pm0.0033$ & $0.9017\pm0.0011$ & $0.3942\pm0.0078$ & $1.0000\pm0.0000$ & $8.26\pm0.26$ \\
+Uniform & clean & $0.9801\pm0.0006$ & $0.9800\pm0.0008$ & $0.7617\pm0.0127$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+Uniform & rf\_0.1 & $0.9772\pm0.0008$ & $0.9773\pm0.0006$ & $0.7370\pm0.0115$ & $1.0000\pm0.0000$ & $0.29\pm0.02$ \\
+Uniform & rf\_0.25 & $0.9718\pm0.0011$ & $0.9727\pm0.0009$ & $0.7013\pm0.0121$ & $1.0000\pm0.0000$ & $0.83\pm0.05$ \\
+Uniform & rf\_0.5 & $0.9598\pm0.0016$ & $0.9623\pm0.0016$ & $0.6496\pm0.0158$ & $1.0000\pm0.0000$ & $2.03\pm0.10$ \\
+Uniform & dice\_0.1 & $0.9767\pm0.0009$ & $0.9767\pm0.0009$ & $0.7334\pm0.0115$ & $1.0000\pm0.0000$ & $0.34\pm0.03$ \\
+Uniform & dice\_0.25 & $0.9707\pm0.0012$ & $0.9716\pm0.0008$ & $0.6995\pm0.0060$ & $1.0000\pm0.0000$ & $0.94\pm0.06$ \\
+Uniform & dice\_0.5 & $0.9567\pm0.0006$ & $0.9590\pm0.0004$ & $0.6339\pm0.0133$ & $1.0000\pm0.0000$ & $2.34\pm0.07$ \\
+Uniform & ea\_0.1 & $0.9791\pm0.0009$ & $0.9789\pm0.0007$ & $0.7523\pm0.0103$ & $1.0000\pm0.0000$ & $0.10\pm0.02$ \\
+Uniform & ea\_0.25 & $0.9785\pm0.0006$ & $0.9778\pm0.0003$ & $0.7427\pm0.0128$ & $0.9967\pm0.0058$ & $0.17\pm0.01$ \\
+Uniform & ea\_0.5 & $0.9773\pm0.0006$ & $0.9765\pm0.0008$ & $0.7245\pm0.0172$ & $0.9967\pm0.0058$ & $0.28\pm0.01$ \\
+Uniform & delete\_0.5 & $0.9678\pm0.0008$ & $0.9686\pm0.0008$ & $0.6843\pm0.0090$ & $1.0000\pm0.0000$ & $1.23\pm0.08$ \\
+Uniform & delete\_hub\_0.5 & $0.9720\pm0.0018$ & $0.9716\pm0.0017$ & $0.6890\pm0.0048$ & $1.0000\pm0.0000$ & $0.81\pm0.17$ \\
+Uniform & insert\_0.5 & $0.9542\pm0.0022$ & $0.9569\pm0.0017$ & $0.6290\pm0.0176$ & $1.0000\pm0.0000$ & $2.59\pm0.16$ \\
+Uniform & feature\_shuffle & $0.8978\pm0.0029$ & $0.8997\pm0.0029$ & $0.3904\pm0.0418$ & $1.0000\pm0.0000$ & $8.24\pm0.26$ \\
+noPE & clean & $0.9794\pm0.0009$ & $0.9794\pm0.0012$ & $0.7606\pm0.0113$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+noPE & rf\_0.1 & $0.9764\pm0.0009$ & $0.9767\pm0.0011$ & $0.7367\pm0.0129$ & $1.0000\pm0.0000$ & $0.30\pm0.01$ \\
+noPE & rf\_0.25 & $0.9710\pm0.0010$ & $0.9720\pm0.0011$ & $0.7072\pm0.0059$ & $1.0000\pm0.0000$ & $0.84\pm0.02$ \\
+noPE & rf\_0.5 & $0.9594\pm0.0004$ & $0.9620\pm0.0009$ & $0.6635\pm0.0096$ & $1.0000\pm0.0000$ & $2.01\pm0.07$ \\
+noPE & dice\_0.1 & $0.9757\pm0.0011$ & $0.9760\pm0.0013$ & $0.7306\pm0.0107$ & $1.0000\pm0.0000$ & $0.37\pm0.04$ \\
+noPE & dice\_0.25 & $0.9699\pm0.0008$ & $0.9709\pm0.0008$ & $0.6972\pm0.0166$ & $1.0000\pm0.0000$ & $0.95\pm0.03$ \\
+noPE & dice\_0.5 & $0.9559\pm0.0014$ & $0.9586\pm0.0020$ & $0.6389\pm0.0234$ & $1.0000\pm0.0000$ & $2.35\pm0.21$ \\
+noPE & ea\_0.1 & $0.9784\pm0.0012$ & $0.9783\pm0.0011$ & $0.7518\pm0.0104$ & $0.9967\pm0.0058$ & $0.10\pm0.03$ \\
+noPE & ea\_0.25 & $0.9778\pm0.0009$ & $0.9772\pm0.0004$ & $0.7389\pm0.0077$ & $0.9933\pm0.0058$ & $0.17\pm0.01$ \\
+noPE & ea\_0.5 & $0.9765\pm0.0008$ & $0.9759\pm0.0009$ & $0.7295\pm0.0121$ & $0.9933\pm0.0058$ & $0.29\pm0.05$ \\
+noPE & delete\_0.5 & $0.9670\pm0.0004$ & $0.9679\pm0.0005$ & $0.6896\pm0.0184$ & $1.0000\pm0.0000$ & $1.24\pm0.07$ \\
+noPE & delete\_hub\_0.5 & $0.9715\pm0.0007$ & $0.9712\pm0.0007$ & $0.6921\pm0.0094$ & $1.0000\pm0.0000$ & $0.79\pm0.12$ \\
+noPE & insert\_0.5 & $0.9534\pm0.0003$ & $0.9562\pm0.0014$ & $0.6225\pm0.0286$ & $1.0000\pm0.0000$ & $2.60\pm0.06$ \\
+noPE & feature\_shuffle & $0.8989\pm0.0008$ & $0.9006\pm0.0033$ & $0.3814\pm0.0415$ & $1.0000\pm0.0000$ & $8.05\pm0.06$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrrrr}
+\caption{pubmed / Refined-GAE：全部条件}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{pubmed / Refined-GAE：全部条件（续）}\\
+\toprule
+版本 & 条件 & AUC & AP & Hits100 & Prec100 & 降幅pp \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & clean & $0.9871\pm0.0003$ & $0.9860\pm0.0004$ & $0.8242\pm0.0069$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+Full & rf\_0.1 & $0.9846\pm0.0005$ & $0.9836\pm0.0009$ & $0.7981\pm0.0208$ & $1.0000\pm0.0000$ & $0.25\pm0.02$ \\
+Full & rf\_0.25 & $0.9810\pm0.0006$ & $0.9805\pm0.0010$ & $0.7725\pm0.0281$ & $1.0000\pm0.0000$ & $0.61\pm0.05$ \\
+Full & rf\_0.5 & $0.9735\pm0.0005$ & $0.9738\pm0.0004$ & $0.7250\pm0.0175$ & $1.0000\pm0.0000$ & $1.36\pm0.05$ \\
+Full & dice\_0.1 & $0.9843\pm0.0004$ & $0.9834\pm0.0008$ & $0.7939\pm0.0135$ & $1.0000\pm0.0000$ & $0.28\pm0.02$ \\
+Full & dice\_0.25 & $0.9804\pm0.0004$ & $0.9800\pm0.0009$ & $0.7629\pm0.0173$ & $1.0000\pm0.0000$ & $0.67\pm0.05$ \\
+Full & dice\_0.5 & $0.9720\pm0.0002$ & $0.9720\pm0.0002$ & $0.7169\pm0.0203$ & $1.0000\pm0.0000$ & $1.51\pm0.04$ \\
+Full & ea\_0.1 & $0.9862\pm0.0002$ & $0.9851\pm0.0004$ & $0.8093\pm0.0069$ & $1.0000\pm0.0000$ & $0.09\pm0.01$ \\
+Full & ea\_0.25 & $0.9850\pm0.0002$ & $0.9838\pm0.0004$ & $0.7863\pm0.0083$ & $1.0000\pm0.0000$ & $0.21\pm0.04$ \\
+Full & ea\_0.5 & $0.9822\pm0.0005$ & $0.9810\pm0.0008$ & $0.7621\pm0.0185$ & $1.0000\pm0.0000$ & $0.49\pm0.08$ \\
+Full & delete\_0.5 & $0.9774\pm0.0004$ & $0.9764\pm0.0006$ & $0.7471\pm0.0036$ & $1.0000\pm0.0000$ & $0.97\pm0.03$ \\
+Full & delete\_hub\_0.5 & $0.9782\pm0.0011$ & $0.9772\pm0.0011$ & $0.7441\pm0.0121$ & $1.0000\pm0.0000$ & $0.88\pm0.13$ \\
+Full & insert\_0.5 & $0.9712\pm0.0011$ & $0.9711\pm0.0018$ & $0.6897\pm0.0441$ & $1.0000\pm0.0000$ & $1.59\pm0.10$ \\
+Full & feature\_shuffle & $0.8573\pm0.0042$ & $0.8526\pm0.0055$ & $0.2350\pm0.0228$ & $0.9767\pm0.0115$ & $12.98\pm0.43$ \\
+noLN & clean & $0.9824\pm0.0006$ & $0.9809\pm0.0003$ & $0.7595\pm0.0188$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+noLN & rf\_0.1 & $0.9787\pm0.0011$ & $0.9774\pm0.0008$ & $0.7313\pm0.0266$ & $1.0000\pm0.0000$ & $0.37\pm0.05$ \\
+noLN & rf\_0.25 & $0.9732\pm0.0013$ & $0.9724\pm0.0013$ & $0.6970\pm0.0265$ & $1.0000\pm0.0000$ & $0.92\pm0.07$ \\
+noLN & rf\_0.5 & $0.9625\pm0.0013$ & $0.9629\pm0.0010$ & $0.6300\pm0.0149$ & $1.0000\pm0.0000$ & $1.98\pm0.12$ \\
+noLN & dice\_0.1 & $0.9779\pm0.0010$ & $0.9768\pm0.0008$ & $0.7187\pm0.0232$ & $1.0000\pm0.0000$ & $0.45\pm0.04$ \\
+noLN & dice\_0.25 & $0.9718\pm0.0010$ & $0.9713\pm0.0002$ & $0.6845\pm0.0223$ & $1.0000\pm0.0000$ & $1.05\pm0.08$ \\
+noLN & dice\_0.5 & $0.9597\pm0.0010$ & $0.9600\pm0.0005$ & $0.6169\pm0.0236$ & $1.0000\pm0.0000$ & $2.26\pm0.09$ \\
+noLN & ea\_0.1 & $0.9805\pm0.0006$ & $0.9791\pm0.0004$ & $0.7378\pm0.0152$ & $1.0000\pm0.0000$ & $0.19\pm0.02$ \\
+noLN & ea\_0.25 & $0.9783\pm0.0005$ & $0.9766\pm0.0010$ & $0.7058\pm0.0241$ & $1.0000\pm0.0000$ & $0.41\pm0.06$ \\
+noLN & ea\_0.5 & $0.9746\pm0.0005$ & $0.9725\pm0.0014$ & $0.6719\pm0.0151$ & $1.0000\pm0.0000$ & $0.77\pm0.09$ \\
+noLN & delete\_0.5 & $0.9663\pm0.0001$ & $0.9635\pm0.0006$ & $0.5920\pm0.0357$ & $1.0000\pm0.0000$ & $1.60\pm0.07$ \\
+noLN & delete\_hub\_0.5 & $0.9699\pm0.0015$ & $0.9672\pm0.0015$ & $0.6266\pm0.0124$ & $1.0000\pm0.0000$ & $1.25\pm0.15$ \\
+noLN & insert\_0.5 & $0.9628\pm0.0013$ & $0.9633\pm0.0015$ & $0.6194\pm0.0396$ & $1.0000\pm0.0000$ & $1.96\pm0.07$ \\
+noLN & feature\_shuffle & $0.7334\pm0.0051$ & $0.7310\pm0.0075$ & $0.0937\pm0.0080$ & $0.9167\pm0.0513$ & $24.90\pm0.49$ \\
+Dot & clean & $0.9621\pm0.0012$ & $0.9706\pm0.0009$ & $0.7800\pm0.0041$ & $1.0000\pm0.0000$ & $0.00\pm0.00$ \\
+Dot & rf\_0.1 & $0.9573\pm0.0014$ & $0.9665\pm0.0014$ & $0.7533\pm0.0094$ & $1.0000\pm0.0000$ & $0.48\pm0.04$ \\
+Dot & rf\_0.25 & $0.9493\pm0.0013$ & $0.9597\pm0.0011$ & $0.7079\pm0.0058$ & $1.0000\pm0.0000$ & $1.28\pm0.07$ \\
+Dot & rf\_0.5 & $0.9351\pm0.0017$ & $0.9469\pm0.0018$ & $0.6255\pm0.0135$ & $1.0000\pm0.0000$ & $2.70\pm0.11$ \\
+Dot & dice\_0.1 & $0.9568\pm0.0013$ & $0.9661\pm0.0011$ & $0.7575\pm0.0038$ & $1.0000\pm0.0000$ & $0.53\pm0.06$ \\
+Dot & dice\_0.25 & $0.9480\pm0.0022$ & $0.9588\pm0.0018$ & $0.7055\pm0.0047$ & $1.0000\pm0.0000$ & $1.42\pm0.18$ \\
+Dot & dice\_0.5 & $0.9308\pm0.0013$ & $0.9438\pm0.0017$ & $0.6291\pm0.0028$ & $1.0000\pm0.0000$ & $3.14\pm0.07$ \\
+Dot & ea\_0.1 & $0.9611\pm0.0009$ & $0.9695\pm0.0006$ & $0.7683\pm0.0037$ & $1.0000\pm0.0000$ & $0.11\pm0.04$ \\
+Dot & ea\_0.25 & $0.9600\pm0.0007$ & $0.9683\pm0.0003$ & $0.7558\pm0.0025$ & $1.0000\pm0.0000$ & $0.21\pm0.07$ \\
+Dot & ea\_0.5 & $0.9582\pm0.0004$ & $0.9663\pm0.0004$ & $0.7298\pm0.0047$ & $1.0000\pm0.0000$ & $0.39\pm0.11$ \\
+Dot & delete\_0.5 & $0.9346\pm0.0012$ & $0.9454\pm0.0008$ & $0.6057\pm0.0219$ & $1.0000\pm0.0000$ & $2.75\pm0.12$ \\
+Dot & delete\_hub\_0.5 & $0.9312\pm0.0023$ & $0.9442\pm0.0019$ & $0.6195\pm0.0166$ & $1.0000\pm0.0000$ & $3.09\pm0.23$ \\
+Dot & insert\_0.5 & $0.9413\pm0.0022$ & $0.9530\pm0.0024$ & $0.6811\pm0.0208$ & $1.0000\pm0.0000$ & $2.09\pm0.11$ \\
+Dot & feature\_shuffle & $0.6750\pm0.0063$ & $0.7013\pm0.0081$ & $0.0990\pm0.0053$ & $0.9300\pm0.0361$ & $28.72\pm0.69$ \\
+\end{longtable}
+}
+\clearpage\section{全部1134行原生逐seed结果}
+每行对应实际保存的正负分数向量；未从汇总表反推。
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{cora / NCNC：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{cora / NCNC：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.957806 & 0.956480 & 0.910354 & 1.000000 \\
+Full & 0 & rf\_0.1 & 0.952607 & 0.949059 & 0.901515 & 0.980000 \\
+Full & 0 & rf\_0.25 & 0.949603 & 0.949574 & 0.886364 & 1.000000 \\
+Full & 0 & rf\_0.5 & 0.929652 & 0.931131 & 0.851010 & 0.990000 \\
+Full & 0 & dice\_0.1 & 0.954646 & 0.952625 & 0.896465 & 0.990000 \\
+Full & 0 & dice\_0.25 & 0.948212 & 0.946841 & 0.885101 & 0.990000 \\
+Full & 0 & dice\_0.5 & 0.927707 & 0.929140 & 0.837121 & 0.990000 \\
+Full & 0 & ea\_0.1 & 0.955856 & 0.954963 & 0.910354 & 1.000000 \\
+Full & 0 & ea\_0.25 & 0.951787 & 0.950760 & 0.898990 & 1.000000 \\
+Full & 0 & ea\_0.5 & 0.946291 & 0.944960 & 0.890152 & 0.990000 \\
+Full & 0 & delete\_0.5 & 0.955030 & 0.950144 & 0.887626 & 0.980000 \\
+Full & 0 & delete\_hub\_0.5 & 0.945130 & 0.942473 & 0.867424 & 0.980000 \\
+Full & 0 & insert\_0.5 & 0.924571 & 0.929992 & 0.829545 & 1.000000 \\
+Full & 0 & feature\_shuffle & 0.673394 & 0.693080 & 0.378788 & 0.870000 \\
+Full & 1 & clean & 0.961378 & 0.957868 & 0.920455 & 0.980000 \\
+Full & 1 & rf\_0.1 & 0.959213 & 0.955111 & 0.916667 & 0.980000 \\
+Full & 1 & rf\_0.25 & 0.952672 & 0.951664 & 0.897727 & 0.970000 \\
+Full & 1 & rf\_0.5 & 0.938570 & 0.939992 & 0.856061 & 0.980000 \\
+Full & 1 & dice\_0.1 & 0.958187 & 0.954455 & 0.907828 & 0.970000 \\
+Full & 1 & dice\_0.25 & 0.953527 & 0.951934 & 0.902778 & 0.970000 \\
+Full & 1 & dice\_0.5 & 0.936732 & 0.938361 & 0.856061 & 0.990000 \\
+Full & 1 & ea\_0.1 & 0.955065 & 0.952928 & 0.900253 & 0.980000 \\
+Full & 1 & ea\_0.25 & 0.949442 & 0.947815 & 0.896465 & 0.990000 \\
+Full & 1 & ea\_0.5 & 0.943201 & 0.943484 & 0.886364 & 1.000000 \\
+Full & 1 & delete\_0.5 & 0.955929 & 0.955700 & 0.905303 & 0.990000 \\
+Full & 1 & delete\_hub\_0.5 & 0.951155 & 0.950536 & 0.892677 & 0.990000 \\
+Full & 1 & insert\_0.5 & 0.935333 & 0.934930 & 0.844697 & 0.980000 \\
+Full & 1 & feature\_shuffle & 0.694468 & 0.721448 & 0.401515 & 0.940000 \\
+Full & 2 & clean & 0.958279 & 0.959106 & 0.911616 & 0.980000 \\
+Full & 2 & rf\_0.1 & 0.952718 & 0.952990 & 0.906566 & 0.990000 \\
+Full & 2 & rf\_0.25 & 0.949766 & 0.952106 & 0.881313 & 0.990000 \\
+Full & 2 & rf\_0.5 & 0.940067 & 0.946171 & 0.866162 & 1.000000 \\
+Full & 2 & dice\_0.1 & 0.953854 & 0.955078 & 0.904040 & 0.990000 \\
+Full & 2 & dice\_0.25 & 0.947209 & 0.950571 & 0.875000 & 1.000000 \\
+Full & 2 & dice\_0.5 & 0.938136 & 0.942344 & 0.867424 & 1.000000 \\
+Full & 2 & ea\_0.1 & 0.954692 & 0.955695 & 0.897727 & 0.990000 \\
+Full & 2 & ea\_0.25 & 0.952329 & 0.954170 & 0.888889 & 0.990000 \\
+Full & 2 & ea\_0.5 & 0.941052 & 0.944748 & 0.863636 & 0.990000 \\
+Full & 2 & delete\_0.5 & 0.953165 & 0.951842 & 0.896465 & 0.990000 \\
+Full & 2 & delete\_hub\_0.5 & 0.946786 & 0.950572 & 0.869949 & 0.990000 \\
+Full & 2 & insert\_0.5 & 0.927660 & 0.930241 & 0.827020 & 0.990000 \\
+Full & 2 & feature\_shuffle & 0.706918 & 0.719702 & 0.414141 & 0.850000 \\
+noCNC & 0 & clean & 0.960289 & 0.963031 & 0.924242 & 1.000000 \\
+noCNC & 0 & rf\_0.1 & 0.954730 & 0.957463 & 0.910354 & 1.000000 \\
+noCNC & 0 & rf\_0.25 & 0.952768 & 0.957407 & 0.900253 & 1.000000 \\
+noCNC & 0 & rf\_0.5 & 0.929510 & 0.935932 & 0.848485 & 1.000000 \\
+noCNC & 0 & dice\_0.1 & 0.957308 & 0.959705 & 0.909091 & 1.000000 \\
+noCNC & 0 & dice\_0.25 & 0.952693 & 0.956322 & 0.900253 & 1.000000 \\
+noCNC & 0 & dice\_0.5 & 0.926803 & 0.934647 & 0.837121 & 0.990000 \\
+noCNC & 0 & ea\_0.1 & 0.959111 & 0.961899 & 0.919192 & 1.000000 \\
+noCNC & 0 & ea\_0.25 & 0.953452 & 0.957407 & 0.896465 & 1.000000 \\
+noCNC & 0 & ea\_0.5 & 0.946527 & 0.952491 & 0.883838 & 1.000000 \\
+noCNC & 0 & delete\_0.5 & 0.952014 & 0.952214 & 0.893939 & 0.990000 \\
+noCNC & 0 & delete\_hub\_0.5 & 0.943357 & 0.945170 & 0.880051 & 1.000000 \\
+noCNC & 0 & insert\_0.5 & 0.935612 & 0.943153 & 0.858586 & 1.000000 \\
+noCNC & 0 & feature\_shuffle & 0.735964 & 0.788821 & 0.534091 & 0.970000 \\
+noCNC & 1 & clean & 0.959959 & 0.961615 & 0.921717 & 0.990000 \\
+noCNC & 1 & rf\_0.1 & 0.957002 & 0.958588 & 0.914141 & 0.990000 \\
+noCNC & 1 & rf\_0.25 & 0.950809 & 0.953610 & 0.901515 & 0.990000 \\
+noCNC & 1 & rf\_0.5 & 0.935754 & 0.938914 & 0.853535 & 0.990000 \\
+noCNC & 1 & dice\_0.1 & 0.956977 & 0.958349 & 0.910354 & 0.990000 \\
+noCNC & 1 & dice\_0.25 & 0.950491 & 0.955713 & 0.900253 & 1.000000 \\
+noCNC & 1 & dice\_0.5 & 0.932612 & 0.936638 & 0.858586 & 0.990000 \\
+noCNC & 1 & ea\_0.1 & 0.954931 & 0.957222 & 0.915404 & 0.990000 \\
+noCNC & 1 & ea\_0.25 & 0.951206 & 0.954141 & 0.905303 & 0.990000 \\
+noCNC & 1 & ea\_0.5 & 0.945283 & 0.947696 & 0.902778 & 0.990000 \\
+noCNC & 1 & delete\_0.5 & 0.952682 & 0.955267 & 0.906566 & 1.000000 \\
+noCNC & 1 & delete\_hub\_0.5 & 0.947904 & 0.947673 & 0.876263 & 0.990000 \\
+noCNC & 1 & insert\_0.5 & 0.936803 & 0.938172 & 0.845960 & 0.980000 \\
+noCNC & 1 & feature\_shuffle & 0.781038 & 0.836835 & 0.602273 & 1.000000 \\
+noCNC & 2 & clean & 0.955497 & 0.956605 & 0.896465 & 0.990000 \\
+noCNC & 2 & rf\_0.1 & 0.950322 & 0.952762 & 0.885101 & 1.000000 \\
+noCNC & 2 & rf\_0.25 & 0.946528 & 0.948269 & 0.877525 & 0.990000 \\
+noCNC & 2 & rf\_0.5 & 0.936610 & 0.942800 & 0.843434 & 1.000000 \\
+noCNC & 2 & dice\_0.1 & 0.950522 & 0.950638 & 0.888889 & 0.990000 \\
+noCNC & 2 & dice\_0.25 & 0.945361 & 0.950242 & 0.871212 & 1.000000 \\
+noCNC & 2 & dice\_0.5 & 0.938417 & 0.939112 & 0.862374 & 0.980000 \\
+noCNC & 2 & ea\_0.1 & 0.951577 & 0.953906 & 0.890152 & 0.990000 \\
+noCNC & 2 & ea\_0.25 & 0.948564 & 0.951497 & 0.883838 & 0.990000 \\
+noCNC & 2 & ea\_0.5 & 0.940712 & 0.945681 & 0.862374 & 0.990000 \\
+noCNC & 2 & delete\_0.5 & 0.946026 & 0.946380 & 0.886364 & 0.990000 \\
+noCNC & 2 & delete\_hub\_0.5 & 0.940260 & 0.943522 & 0.852273 & 1.000000 \\
+noCNC & 2 & insert\_0.5 & 0.929723 & 0.935572 & 0.843434 & 0.990000 \\
+noCNC & 2 & feature\_shuffle & 0.732642 & 0.790761 & 0.521465 & 0.990000 \\
+noCN & 0 & clean & 0.957099 & 0.958498 & 0.911616 & 1.000000 \\
+noCN & 0 & rf\_0.1 & 0.952417 & 0.953577 & 0.891414 & 1.000000 \\
+noCN & 0 & rf\_0.25 & 0.948801 & 0.949738 & 0.886364 & 1.000000 \\
+noCN & 0 & rf\_0.5 & 0.930536 & 0.933323 & 0.843434 & 1.000000 \\
+noCN & 0 & dice\_0.1 & 0.955330 & 0.956767 & 0.905303 & 1.000000 \\
+noCN & 0 & dice\_0.25 & 0.951245 & 0.953966 & 0.888889 & 1.000000 \\
+noCN & 0 & dice\_0.5 & 0.928789 & 0.932982 & 0.834596 & 1.000000 \\
+noCN & 0 & ea\_0.1 & 0.954683 & 0.956345 & 0.904040 & 1.000000 \\
+noCN & 0 & ea\_0.25 & 0.950157 & 0.952572 & 0.896465 & 1.000000 \\
+noCN & 0 & ea\_0.5 & 0.942299 & 0.946597 & 0.878788 & 1.000000 \\
+noCN & 0 & delete\_0.5 & 0.949989 & 0.950980 & 0.883838 & 0.990000 \\
+noCN & 0 & delete\_hub\_0.5 & 0.939348 & 0.940895 & 0.851010 & 1.000000 \\
+noCN & 0 & insert\_0.5 & 0.929794 & 0.934577 & 0.843434 & 0.990000 \\
+noCN & 0 & feature\_shuffle & 0.667135 & 0.695808 & 0.383838 & 0.900000 \\
+noCN & 1 & clean & 0.960717 & 0.959849 & 0.924242 & 0.990000 \\
+noCN & 1 & rf\_0.1 & 0.957850 & 0.956891 & 0.920455 & 0.990000 \\
+noCN & 1 & rf\_0.25 & 0.952455 & 0.954301 & 0.898990 & 0.990000 \\
+noCN & 1 & rf\_0.5 & 0.939230 & 0.941701 & 0.880051 & 0.990000 \\
+noCN & 1 & dice\_0.1 & 0.958360 & 0.958220 & 0.916667 & 0.990000 \\
+noCN & 1 & dice\_0.25 & 0.953324 & 0.954871 & 0.902778 & 0.990000 \\
+noCN & 1 & dice\_0.5 & 0.934044 & 0.936827 & 0.857323 & 0.990000 \\
+noCN & 1 & ea\_0.1 & 0.955580 & 0.955585 & 0.910354 & 0.990000 \\
+noCN & 1 & ea\_0.25 & 0.949863 & 0.950307 & 0.907828 & 0.990000 \\
+noCN & 1 & ea\_0.5 & 0.941643 & 0.945007 & 0.892677 & 1.000000 \\
+noCN & 1 & delete\_0.5 & 0.954917 & 0.956570 & 0.909091 & 1.000000 \\
+noCN & 1 & delete\_hub\_0.5 & 0.949270 & 0.949969 & 0.888889 & 1.000000 \\
+noCN & 1 & insert\_0.5 & 0.937932 & 0.939319 & 0.854798 & 0.980000 \\
+noCN & 1 & feature\_shuffle & 0.685488 & 0.719063 & 0.405303 & 0.920000 \\
+noCN & 2 & clean & 0.955921 & 0.958542 & 0.909091 & 0.990000 \\
+noCN & 2 & rf\_0.1 & 0.949270 & 0.952590 & 0.895202 & 1.000000 \\
+noCN & 2 & rf\_0.25 & 0.949630 & 0.953713 & 0.896465 & 0.990000 \\
+noCN & 2 & rf\_0.5 & 0.939842 & 0.946111 & 0.871212 & 1.000000 \\
+noCN & 2 & dice\_0.1 & 0.950322 & 0.954032 & 0.900253 & 1.000000 \\
+noCN & 2 & dice\_0.25 & 0.947528 & 0.952619 & 0.887626 & 1.000000 \\
+noCN & 2 & dice\_0.5 & 0.939483 & 0.944422 & 0.864899 & 0.990000 \\
+noCN & 2 & ea\_0.1 & 0.952022 & 0.955081 & 0.898990 & 0.990000 \\
+noCN & 2 & ea\_0.25 & 0.948581 & 0.951652 & 0.886364 & 0.990000 \\
+noCN & 2 & ea\_0.5 & 0.936665 & 0.942464 & 0.861111 & 0.990000 \\
+noCN & 2 & delete\_0.5 & 0.948189 & 0.950195 & 0.888889 & 0.990000 \\
+noCN & 2 & delete\_hub\_0.5 & 0.940033 & 0.945980 & 0.875000 & 0.990000 \\
+noCN & 2 & insert\_0.5 & 0.927541 & 0.932875 & 0.842172 & 0.980000 \\
+noCN & 2 & feature\_shuffle & 0.659155 & 0.682180 & 0.356061 & 0.870000 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{cora / LPFormer：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{cora / LPFormer：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.937049 & 0.945973 & 0.863636 & 1.000000 \\
+Full & 0 & rf\_0.1 & 0.927227 & 0.937644 & 0.838384 & 1.000000 \\
+Full & 0 & rf\_0.25 & 0.918924 & 0.931604 & 0.803030 & 1.000000 \\
+Full & 0 & rf\_0.5 & 0.889479 & 0.905495 & 0.748737 & 1.000000 \\
+Full & 0 & dice\_0.1 & 0.928336 & 0.937768 & 0.833333 & 1.000000 \\
+Full & 0 & dice\_0.25 & 0.916705 & 0.927049 & 0.813131 & 1.000000 \\
+Full & 0 & dice\_0.5 & 0.877090 & 0.895277 & 0.723485 & 1.000000 \\
+Full & 0 & ea\_0.1 & 0.934308 & 0.943486 & 0.864899 & 1.000000 \\
+Full & 0 & ea\_0.25 & 0.927222 & 0.938239 & 0.839646 & 1.000000 \\
+Full & 0 & ea\_0.5 & 0.917706 & 0.925814 & 0.819444 & 0.980000 \\
+Full & 0 & delete\_0.5 & 0.895983 & 0.909305 & 0.761364 & 0.990000 \\
+Full & 0 & delete\_hub\_0.5 & 0.885720 & 0.897767 & 0.743687 & 1.000000 \\
+Full & 0 & insert\_0.5 & 0.900881 & 0.915414 & 0.780303 & 0.990000 \\
+Full & 0 & feature\_shuffle & 0.832455 & 0.867752 & 0.715909 & 0.990000 \\
+Full & 1 & clean & 0.935847 & 0.942538 & 0.880051 & 0.990000 \\
+Full & 1 & rf\_0.1 & 0.929296 & 0.935637 & 0.859848 & 0.990000 \\
+Full & 1 & rf\_0.25 & 0.916257 & 0.924851 & 0.830808 & 0.990000 \\
+Full & 1 & rf\_0.5 & 0.890427 & 0.903701 & 0.766414 & 1.000000 \\
+Full & 1 & dice\_0.1 & 0.932049 & 0.937923 & 0.863636 & 0.990000 \\
+Full & 1 & dice\_0.25 & 0.918607 & 0.928211 & 0.838384 & 0.990000 \\
+Full & 1 & dice\_0.5 & 0.881377 & 0.894656 & 0.728535 & 0.990000 \\
+Full & 1 & ea\_0.1 & 0.927574 & 0.936873 & 0.864899 & 0.990000 \\
+Full & 1 & ea\_0.25 & 0.919327 & 0.929583 & 0.844697 & 0.990000 \\
+Full & 1 & ea\_0.5 & 0.915412 & 0.926905 & 0.840909 & 0.980000 \\
+Full & 1 & delete\_0.5 & 0.899280 & 0.899026 & 0.790404 & 0.990000 \\
+Full & 1 & delete\_hub\_0.5 & 0.887110 & 0.892545 & 0.751263 & 0.990000 \\
+Full & 1 & insert\_0.5 & 0.895927 & 0.909653 & 0.785354 & 1.000000 \\
+Full & 1 & feature\_shuffle & 0.820970 & 0.862677 & 0.686869 & 0.990000 \\
+Full & 2 & clean & 0.935467 & 0.942964 & 0.858586 & 1.000000 \\
+Full & 2 & rf\_0.1 & 0.924167 & 0.933212 & 0.828283 & 1.000000 \\
+Full & 2 & rf\_0.25 & 0.911364 & 0.923409 & 0.791667 & 1.000000 \\
+Full & 2 & rf\_0.5 & 0.902292 & 0.911702 & 0.767677 & 0.990000 \\
+Full & 2 & dice\_0.1 & 0.926398 & 0.934679 & 0.820707 & 1.000000 \\
+Full & 2 & dice\_0.25 & 0.914159 & 0.926299 & 0.813131 & 1.000000 \\
+Full & 2 & dice\_0.5 & 0.895892 & 0.906670 & 0.758838 & 1.000000 \\
+Full & 2 & ea\_0.1 & 0.929918 & 0.938447 & 0.845960 & 1.000000 \\
+Full & 2 & ea\_0.25 & 0.926745 & 0.936449 & 0.840909 & 1.000000 \\
+Full & 2 & ea\_0.5 & 0.914411 & 0.926616 & 0.815657 & 1.000000 \\
+Full & 2 & delete\_0.5 & 0.894760 & 0.898741 & 0.765152 & 0.990000 \\
+Full & 2 & delete\_hub\_0.5 & 0.888154 & 0.900484 & 0.746212 & 1.000000 \\
+Full & 2 & insert\_0.5 & 0.897810 & 0.910939 & 0.755051 & 1.000000 \\
+Full & 2 & feature\_shuffle & 0.825501 & 0.870244 & 0.676768 & 1.000000 \\
+Uniform & 0 & clean & 0.940636 & 0.949332 & 0.853535 & 1.000000 \\
+Uniform & 0 & rf\_0.1 & 0.930006 & 0.941109 & 0.838384 & 1.000000 \\
+Uniform & 0 & rf\_0.25 & 0.927277 & 0.935905 & 0.828283 & 1.000000 \\
+Uniform & 0 & rf\_0.5 & 0.895191 & 0.909600 & 0.758838 & 1.000000 \\
+Uniform & 0 & dice\_0.1 & 0.930927 & 0.941538 & 0.821970 & 1.000000 \\
+Uniform & 0 & dice\_0.25 & 0.923173 & 0.931006 & 0.806818 & 1.000000 \\
+Uniform & 0 & dice\_0.5 & 0.884835 & 0.899728 & 0.728535 & 1.000000 \\
+Uniform & 0 & ea\_0.1 & 0.936229 & 0.946529 & 0.848485 & 1.000000 \\
+Uniform & 0 & ea\_0.25 & 0.928719 & 0.940676 & 0.835859 & 1.000000 \\
+Uniform & 0 & ea\_0.5 & 0.919315 & 0.931444 & 0.816919 & 0.990000 \\
+Uniform & 0 & delete\_0.5 & 0.902468 & 0.913339 & 0.770202 & 1.000000 \\
+Uniform & 0 & delete\_hub\_0.5 & 0.894193 & 0.901952 & 0.741162 & 1.000000 \\
+Uniform & 0 & insert\_0.5 & 0.905231 & 0.917667 & 0.777778 & 1.000000 \\
+Uniform & 0 & feature\_shuffle & 0.827852 & 0.871619 & 0.709596 & 1.000000 \\
+Uniform & 1 & clean & 0.928811 & 0.937217 & 0.849747 & 0.990000 \\
+Uniform & 1 & rf\_0.1 & 0.922254 & 0.930666 & 0.833333 & 0.990000 \\
+Uniform & 1 & rf\_0.25 & 0.907288 & 0.916095 & 0.799242 & 0.990000 \\
+Uniform & 1 & rf\_0.5 & 0.880349 & 0.891438 & 0.704545 & 1.000000 \\
+Uniform & 1 & dice\_0.1 & 0.923005 & 0.931203 & 0.834596 & 0.990000 \\
+Uniform & 1 & dice\_0.25 & 0.906896 & 0.916419 & 0.792929 & 0.990000 \\
+Uniform & 1 & dice\_0.5 & 0.872722 & 0.885706 & 0.714646 & 1.000000 \\
+Uniform & 1 & ea\_0.1 & 0.924105 & 0.934647 & 0.838384 & 0.990000 \\
+Uniform & 1 & ea\_0.25 & 0.917403 & 0.926726 & 0.828283 & 0.990000 \\
+Uniform & 1 & ea\_0.5 & 0.910832 & 0.920663 & 0.801768 & 0.990000 \\
+Uniform & 1 & delete\_0.5 & 0.887990 & 0.892255 & 0.742424 & 0.990000 \\
+Uniform & 1 & delete\_hub\_0.5 & 0.882872 & 0.891956 & 0.713384 & 0.990000 \\
+Uniform & 1 & insert\_0.5 & 0.892454 & 0.904777 & 0.728535 & 1.000000 \\
+Uniform & 1 & feature\_shuffle & 0.826754 & 0.874985 & 0.690657 & 1.000000 \\
+Uniform & 2 & clean & 0.929428 & 0.937769 & 0.821970 & 1.000000 \\
+Uniform & 2 & rf\_0.1 & 0.918887 & 0.928478 & 0.804293 & 1.000000 \\
+Uniform & 2 & rf\_0.25 & 0.904571 & 0.916919 & 0.772727 & 1.000000 \\
+Uniform & 2 & rf\_0.5 & 0.888941 & 0.903505 & 0.729798 & 1.000000 \\
+Uniform & 2 & dice\_0.1 & 0.922202 & 0.931247 & 0.797980 & 1.000000 \\
+Uniform & 2 & dice\_0.25 & 0.907988 & 0.919382 & 0.785354 & 1.000000 \\
+Uniform & 2 & dice\_0.5 & 0.886129 & 0.898616 & 0.729798 & 1.000000 \\
+Uniform & 2 & ea\_0.1 & 0.924400 & 0.933198 & 0.815657 & 1.000000 \\
+Uniform & 2 & ea\_0.25 & 0.918926 & 0.929640 & 0.789141 & 1.000000 \\
+Uniform & 2 & ea\_0.5 & 0.909430 & 0.922575 & 0.775253 & 1.000000 \\
+Uniform & 2 & delete\_0.5 & 0.888101 & 0.894113 & 0.736111 & 0.990000 \\
+Uniform & 2 & delete\_hub\_0.5 & 0.866576 & 0.882369 & 0.688131 & 1.000000 \\
+Uniform & 2 & insert\_0.5 & 0.897305 & 0.908975 & 0.750000 & 1.000000 \\
+Uniform & 2 & feature\_shuffle & 0.807548 & 0.852956 & 0.632576 & 1.000000 \\
+noPE & 0 & clean & 0.934826 & 0.945634 & 0.861111 & 1.000000 \\
+noPE & 0 & rf\_0.1 & 0.924486 & 0.935907 & 0.832071 & 1.000000 \\
+noPE & 0 & rf\_0.25 & 0.912082 & 0.923416 & 0.803030 & 1.000000 \\
+noPE & 0 & rf\_0.5 & 0.880986 & 0.898124 & 0.720960 & 1.000000 \\
+noPE & 0 & dice\_0.1 & 0.921202 & 0.933091 & 0.828283 & 1.000000 \\
+noPE & 0 & dice\_0.25 & 0.908994 & 0.921146 & 0.790404 & 1.000000 \\
+noPE & 0 & dice\_0.5 & 0.871871 & 0.888692 & 0.693182 & 1.000000 \\
+noPE & 0 & ea\_0.1 & 0.932255 & 0.942927 & 0.845960 & 1.000000 \\
+noPE & 0 & ea\_0.25 & 0.921977 & 0.936167 & 0.829545 & 1.000000 \\
+noPE & 0 & ea\_0.5 & 0.907922 & 0.927624 & 0.809343 & 1.000000 \\
+noPE & 0 & delete\_0.5 & 0.881629 & 0.899598 & 0.743687 & 1.000000 \\
+noPE & 0 & delete\_hub\_0.5 & 0.870093 & 0.881525 & 0.712121 & 0.990000 \\
+noPE & 0 & insert\_0.5 & 0.899025 & 0.914189 & 0.766414 & 0.990000 \\
+noPE & 0 & feature\_shuffle & 0.833947 & 0.877552 & 0.719697 & 1.000000 \\
+noPE & 1 & clean & 0.931098 & 0.940659 & 0.856061 & 0.990000 \\
+noPE & 1 & rf\_0.1 & 0.925121 & 0.933841 & 0.837121 & 0.990000 \\
+noPE & 1 & rf\_0.25 & 0.909300 & 0.921984 & 0.824495 & 0.990000 \\
+noPE & 1 & rf\_0.5 & 0.879060 & 0.896234 & 0.733586 & 1.000000 \\
+noPE & 1 & dice\_0.1 & 0.926513 & 0.935633 & 0.863636 & 0.990000 \\
+noPE & 1 & dice\_0.25 & 0.909556 & 0.923864 & 0.823232 & 0.990000 \\
+noPE & 1 & dice\_0.5 & 0.865511 & 0.884110 & 0.710859 & 0.990000 \\
+noPE & 1 & ea\_0.1 & 0.926411 & 0.937033 & 0.849747 & 0.990000 \\
+noPE & 1 & ea\_0.25 & 0.919986 & 0.930552 & 0.829545 & 0.990000 \\
+noPE & 1 & ea\_0.5 & 0.917937 & 0.927476 & 0.818182 & 0.980000 \\
+noPE & 1 & delete\_0.5 & 0.887368 & 0.893295 & 0.765152 & 0.990000 \\
+noPE & 1 & delete\_hub\_0.5 & 0.887886 & 0.897889 & 0.733586 & 1.000000 \\
+noPE & 1 & insert\_0.5 & 0.895685 & 0.908384 & 0.773990 & 1.000000 \\
+noPE & 1 & feature\_shuffle & 0.831374 & 0.876657 & 0.709596 & 1.000000 \\
+noPE & 2 & clean & 0.912974 & 0.925094 & 0.801768 & 1.000000 \\
+noPE & 2 & rf\_0.1 & 0.902768 & 0.915744 & 0.775253 & 1.000000 \\
+noPE & 2 & rf\_0.25 & 0.887802 & 0.904278 & 0.728535 & 1.000000 \\
+noPE & 2 & rf\_0.5 & 0.872086 & 0.887622 & 0.693182 & 0.990000 \\
+noPE & 2 & dice\_0.1 & 0.903573 & 0.916356 & 0.784091 & 1.000000 \\
+noPE & 2 & dice\_0.25 & 0.887629 & 0.905112 & 0.751263 & 1.000000 \\
+noPE & 2 & dice\_0.5 & 0.866954 & 0.883022 & 0.690657 & 1.000000 \\
+noPE & 2 & ea\_0.1 & 0.908334 & 0.921570 & 0.794192 & 1.000000 \\
+noPE & 2 & ea\_0.25 & 0.905584 & 0.920407 & 0.794192 & 1.000000 \\
+noPE & 2 & ea\_0.5 & 0.897839 & 0.914894 & 0.781566 & 1.000000 \\
+noPE & 2 & delete\_0.5 & 0.864456 & 0.874955 & 0.645202 & 0.990000 \\
+noPE & 2 & delete\_hub\_0.5 & 0.852180 & 0.865502 & 0.625000 & 1.000000 \\
+noPE & 2 & insert\_0.5 & 0.873492 & 0.894542 & 0.729798 & 1.000000 \\
+noPE & 2 & feature\_shuffle & 0.823744 & 0.868595 & 0.686869 & 0.990000 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{cora / Refined-GAE：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{cora / Refined-GAE：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.965597 & 0.960093 & 0.924242 & 0.990000 \\
+Full & 0 & rf\_0.1 & 0.959032 & 0.954051 & 0.915404 & 0.990000 \\
+Full & 0 & rf\_0.25 & 0.953549 & 0.949752 & 0.901515 & 0.990000 \\
+Full & 0 & rf\_0.5 & 0.918758 & 0.919739 & 0.829545 & 0.970000 \\
+Full & 0 & dice\_0.1 & 0.959626 & 0.954404 & 0.919192 & 0.990000 \\
+Full & 0 & dice\_0.25 & 0.947979 & 0.946898 & 0.885101 & 0.990000 \\
+Full & 0 & dice\_0.5 & 0.911541 & 0.915239 & 0.811869 & 0.980000 \\
+Full & 0 & ea\_0.1 & 0.962778 & 0.957822 & 0.921717 & 0.990000 \\
+Full & 0 & ea\_0.25 & 0.955197 & 0.950190 & 0.900253 & 0.980000 \\
+Full & 0 & ea\_0.5 & 0.946780 & 0.943180 & 0.873737 & 0.980000 \\
+Full & 0 & delete\_0.5 & 0.952548 & 0.950191 & 0.892677 & 0.990000 \\
+Full & 0 & delete\_hub\_0.5 & 0.946810 & 0.948806 & 0.881313 & 1.000000 \\
+Full & 0 & insert\_0.5 & 0.891349 & 0.893949 & 0.757576 & 0.970000 \\
+Full & 0 & feature\_shuffle & 0.746262 & 0.775873 & 0.508838 & 0.930000 \\
+Full & 1 & clean & 0.958982 & 0.955500 & 0.904040 & 0.970000 \\
+Full & 1 & rf\_0.1 & 0.952320 & 0.950163 & 0.890152 & 0.970000 \\
+Full & 1 & rf\_0.25 & 0.944720 & 0.944301 & 0.888889 & 0.990000 \\
+Full & 1 & rf\_0.5 & 0.926780 & 0.933671 & 0.845960 & 1.000000 \\
+Full & 1 & dice\_0.1 & 0.954432 & 0.952582 & 0.900253 & 0.990000 \\
+Full & 1 & dice\_0.25 & 0.945403 & 0.943932 & 0.895202 & 0.980000 \\
+Full & 1 & dice\_0.5 & 0.921239 & 0.926186 & 0.827020 & 1.000000 \\
+Full & 1 & ea\_0.1 & 0.954815 & 0.952046 & 0.891414 & 0.970000 \\
+Full & 1 & ea\_0.25 & 0.951054 & 0.949478 & 0.885101 & 0.990000 \\
+Full & 1 & ea\_0.5 & 0.944701 & 0.944046 & 0.872475 & 0.990000 \\
+Full & 1 & delete\_0.5 & 0.944261 & 0.949007 & 0.869949 & 0.990000 \\
+Full & 1 & delete\_hub\_0.5 & 0.941844 & 0.944679 & 0.864899 & 0.990000 \\
+Full & 1 & insert\_0.5 & 0.923018 & 0.926994 & 0.828283 & 0.990000 \\
+Full & 1 & feature\_shuffle & 0.774938 & 0.796377 & 0.553030 & 0.940000 \\
+Full & 2 & clean & 0.960238 & 0.963596 & 0.906566 & 1.000000 \\
+Full & 2 & rf\_0.1 & 0.949988 & 0.952743 & 0.886364 & 1.000000 \\
+Full & 2 & rf\_0.25 & 0.946369 & 0.951182 & 0.867424 & 1.000000 \\
+Full & 2 & rf\_0.5 & 0.923466 & 0.928151 & 0.811869 & 0.990000 \\
+Full & 2 & dice\_0.1 & 0.952183 & 0.955227 & 0.887626 & 1.000000 \\
+Full & 2 & dice\_0.25 & 0.942299 & 0.948892 & 0.867424 & 1.000000 \\
+Full & 2 & dice\_0.5 & 0.922647 & 0.926124 & 0.827020 & 0.990000 \\
+Full & 2 & ea\_0.1 & 0.956482 & 0.960442 & 0.895202 & 1.000000 \\
+Full & 2 & ea\_0.25 & 0.953635 & 0.958061 & 0.893939 & 1.000000 \\
+Full & 2 & ea\_0.5 & 0.944092 & 0.950812 & 0.882576 & 1.000000 \\
+Full & 2 & delete\_0.5 & 0.947108 & 0.950179 & 0.888889 & 0.990000 \\
+Full & 2 & delete\_hub\_0.5 & 0.944116 & 0.950403 & 0.866162 & 1.000000 \\
+Full & 2 & insert\_0.5 & 0.906547 & 0.908204 & 0.808081 & 0.970000 \\
+Full & 2 & feature\_shuffle & 0.774470 & 0.786540 & 0.559343 & 0.910000 \\
+noLN & 0 & clean & 0.948556 & 0.954128 & 0.893939 & 0.990000 \\
+noLN & 0 & rf\_0.1 & 0.942971 & 0.948770 & 0.876263 & 0.990000 \\
+noLN & 0 & rf\_0.25 & 0.934179 & 0.940878 & 0.867424 & 1.000000 \\
+noLN & 0 & rf\_0.5 & 0.915052 & 0.922897 & 0.810606 & 1.000000 \\
+noLN & 0 & dice\_0.1 & 0.945050 & 0.950702 & 0.888889 & 0.990000 \\
+noLN & 0 & dice\_0.25 & 0.934237 & 0.941982 & 0.861111 & 0.990000 \\
+noLN & 0 & dice\_0.5 & 0.909861 & 0.918954 & 0.799242 & 0.990000 \\
+noLN & 0 & ea\_0.1 & 0.946641 & 0.952243 & 0.887626 & 0.990000 \\
+noLN & 0 & ea\_0.25 & 0.939998 & 0.946769 & 0.875000 & 0.990000 \\
+noLN & 0 & ea\_0.5 & 0.931278 & 0.939361 & 0.858586 & 0.990000 \\
+noLN & 0 & delete\_0.5 & 0.933200 & 0.937867 & 0.849747 & 0.980000 \\
+noLN & 0 & delete\_hub\_0.5 & 0.920992 & 0.928664 & 0.829545 & 1.000000 \\
+noLN & 0 & insert\_0.5 & 0.919262 & 0.928587 & 0.828283 & 1.000000 \\
+noLN & 0 & feature\_shuffle & 0.701067 & 0.716670 & 0.441919 & 0.890000 \\
+noLN & 1 & clean & 0.953289 & 0.960131 & 0.909091 & 1.000000 \\
+noLN & 1 & rf\_0.1 & 0.947135 & 0.954260 & 0.891414 & 1.000000 \\
+noLN & 1 & rf\_0.25 & 0.939499 & 0.947641 & 0.883838 & 1.000000 \\
+noLN & 1 & rf\_0.5 & 0.920662 & 0.931206 & 0.832071 & 1.000000 \\
+noLN & 1 & dice\_0.1 & 0.947271 & 0.954832 & 0.896465 & 1.000000 \\
+noLN & 1 & dice\_0.25 & 0.941659 & 0.949045 & 0.904040 & 1.000000 \\
+noLN & 1 & dice\_0.5 & 0.916652 & 0.925945 & 0.833333 & 1.000000 \\
+noLN & 1 & ea\_0.1 & 0.948701 & 0.956147 & 0.898990 & 1.000000 \\
+noLN & 1 & ea\_0.25 & 0.943065 & 0.951010 & 0.887626 & 1.000000 \\
+noLN & 1 & ea\_0.5 & 0.937361 & 0.944643 & 0.869949 & 1.000000 \\
+noLN & 1 & delete\_0.5 & 0.937806 & 0.946920 & 0.863636 & 1.000000 \\
+noLN & 1 & delete\_hub\_0.5 & 0.937766 & 0.945822 & 0.858586 & 1.000000 \\
+noLN & 1 & insert\_0.5 & 0.922747 & 0.929616 & 0.825758 & 0.990000 \\
+noLN & 1 & feature\_shuffle & 0.732783 & 0.737358 & 0.450758 & 0.850000 \\
+noLN & 2 & clean & 0.954056 & 0.959667 & 0.885101 & 1.000000 \\
+noLN & 2 & rf\_0.1 & 0.943238 & 0.950129 & 0.859848 & 1.000000 \\
+noLN & 2 & rf\_0.25 & 0.940929 & 0.947411 & 0.859848 & 1.000000 \\
+noLN & 2 & rf\_0.5 & 0.924399 & 0.931886 & 0.805556 & 1.000000 \\
+noLN & 2 & dice\_0.1 & 0.944492 & 0.951473 & 0.875000 & 1.000000 \\
+noLN & 2 & dice\_0.25 & 0.938943 & 0.946917 & 0.871212 & 1.000000 \\
+noLN & 2 & dice\_0.5 & 0.920804 & 0.929046 & 0.830808 & 1.000000 \\
+noLN & 2 & ea\_0.1 & 0.949546 & 0.956680 & 0.882576 & 1.000000 \\
+noLN & 2 & ea\_0.25 & 0.946182 & 0.953777 & 0.880051 & 1.000000 \\
+noLN & 2 & ea\_0.5 & 0.935561 & 0.944599 & 0.858586 & 1.000000 \\
+noLN & 2 & delete\_0.5 & 0.935651 & 0.941759 & 0.864899 & 1.000000 \\
+noLN & 2 & delete\_hub\_0.5 & 0.932524 & 0.938027 & 0.840909 & 0.990000 \\
+noLN & 2 & insert\_0.5 & 0.917021 & 0.928145 & 0.818182 & 1.000000 \\
+noLN & 2 & feature\_shuffle & 0.615146 & 0.665740 & 0.354798 & 0.850000 \\
+Dot & 0 & clean & 0.944103 & 0.954087 & 0.890152 & 1.000000 \\
+Dot & 0 & rf\_0.1 & 0.937487 & 0.948035 & 0.872475 & 1.000000 \\
+Dot & 0 & rf\_0.25 & 0.930656 & 0.941631 & 0.835859 & 1.000000 \\
+Dot & 0 & rf\_0.5 & 0.896085 & 0.915870 & 0.806818 & 0.990000 \\
+Dot & 0 & dice\_0.1 & 0.937961 & 0.948631 & 0.871212 & 1.000000 \\
+Dot & 0 & dice\_0.25 & 0.928705 & 0.940779 & 0.832071 & 1.000000 \\
+Dot & 0 & dice\_0.5 & 0.896710 & 0.918305 & 0.804293 & 1.000000 \\
+Dot & 0 & ea\_0.1 & 0.943984 & 0.953827 & 0.887626 & 1.000000 \\
+Dot & 0 & ea\_0.25 & 0.940870 & 0.950769 & 0.871212 & 1.000000 \\
+Dot & 0 & ea\_0.5 & 0.936162 & 0.946104 & 0.861111 & 1.000000 \\
+Dot & 0 & delete\_0.5 & 0.914672 & 0.928603 & 0.818182 & 1.000000 \\
+Dot & 0 & delete\_hub\_0.5 & 0.892822 & 0.913352 & 0.765152 & 1.000000 \\
+Dot & 0 & insert\_0.5 & 0.910819 & 0.926998 & 0.799242 & 1.000000 \\
+Dot & 0 & feature\_shuffle & 0.786141 & 0.842107 & 0.632576 & 0.990000 \\
+Dot & 1 & clean & 0.946597 & 0.955329 & 0.890152 & 1.000000 \\
+Dot & 1 & rf\_0.1 & 0.940445 & 0.950919 & 0.878788 & 1.000000 \\
+Dot & 1 & rf\_0.25 & 0.930455 & 0.942033 & 0.853535 & 1.000000 \\
+Dot & 1 & rf\_0.5 & 0.915576 & 0.931852 & 0.819444 & 1.000000 \\
+Dot & 1 & dice\_0.1 & 0.940341 & 0.950408 & 0.880051 & 1.000000 \\
+Dot & 1 & dice\_0.25 & 0.929374 & 0.943222 & 0.851010 & 1.000000 \\
+Dot & 1 & dice\_0.5 & 0.908742 & 0.925023 & 0.811869 & 1.000000 \\
+Dot & 1 & ea\_0.1 & 0.944151 & 0.952884 & 0.881313 & 1.000000 \\
+Dot & 1 & ea\_0.25 & 0.941814 & 0.950560 & 0.875000 & 1.000000 \\
+Dot & 1 & ea\_0.5 & 0.938409 & 0.946915 & 0.872475 & 1.000000 \\
+Dot & 1 & delete\_0.5 & 0.917003 & 0.934105 & 0.832071 & 1.000000 \\
+Dot & 1 & delete\_hub\_0.5 & 0.894260 & 0.918002 & 0.776515 & 1.000000 \\
+Dot & 1 & insert\_0.5 & 0.915817 & 0.928778 & 0.824495 & 0.990000 \\
+Dot & 1 & feature\_shuffle & 0.815577 & 0.864486 & 0.676768 & 1.000000 \\
+Dot & 2 & clean & 0.946908 & 0.958205 & 0.891414 & 1.000000 \\
+Dot & 2 & rf\_0.1 & 0.938316 & 0.951086 & 0.876263 & 1.000000 \\
+Dot & 2 & rf\_0.25 & 0.934665 & 0.946880 & 0.862374 & 1.000000 \\
+Dot & 2 & rf\_0.5 & 0.915841 & 0.930854 & 0.801768 & 1.000000 \\
+Dot & 2 & dice\_0.1 & 0.937777 & 0.950390 & 0.872475 & 1.000000 \\
+Dot & 2 & dice\_0.25 & 0.931397 & 0.945745 & 0.845960 & 1.000000 \\
+Dot & 2 & dice\_0.5 & 0.909751 & 0.926801 & 0.796717 & 1.000000 \\
+Dot & 2 & ea\_0.1 & 0.945301 & 0.956503 & 0.886364 & 1.000000 \\
+Dot & 2 & ea\_0.25 & 0.943698 & 0.955314 & 0.885101 & 1.000000 \\
+Dot & 2 & ea\_0.5 & 0.935828 & 0.949034 & 0.866162 & 1.000000 \\
+Dot & 2 & delete\_0.5 & 0.908594 & 0.929075 & 0.815657 & 1.000000 \\
+Dot & 2 & delete\_hub\_0.5 & 0.897090 & 0.920261 & 0.782828 & 1.000000 \\
+Dot & 2 & insert\_0.5 & 0.912469 & 0.931811 & 0.809343 & 1.000000 \\
+Dot & 2 & feature\_shuffle & 0.789047 & 0.843825 & 0.621212 & 1.000000 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{citeseer / NCNC：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{citeseer / NCNC：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.971142 & 0.970577 & 0.945827 & 1.000000 \\
+Full & 0 & rf\_0.1 & 0.967161 & 0.967078 & 0.942899 & 1.000000 \\
+Full & 0 & rf\_0.25 & 0.963444 & 0.962588 & 0.923865 & 0.990000 \\
+Full & 0 & rf\_0.5 & 0.951577 & 0.952828 & 0.907760 & 0.990000 \\
+Full & 0 & dice\_0.1 & 0.966655 & 0.966698 & 0.937042 & 1.000000 \\
+Full & 0 & dice\_0.25 & 0.963212 & 0.963531 & 0.932650 & 0.990000 \\
+Full & 0 & dice\_0.5 & 0.944376 & 0.947744 & 0.896047 & 0.990000 \\
+Full & 0 & ea\_0.1 & 0.967067 & 0.967407 & 0.941435 & 1.000000 \\
+Full & 0 & ea\_0.25 & 0.962003 & 0.962662 & 0.932650 & 1.000000 \\
+Full & 0 & ea\_0.5 & 0.954681 & 0.956000 & 0.928258 & 0.990000 \\
+Full & 0 & delete\_0.5 & 0.966220 & 0.965038 & 0.941435 & 0.990000 \\
+Full & 0 & delete\_hub\_0.5 & 0.969515 & 0.968604 & 0.935578 & 0.990000 \\
+Full & 0 & insert\_0.5 & 0.931381 & 0.938168 & 0.868228 & 0.990000 \\
+Full & 0 & feature\_shuffle & 0.596186 & 0.604009 & 0.275256 & 0.730000 \\
+Full & 1 & clean & 0.960629 & 0.964307 & 0.926794 & 1.000000 \\
+Full & 1 & rf\_0.1 & 0.957405 & 0.960837 & 0.928258 & 1.000000 \\
+Full & 1 & rf\_0.25 & 0.951212 & 0.955170 & 0.913616 & 1.000000 \\
+Full & 1 & rf\_0.5 & 0.946295 & 0.950550 & 0.891654 & 1.000000 \\
+Full & 1 & dice\_0.1 & 0.957517 & 0.961489 & 0.916545 & 1.000000 \\
+Full & 1 & dice\_0.25 & 0.951540 & 0.955429 & 0.910688 & 1.000000 \\
+Full & 1 & dice\_0.5 & 0.943559 & 0.948060 & 0.898975 & 1.000000 \\
+Full & 1 & ea\_0.1 & 0.956348 & 0.960580 & 0.919473 & 1.000000 \\
+Full & 1 & ea\_0.25 & 0.952548 & 0.956524 & 0.923865 & 1.000000 \\
+Full & 1 & ea\_0.5 & 0.942911 & 0.946825 & 0.900439 & 1.000000 \\
+Full & 1 & delete\_0.5 & 0.957161 & 0.959948 & 0.923865 & 1.000000 \\
+Full & 1 & delete\_hub\_0.5 & 0.954395 & 0.958627 & 0.912152 & 1.000000 \\
+Full & 1 & insert\_0.5 & 0.936417 & 0.944159 & 0.878477 & 1.000000 \\
+Full & 1 & feature\_shuffle & 0.669754 & 0.685819 & 0.393851 & 0.860000 \\
+Full & 2 & clean & 0.972983 & 0.974126 & 0.961933 & 1.000000 \\
+Full & 2 & rf\_0.1 & 0.967478 & 0.969425 & 0.944363 & 1.000000 \\
+Full & 2 & rf\_0.25 & 0.965991 & 0.967783 & 0.939971 & 1.000000 \\
+Full & 2 & rf\_0.5 & 0.951099 & 0.954911 & 0.887262 & 1.000000 \\
+Full & 2 & dice\_0.1 & 0.968203 & 0.970049 & 0.947291 & 1.000000 \\
+Full & 2 & dice\_0.25 & 0.964649 & 0.965773 & 0.934114 & 0.990000 \\
+Full & 2 & dice\_0.5 & 0.946813 & 0.951783 & 0.874085 & 1.000000 \\
+Full & 2 & ea\_0.1 & 0.968083 & 0.969465 & 0.953148 & 1.000000 \\
+Full & 2 & ea\_0.25 & 0.962794 & 0.964245 & 0.944363 & 0.990000 \\
+Full & 2 & ea\_0.5 & 0.952423 & 0.955486 & 0.919473 & 0.990000 \\
+Full & 2 & delete\_0.5 & 0.968584 & 0.969477 & 0.951684 & 0.990000 \\
+Full & 2 & delete\_hub\_0.5 & 0.964233 & 0.963134 & 0.945827 & 0.990000 \\
+Full & 2 & insert\_0.5 & 0.940918 & 0.946397 & 0.874085 & 0.990000 \\
+Full & 2 & feature\_shuffle & 0.644733 & 0.656551 & 0.383602 & 0.790000 \\
+noCNC & 0 & clean & 0.972495 & 0.971869 & 0.956076 & 1.000000 \\
+noCNC & 0 & rf\_0.1 & 0.969131 & 0.968708 & 0.941435 & 1.000000 \\
+noCNC & 0 & rf\_0.25 & 0.966068 & 0.965995 & 0.939971 & 1.000000 \\
+noCNC & 0 & rf\_0.5 & 0.958198 & 0.961465 & 0.925329 & 1.000000 \\
+noCNC & 0 & dice\_0.1 & 0.969230 & 0.968606 & 0.944363 & 1.000000 \\
+noCNC & 0 & dice\_0.25 & 0.965534 & 0.964932 & 0.945827 & 0.990000 \\
+noCNC & 0 & dice\_0.5 & 0.953508 & 0.956407 & 0.915081 & 0.990000 \\
+noCNC & 0 & ea\_0.1 & 0.970175 & 0.970510 & 0.950220 & 1.000000 \\
+noCNC & 0 & ea\_0.25 & 0.964694 & 0.966332 & 0.938507 & 1.000000 \\
+noCNC & 0 & ea\_0.5 & 0.958897 & 0.962729 & 0.928258 & 1.000000 \\
+noCNC & 0 & delete\_0.5 & 0.968829 & 0.967202 & 0.950220 & 0.980000 \\
+noCNC & 0 & delete\_hub\_0.5 & 0.970642 & 0.970758 & 0.951684 & 0.990000 \\
+noCNC & 0 & insert\_0.5 & 0.941909 & 0.947320 & 0.882870 & 1.000000 \\
+noCNC & 0 & feature\_shuffle & 0.658391 & 0.723797 & 0.390922 & 1.000000 \\
+noCNC & 1 & clean & 0.962389 & 0.964777 & 0.920937 & 1.000000 \\
+noCNC & 1 & rf\_0.1 & 0.958518 & 0.961361 & 0.910688 & 1.000000 \\
+noCNC & 1 & rf\_0.25 & 0.954891 & 0.957479 & 0.901903 & 0.990000 \\
+noCNC & 1 & rf\_0.5 & 0.948661 & 0.952262 & 0.894583 & 1.000000 \\
+noCNC & 1 & dice\_0.1 & 0.958910 & 0.961742 & 0.907760 & 1.000000 \\
+noCNC & 1 & dice\_0.25 & 0.954891 & 0.956694 & 0.900439 & 0.990000 \\
+noCNC & 1 & dice\_0.5 & 0.946112 & 0.947664 & 0.887262 & 0.990000 \\
+noCNC & 1 & ea\_0.1 & 0.957356 & 0.961253 & 0.912152 & 1.000000 \\
+noCNC & 1 & ea\_0.25 & 0.953272 & 0.957142 & 0.909224 & 1.000000 \\
+noCNC & 1 & ea\_0.5 & 0.943158 & 0.947908 & 0.888726 & 1.000000 \\
+noCNC & 1 & delete\_0.5 & 0.959620 & 0.959665 & 0.910688 & 0.990000 \\
+noCNC & 1 & delete\_hub\_0.5 & 0.956747 & 0.961718 & 0.910688 & 1.000000 \\
+noCNC & 1 & insert\_0.5 & 0.941017 & 0.948046 & 0.878477 & 1.000000 \\
+noCNC & 1 & feature\_shuffle & 0.675251 & 0.719882 & 0.475842 & 0.870000 \\
+noCNC & 2 & clean & 0.970070 & 0.973551 & 0.948755 & 1.000000 \\
+noCNC & 2 & rf\_0.1 & 0.965656 & 0.970073 & 0.938507 & 1.000000 \\
+noCNC & 2 & rf\_0.25 & 0.963071 & 0.966968 & 0.922401 & 1.000000 \\
+noCNC & 2 & rf\_0.5 & 0.944254 & 0.951071 & 0.882870 & 1.000000 \\
+noCNC & 2 & dice\_0.1 & 0.965493 & 0.969945 & 0.945827 & 1.000000 \\
+noCNC & 2 & dice\_0.25 & 0.959821 & 0.964440 & 0.918009 & 1.000000 \\
+noCNC & 2 & dice\_0.5 & 0.941165 & 0.950045 & 0.871157 & 1.000000 \\
+noCNC & 2 & ea\_0.1 & 0.965928 & 0.970354 & 0.942899 & 1.000000 \\
+noCNC & 2 & ea\_0.25 & 0.960370 & 0.966278 & 0.920937 & 1.000000 \\
+noCNC & 2 & ea\_0.5 & 0.950434 & 0.959089 & 0.903367 & 1.000000 \\
+noCNC & 2 & delete\_0.5 & 0.965448 & 0.969111 & 0.939971 & 1.000000 \\
+noCNC & 2 & delete\_hub\_0.5 & 0.963215 & 0.965401 & 0.942899 & 1.000000 \\
+noCNC & 2 & insert\_0.5 & 0.936952 & 0.947594 & 0.857980 & 1.000000 \\
+noCNC & 2 & feature\_shuffle & 0.668957 & 0.716575 & 0.469985 & 0.830000 \\
+noCN & 0 & clean & 0.970387 & 0.970200 & 0.944363 & 0.990000 \\
+noCN & 0 & rf\_0.1 & 0.966827 & 0.966739 & 0.935578 & 0.990000 \\
+noCN & 0 & rf\_0.25 & 0.964689 & 0.962719 & 0.929722 & 0.990000 \\
+noCN & 0 & rf\_0.5 & 0.953161 & 0.953568 & 0.907760 & 0.990000 \\
+noCN & 0 & dice\_0.1 & 0.966947 & 0.966797 & 0.935578 & 0.990000 \\
+noCN & 0 & dice\_0.25 & 0.964732 & 0.964566 & 0.931186 & 0.990000 \\
+noCN & 0 & dice\_0.5 & 0.946957 & 0.954432 & 0.888726 & 1.000000 \\
+noCN & 0 & ea\_0.1 & 0.967168 & 0.967674 & 0.937042 & 0.990000 \\
+noCN & 0 & ea\_0.25 & 0.962323 & 0.963624 & 0.929722 & 0.990000 \\
+noCN & 0 & ea\_0.5 & 0.955178 & 0.957543 & 0.915081 & 0.990000 \\
+noCN & 0 & delete\_0.5 & 0.966569 & 0.965387 & 0.938507 & 0.990000 \\
+noCN & 0 & delete\_hub\_0.5 & 0.969204 & 0.967462 & 0.939971 & 0.990000 \\
+noCN & 0 & insert\_0.5 & 0.933072 & 0.943695 & 0.877013 & 1.000000 \\
+noCN & 0 & feature\_shuffle & 0.619172 & 0.637095 & 0.308931 & 0.770000 \\
+noCN & 1 & clean & 0.959783 & 0.964520 & 0.916545 & 1.000000 \\
+noCN & 1 & rf\_0.1 & 0.957394 & 0.961990 & 0.918009 & 1.000000 \\
+noCN & 1 & rf\_0.25 & 0.951354 & 0.956294 & 0.887262 & 1.000000 \\
+noCN & 1 & rf\_0.5 & 0.946425 & 0.952429 & 0.897511 & 1.000000 \\
+noCN & 1 & dice\_0.1 & 0.957701 & 0.962587 & 0.901903 & 1.000000 \\
+noCN & 1 & dice\_0.25 & 0.951804 & 0.956644 & 0.896047 & 1.000000 \\
+noCN & 1 & dice\_0.5 & 0.943045 & 0.949013 & 0.891654 & 1.000000 \\
+noCN & 1 & ea\_0.1 & 0.954535 & 0.960120 & 0.910688 & 1.000000 \\
+noCN & 1 & ea\_0.25 & 0.949782 & 0.955459 & 0.909224 & 1.000000 \\
+noCN & 1 & ea\_0.5 & 0.940532 & 0.945449 & 0.890190 & 1.000000 \\
+noCN & 1 & delete\_0.5 & 0.959635 & 0.963391 & 0.920937 & 1.000000 \\
+noCN & 1 & delete\_hub\_0.5 & 0.953705 & 0.959591 & 0.909224 & 1.000000 \\
+noCN & 1 & insert\_0.5 & 0.937117 & 0.944960 & 0.874085 & 1.000000 \\
+noCN & 1 & feature\_shuffle & 0.622263 & 0.646912 & 0.348463 & 0.830000 \\
+noCN & 2 & clean & 0.968705 & 0.971261 & 0.935578 & 1.000000 \\
+noCN & 2 & rf\_0.1 & 0.963294 & 0.966984 & 0.926794 & 1.000000 \\
+noCN & 2 & rf\_0.25 & 0.961485 & 0.963606 & 0.931186 & 1.000000 \\
+noCN & 2 & rf\_0.5 & 0.942599 & 0.949608 & 0.874085 & 1.000000 \\
+noCN & 2 & dice\_0.1 & 0.964003 & 0.967482 & 0.923865 & 1.000000 \\
+noCN & 2 & dice\_0.25 & 0.959746 & 0.962411 & 0.915081 & 1.000000 \\
+noCN & 2 & dice\_0.5 & 0.938961 & 0.947056 & 0.863836 & 1.000000 \\
+noCN & 2 & ea\_0.1 & 0.964833 & 0.967670 & 0.931186 & 1.000000 \\
+noCN & 2 & ea\_0.25 & 0.958372 & 0.961776 & 0.913616 & 1.000000 \\
+noCN & 2 & ea\_0.5 & 0.947720 & 0.952782 & 0.888726 & 1.000000 \\
+noCN & 2 & delete\_0.5 & 0.965176 & 0.967870 & 0.942899 & 1.000000 \\
+noCN & 2 & delete\_hub\_0.5 & 0.962171 & 0.963854 & 0.926794 & 1.000000 \\
+noCN & 2 & insert\_0.5 & 0.935192 & 0.942943 & 0.846266 & 1.000000 \\
+noCN & 2 & feature\_shuffle & 0.610883 & 0.618576 & 0.265007 & 0.760000 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{citeseer / LPFormer：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{citeseer / LPFormer：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.949182 & 0.952585 & 0.897511 & 0.990000 \\
+Full & 0 & rf\_0.1 & 0.946037 & 0.950132 & 0.893119 & 0.990000 \\
+Full & 0 & rf\_0.25 & 0.941225 & 0.945082 & 0.869693 & 0.980000 \\
+Full & 0 & rf\_0.5 & 0.931042 & 0.936420 & 0.862372 & 0.980000 \\
+Full & 0 & dice\_0.1 & 0.945214 & 0.949428 & 0.888726 & 0.990000 \\
+Full & 0 & dice\_0.25 & 0.940301 & 0.945421 & 0.869693 & 0.980000 \\
+Full & 0 & dice\_0.5 & 0.926832 & 0.932863 & 0.853587 & 0.990000 \\
+Full & 0 & ea\_0.1 & 0.947909 & 0.953431 & 0.893119 & 0.990000 \\
+Full & 0 & ea\_0.25 & 0.944800 & 0.950781 & 0.884334 & 0.980000 \\
+Full & 0 & ea\_0.5 & 0.939163 & 0.946036 & 0.879941 & 0.980000 \\
+Full & 0 & delete\_0.5 & 0.939950 & 0.946337 & 0.879941 & 1.000000 \\
+Full & 0 & delete\_hub\_0.5 & 0.935501 & 0.942379 & 0.879941 & 1.000000 \\
+Full & 0 & insert\_0.5 & 0.918311 & 0.929935 & 0.828697 & 0.990000 \\
+Full & 0 & feature\_shuffle & 0.746035 & 0.823607 & 0.612006 & 1.000000 \\
+Full & 1 & clean & 0.938224 & 0.943916 & 0.881406 & 0.990000 \\
+Full & 1 & rf\_0.1 & 0.936451 & 0.941972 & 0.875549 & 0.990000 \\
+Full & 1 & rf\_0.25 & 0.928346 & 0.933019 & 0.877013 & 0.980000 \\
+Full & 1 & rf\_0.5 & 0.924202 & 0.929812 & 0.849195 & 0.990000 \\
+Full & 1 & dice\_0.1 & 0.935853 & 0.941572 & 0.871157 & 0.980000 \\
+Full & 1 & dice\_0.25 & 0.929390 & 0.937691 & 0.856515 & 1.000000 \\
+Full & 1 & dice\_0.5 & 0.922969 & 0.930510 & 0.841874 & 1.000000 \\
+Full & 1 & ea\_0.1 & 0.935608 & 0.941925 & 0.877013 & 0.980000 \\
+Full & 1 & ea\_0.25 & 0.935090 & 0.941138 & 0.872621 & 0.980000 \\
+Full & 1 & ea\_0.5 & 0.930035 & 0.936926 & 0.868228 & 0.980000 \\
+Full & 1 & delete\_0.5 & 0.929561 & 0.933943 & 0.865300 & 1.000000 \\
+Full & 1 & delete\_hub\_0.5 & 0.905425 & 0.914891 & 0.811127 & 0.980000 \\
+Full & 1 & insert\_0.5 & 0.922712 & 0.930749 & 0.846266 & 0.990000 \\
+Full & 1 & feature\_shuffle & 0.745132 & 0.823201 & 0.626647 & 0.980000 \\
+Full & 2 & clean & 0.942972 & 0.949779 & 0.887262 & 0.990000 \\
+Full & 2 & rf\_0.1 & 0.935000 & 0.941667 & 0.868228 & 0.990000 \\
+Full & 2 & rf\_0.25 & 0.935900 & 0.940848 & 0.871157 & 0.990000 \\
+Full & 2 & rf\_0.5 & 0.915123 & 0.924046 & 0.843338 & 0.980000 \\
+Full & 2 & dice\_0.1 & 0.937220 & 0.943937 & 0.868228 & 0.990000 \\
+Full & 2 & dice\_0.25 & 0.932511 & 0.938358 & 0.856515 & 0.990000 \\
+Full & 2 & dice\_0.5 & 0.909496 & 0.919454 & 0.821376 & 0.990000 \\
+Full & 2 & ea\_0.1 & 0.938916 & 0.946202 & 0.879941 & 0.990000 \\
+Full & 2 & ea\_0.25 & 0.935169 & 0.942905 & 0.877013 & 0.990000 \\
+Full & 2 & ea\_0.5 & 0.925846 & 0.937386 & 0.852123 & 0.990000 \\
+Full & 2 & delete\_0.5 & 0.926496 & 0.932042 & 0.833089 & 1.000000 \\
+Full & 2 & delete\_hub\_0.5 & 0.916883 & 0.924340 & 0.833089 & 1.000000 \\
+Full & 2 & insert\_0.5 & 0.923966 & 0.931009 & 0.837482 & 0.990000 \\
+Full & 2 & feature\_shuffle & 0.738941 & 0.818725 & 0.581259 & 1.000000 \\
+Uniform & 0 & clean & 0.948063 & 0.953765 & 0.896047 & 1.000000 \\
+Uniform & 0 & rf\_0.1 & 0.945195 & 0.950996 & 0.891654 & 0.990000 \\
+Uniform & 0 & rf\_0.25 & 0.940697 & 0.946669 & 0.884334 & 0.990000 \\
+Uniform & 0 & rf\_0.5 & 0.932879 & 0.941311 & 0.855051 & 1.000000 \\
+Uniform & 0 & dice\_0.1 & 0.943898 & 0.950753 & 0.893119 & 1.000000 \\
+Uniform & 0 & dice\_0.25 & 0.936912 & 0.944962 & 0.869693 & 0.990000 \\
+Uniform & 0 & dice\_0.5 & 0.922832 & 0.934087 & 0.831625 & 1.000000 \\
+Uniform & 0 & ea\_0.1 & 0.947058 & 0.953974 & 0.896047 & 1.000000 \\
+Uniform & 0 & ea\_0.25 & 0.945383 & 0.952706 & 0.884334 & 0.990000 \\
+Uniform & 0 & ea\_0.5 & 0.939338 & 0.947974 & 0.879941 & 0.990000 \\
+Uniform & 0 & delete\_0.5 & 0.941868 & 0.947383 & 0.887262 & 1.000000 \\
+Uniform & 0 & delete\_hub\_0.5 & 0.930033 & 0.938143 & 0.859444 & 0.990000 \\
+Uniform & 0 & insert\_0.5 & 0.916697 & 0.931324 & 0.836018 & 1.000000 \\
+Uniform & 0 & feature\_shuffle & 0.743900 & 0.818507 & 0.604685 & 0.990000 \\
+Uniform & 1 & clean & 0.931696 & 0.940378 & 0.847731 & 1.000000 \\
+Uniform & 1 & rf\_0.1 & 0.928433 & 0.937739 & 0.847731 & 1.000000 \\
+Uniform & 1 & rf\_0.25 & 0.919334 & 0.928888 & 0.827233 & 0.990000 \\
+Uniform & 1 & rf\_0.5 & 0.906394 & 0.918412 & 0.800878 & 0.990000 \\
+Uniform & 1 & dice\_0.1 & 0.928157 & 0.937197 & 0.843338 & 1.000000 \\
+Uniform & 1 & dice\_0.25 & 0.921250 & 0.932973 & 0.830161 & 1.000000 \\
+Uniform & 1 & dice\_0.5 & 0.902943 & 0.915720 & 0.781845 & 1.000000 \\
+Uniform & 1 & ea\_0.1 & 0.927765 & 0.937686 & 0.844802 & 1.000000 \\
+Uniform & 1 & ea\_0.25 & 0.925359 & 0.935495 & 0.844802 & 0.990000 \\
+Uniform & 1 & ea\_0.5 & 0.919627 & 0.929784 & 0.818448 & 0.990000 \\
+Uniform & 1 & delete\_0.5 & 0.924249 & 0.930031 & 0.844802 & 1.000000 \\
+Uniform & 1 & delete\_hub\_0.5 & 0.895337 & 0.912388 & 0.793558 & 1.000000 \\
+Uniform & 1 & insert\_0.5 & 0.910433 & 0.925612 & 0.803807 & 0.990000 \\
+Uniform & 1 & feature\_shuffle & 0.771075 & 0.834424 & 0.623719 & 0.990000 \\
+Uniform & 2 & clean & 0.942860 & 0.949432 & 0.879941 & 0.990000 \\
+Uniform & 2 & rf\_0.1 & 0.939806 & 0.945148 & 0.871157 & 0.990000 \\
+Uniform & 2 & rf\_0.25 & 0.939791 & 0.944220 & 0.869693 & 0.990000 \\
+Uniform & 2 & rf\_0.5 & 0.916054 & 0.923760 & 0.816984 & 0.990000 \\
+Uniform & 2 & dice\_0.1 & 0.941205 & 0.947498 & 0.874085 & 0.990000 \\
+Uniform & 2 & dice\_0.25 & 0.935484 & 0.940447 & 0.863836 & 0.990000 \\
+Uniform & 2 & dice\_0.5 & 0.914521 & 0.922411 & 0.822840 & 0.990000 \\
+Uniform & 2 & ea\_0.1 & 0.937870 & 0.944685 & 0.877013 & 0.990000 \\
+Uniform & 2 & ea\_0.25 & 0.933615 & 0.939959 & 0.868228 & 0.980000 \\
+Uniform & 2 & ea\_0.5 & 0.926273 & 0.934243 & 0.855051 & 0.970000 \\
+Uniform & 2 & delete\_0.5 & 0.925398 & 0.936836 & 0.847731 & 1.000000 \\
+Uniform & 2 & delete\_hub\_0.5 & 0.914695 & 0.929189 & 0.846266 & 1.000000 \\
+Uniform & 2 & insert\_0.5 & 0.918245 & 0.927745 & 0.836018 & 0.990000 \\
+Uniform & 2 & feature\_shuffle & 0.727801 & 0.806398 & 0.579795 & 0.990000 \\
+noPE & 0 & clean & 0.937954 & 0.942657 & 0.865300 & 0.990000 \\
+noPE & 0 & rf\_0.1 & 0.935017 & 0.939270 & 0.859444 & 0.990000 \\
+noPE & 0 & rf\_0.25 & 0.929949 & 0.932803 & 0.846266 & 0.990000 \\
+noPE & 0 & rf\_0.5 & 0.912534 & 0.922782 & 0.822840 & 1.000000 \\
+noPE & 0 & dice\_0.1 & 0.934826 & 0.939581 & 0.856515 & 0.990000 \\
+noPE & 0 & dice\_0.25 & 0.927893 & 0.932466 & 0.837482 & 0.990000 \\
+noPE & 0 & dice\_0.5 & 0.910124 & 0.920606 & 0.819912 & 0.990000 \\
+noPE & 0 & ea\_0.1 & 0.938342 & 0.943527 & 0.862372 & 0.990000 \\
+noPE & 0 & ea\_0.25 & 0.937019 & 0.942248 & 0.862372 & 0.990000 \\
+noPE & 0 & ea\_0.5 & 0.930830 & 0.937783 & 0.849195 & 0.990000 \\
+noPE & 0 & delete\_0.5 & 0.925175 & 0.931010 & 0.840410 & 1.000000 \\
+noPE & 0 & delete\_hub\_0.5 & 0.919930 & 0.925918 & 0.827233 & 1.000000 \\
+noPE & 0 & insert\_0.5 & 0.903841 & 0.916486 & 0.793558 & 0.990000 \\
+noPE & 0 & feature\_shuffle & 0.747497 & 0.824246 & 0.610542 & 0.990000 \\
+noPE & 1 & clean & 0.928661 & 0.938925 & 0.860908 & 0.990000 \\
+noPE & 1 & rf\_0.1 & 0.925653 & 0.935743 & 0.850659 & 0.990000 \\
+noPE & 1 & rf\_0.25 & 0.918611 & 0.928096 & 0.827233 & 0.990000 \\
+noPE & 1 & rf\_0.5 & 0.905560 & 0.918883 & 0.773060 & 1.000000 \\
+noPE & 1 & dice\_0.1 & 0.926489 & 0.935989 & 0.850659 & 0.990000 \\
+noPE & 1 & dice\_0.25 & 0.919044 & 0.930388 & 0.831625 & 1.000000 \\
+noPE & 1 & dice\_0.5 & 0.906399 & 0.916204 & 0.792094 & 1.000000 \\
+noPE & 1 & ea\_0.1 & 0.927267 & 0.938045 & 0.857980 & 0.990000 \\
+noPE & 1 & ea\_0.25 & 0.925619 & 0.936797 & 0.852123 & 0.990000 \\
+noPE & 1 & ea\_0.5 & 0.917859 & 0.930200 & 0.837482 & 0.990000 \\
+noPE & 1 & delete\_0.5 & 0.914978 & 0.921829 & 0.834553 & 1.000000 \\
+noPE & 1 & delete\_hub\_0.5 & 0.898289 & 0.907490 & 0.809663 & 1.000000 \\
+noPE & 1 & insert\_0.5 & 0.907408 & 0.923041 & 0.802343 & 1.000000 \\
+noPE & 1 & feature\_shuffle & 0.766788 & 0.838471 & 0.639824 & 1.000000 \\
+noPE & 2 & clean & 0.946792 & 0.952772 & 0.890190 & 0.990000 \\
+noPE & 2 & rf\_0.1 & 0.939529 & 0.945654 & 0.878477 & 0.990000 \\
+noPE & 2 & rf\_0.25 & 0.936209 & 0.941665 & 0.884334 & 0.990000 \\
+noPE & 2 & rf\_0.5 & 0.915344 & 0.921719 & 0.834553 & 0.980000 \\
+noPE & 2 & dice\_0.1 & 0.940560 & 0.947716 & 0.881406 & 0.990000 \\
+noPE & 2 & dice\_0.25 & 0.935623 & 0.941615 & 0.868228 & 0.990000 \\
+noPE & 2 & dice\_0.5 & 0.910870 & 0.917666 & 0.812592 & 0.990000 \\
+noPE & 2 & ea\_0.1 & 0.942837 & 0.950209 & 0.885798 & 0.990000 \\
+noPE & 2 & ea\_0.25 & 0.939499 & 0.946692 & 0.882870 & 0.990000 \\
+noPE & 2 & ea\_0.5 & 0.930967 & 0.941462 & 0.868228 & 0.990000 \\
+noPE & 2 & delete\_0.5 & 0.930560 & 0.933307 & 0.860908 & 1.000000 \\
+noPE & 2 & delete\_hub\_0.5 & 0.917327 & 0.923716 & 0.849195 & 1.000000 \\
+noPE & 2 & insert\_0.5 & 0.918555 & 0.929593 & 0.825769 & 0.990000 \\
+noPE & 2 & feature\_shuffle & 0.734697 & 0.813554 & 0.573939 & 1.000000 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{citeseer / Refined-GAE：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{citeseer / Refined-GAE：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.969811 & 0.970207 & 0.953148 & 0.990000 \\
+Full & 0 & rf\_0.1 & 0.963969 & 0.964669 & 0.935578 & 0.990000 \\
+Full & 0 & rf\_0.25 & 0.961221 & 0.961986 & 0.925329 & 0.990000 \\
+Full & 0 & rf\_0.5 & 0.941719 & 0.945450 & 0.900439 & 0.990000 \\
+Full & 0 & dice\_0.1 & 0.965095 & 0.966561 & 0.937042 & 0.990000 \\
+Full & 0 & dice\_0.25 & 0.960966 & 0.961165 & 0.928258 & 0.990000 \\
+Full & 0 & dice\_0.5 & 0.940920 & 0.948871 & 0.900439 & 0.990000 \\
+Full & 0 & ea\_0.1 & 0.967693 & 0.968308 & 0.948755 & 0.990000 \\
+Full & 0 & ea\_0.25 & 0.964542 & 0.965715 & 0.942899 & 0.990000 \\
+Full & 0 & ea\_0.5 & 0.960505 & 0.962376 & 0.937042 & 0.990000 \\
+Full & 0 & delete\_0.5 & 0.961448 & 0.963659 & 0.929722 & 1.000000 \\
+Full & 0 & delete\_hub\_0.5 & 0.962687 & 0.964539 & 0.945827 & 1.000000 \\
+Full & 0 & insert\_0.5 & 0.926018 & 0.936158 & 0.875549 & 0.990000 \\
+Full & 0 & feature\_shuffle & 0.693710 & 0.711089 & 0.370425 & 0.950000 \\
+Full & 1 & clean & 0.956670 & 0.958721 & 0.916545 & 1.000000 \\
+Full & 1 & rf\_0.1 & 0.951615 & 0.954536 & 0.906296 & 1.000000 \\
+Full & 1 & rf\_0.25 & 0.945699 & 0.951020 & 0.903367 & 1.000000 \\
+Full & 1 & rf\_0.5 & 0.937851 & 0.941663 & 0.874085 & 1.000000 \\
+Full & 1 & dice\_0.1 & 0.953491 & 0.955859 & 0.913616 & 1.000000 \\
+Full & 1 & dice\_0.25 & 0.944535 & 0.948886 & 0.900439 & 1.000000 \\
+Full & 1 & dice\_0.5 & 0.931415 & 0.935339 & 0.877013 & 1.000000 \\
+Full & 1 & ea\_0.1 & 0.953742 & 0.956679 & 0.915081 & 1.000000 \\
+Full & 1 & ea\_0.25 & 0.951390 & 0.954031 & 0.913616 & 1.000000 \\
+Full & 1 & ea\_0.5 & 0.941298 & 0.945591 & 0.901903 & 1.000000 \\
+Full & 1 & delete\_0.5 & 0.952241 & 0.956276 & 0.913616 & 1.000000 \\
+Full & 1 & delete\_hub\_0.5 & 0.948275 & 0.953303 & 0.915081 & 1.000000 \\
+Full & 1 & insert\_0.5 & 0.932504 & 0.935702 & 0.857980 & 0.990000 \\
+Full & 1 & feature\_shuffle & 0.706297 & 0.730582 & 0.404100 & 0.950000 \\
+Full & 2 & clean & 0.968848 & 0.969934 & 0.937042 & 1.000000 \\
+Full & 2 & rf\_0.1 & 0.963262 & 0.966003 & 0.919473 & 1.000000 \\
+Full & 2 & rf\_0.25 & 0.960406 & 0.963287 & 0.915081 & 0.990000 \\
+Full & 2 & rf\_0.5 & 0.945283 & 0.948837 & 0.888726 & 0.990000 \\
+Full & 2 & dice\_0.1 & 0.961969 & 0.965237 & 0.916545 & 1.000000 \\
+Full & 2 & dice\_0.25 & 0.961375 & 0.963033 & 0.912152 & 0.990000 \\
+Full & 2 & dice\_0.5 & 0.937072 & 0.944963 & 0.869693 & 0.990000 \\
+Full & 2 & ea\_0.1 & 0.966825 & 0.967969 & 0.931186 & 1.000000 \\
+Full & 2 & ea\_0.25 & 0.964008 & 0.965788 & 0.925329 & 1.000000 \\
+Full & 2 & ea\_0.5 & 0.958173 & 0.961381 & 0.910688 & 1.000000 \\
+Full & 2 & delete\_0.5 & 0.963403 & 0.965836 & 0.920937 & 1.000000 \\
+Full & 2 & delete\_hub\_0.5 & 0.961626 & 0.965912 & 0.916545 & 1.000000 \\
+Full & 2 & insert\_0.5 & 0.939458 & 0.945763 & 0.887262 & 0.990000 \\
+Full & 2 & feature\_shuffle & 0.693934 & 0.725138 & 0.431918 & 0.930000 \\
+noLN & 0 & clean & 0.964344 & 0.967754 & 0.942899 & 0.990000 \\
+noLN & 0 & rf\_0.1 & 0.959598 & 0.963282 & 0.932650 & 0.990000 \\
+noLN & 0 & rf\_0.25 & 0.954563 & 0.959219 & 0.912152 & 1.000000 \\
+noLN & 0 & rf\_0.5 & 0.940202 & 0.947275 & 0.891654 & 0.990000 \\
+noLN & 0 & dice\_0.1 & 0.960164 & 0.963902 & 0.938507 & 0.990000 \\
+noLN & 0 & dice\_0.25 & 0.952989 & 0.958667 & 0.912152 & 0.990000 \\
+noLN & 0 & dice\_0.5 & 0.935135 & 0.943438 & 0.879941 & 0.990000 \\
+noLN & 0 & ea\_0.1 & 0.962194 & 0.966449 & 0.944363 & 0.990000 \\
+noLN & 0 & ea\_0.25 & 0.957900 & 0.963617 & 0.937042 & 0.990000 \\
+noLN & 0 & ea\_0.5 & 0.953304 & 0.960858 & 0.929722 & 1.000000 \\
+noLN & 0 & delete\_0.5 & 0.960522 & 0.963277 & 0.932650 & 1.000000 \\
+noLN & 0 & delete\_hub\_0.5 & 0.955675 & 0.959345 & 0.920937 & 0.990000 \\
+noLN & 0 & insert\_0.5 & 0.924429 & 0.934761 & 0.847731 & 0.980000 \\
+noLN & 0 & feature\_shuffle & 0.553222 & 0.609986 & 0.304539 & 0.840000 \\
+noLN & 1 & clean & 0.956955 & 0.959900 & 0.916545 & 0.990000 \\
+noLN & 1 & rf\_0.1 & 0.948498 & 0.953636 & 0.896047 & 0.990000 \\
+noLN & 1 & rf\_0.25 & 0.940284 & 0.945422 & 0.881406 & 0.990000 \\
+noLN & 1 & rf\_0.5 & 0.933749 & 0.939339 & 0.881406 & 1.000000 \\
+noLN & 1 & dice\_0.1 & 0.951073 & 0.954979 & 0.906296 & 0.990000 \\
+noLN & 1 & dice\_0.25 & 0.940350 & 0.944440 & 0.879941 & 0.990000 \\
+noLN & 1 & dice\_0.5 & 0.930869 & 0.935504 & 0.868228 & 0.990000 \\
+noLN & 1 & ea\_0.1 & 0.952732 & 0.956950 & 0.912152 & 0.990000 \\
+noLN & 1 & ea\_0.25 & 0.949088 & 0.952896 & 0.906296 & 0.990000 \\
+noLN & 1 & ea\_0.5 & 0.940114 & 0.944502 & 0.890190 & 1.000000 \\
+noLN & 1 & delete\_0.5 & 0.955853 & 0.957631 & 0.918009 & 1.000000 \\
+noLN & 1 & delete\_hub\_0.5 & 0.955572 & 0.957754 & 0.919473 & 1.000000 \\
+noLN & 1 & insert\_0.5 & 0.919711 & 0.928752 & 0.831625 & 1.000000 \\
+noLN & 1 & feature\_shuffle & 0.528966 & 0.607416 & 0.295754 & 0.840000 \\
+noLN & 2 & clean & 0.970393 & 0.973096 & 0.937042 & 1.000000 \\
+noLN & 2 & rf\_0.1 & 0.962625 & 0.967390 & 0.919473 & 1.000000 \\
+noLN & 2 & rf\_0.25 & 0.958998 & 0.963334 & 0.918009 & 1.000000 \\
+noLN & 2 & rf\_0.5 & 0.938721 & 0.947275 & 0.853587 & 1.000000 \\
+noLN & 2 & dice\_0.1 & 0.963627 & 0.967954 & 0.920937 & 1.000000 \\
+noLN & 2 & dice\_0.25 & 0.957115 & 0.961836 & 0.907760 & 1.000000 \\
+noLN & 2 & dice\_0.5 & 0.929476 & 0.941211 & 0.852123 & 1.000000 \\
+noLN & 2 & ea\_0.1 & 0.965972 & 0.969477 & 0.932650 & 1.000000 \\
+noLN & 2 & ea\_0.25 & 0.959575 & 0.964441 & 0.928258 & 1.000000 \\
+noLN & 2 & ea\_0.5 & 0.951069 & 0.957318 & 0.912152 & 1.000000 \\
+noLN & 2 & delete\_0.5 & 0.963036 & 0.965760 & 0.925329 & 1.000000 \\
+noLN & 2 & delete\_hub\_0.5 & 0.959969 & 0.961178 & 0.919473 & 1.000000 \\
+noLN & 2 & insert\_0.5 & 0.933287 & 0.942894 & 0.868228 & 1.000000 \\
+noLN & 2 & feature\_shuffle & 0.547860 & 0.618875 & 0.323572 & 0.820000 \\
+Dot & 0 & clean & 0.965330 & 0.971213 & 0.934114 & 1.000000 \\
+Dot & 0 & rf\_0.1 & 0.961491 & 0.967834 & 0.922401 & 1.000000 \\
+Dot & 0 & rf\_0.25 & 0.956308 & 0.964459 & 0.919473 & 1.000000 \\
+Dot & 0 & rf\_0.5 & 0.943857 & 0.954023 & 0.885798 & 1.000000 \\
+Dot & 0 & dice\_0.1 & 0.960591 & 0.967441 & 0.925329 & 1.000000 \\
+Dot & 0 & dice\_0.25 & 0.955504 & 0.963811 & 0.918009 & 1.000000 \\
+Dot & 0 & dice\_0.5 & 0.942515 & 0.953822 & 0.888726 & 1.000000 \\
+Dot & 0 & ea\_0.1 & 0.964396 & 0.970648 & 0.935578 & 1.000000 \\
+Dot & 0 & ea\_0.25 & 0.963450 & 0.969533 & 0.932650 & 1.000000 \\
+Dot & 0 & ea\_0.5 & 0.959007 & 0.965818 & 0.926794 & 1.000000 \\
+Dot & 0 & delete\_0.5 & 0.955259 & 0.962961 & 0.915081 & 1.000000 \\
+Dot & 0 & delete\_hub\_0.5 & 0.932136 & 0.945976 & 0.875549 & 1.000000 \\
+Dot & 0 & insert\_0.5 & 0.929604 & 0.943550 & 0.857980 & 1.000000 \\
+Dot & 0 & feature\_shuffle & 0.754712 & 0.823140 & 0.600293 & 1.000000 \\
+Dot & 1 & clean & 0.955191 & 0.963132 & 0.906296 & 1.000000 \\
+Dot & 1 & rf\_0.1 & 0.950899 & 0.960026 & 0.900439 & 1.000000 \\
+Dot & 1 & rf\_0.25 & 0.948245 & 0.957665 & 0.900439 & 1.000000 \\
+Dot & 1 & rf\_0.5 & 0.932326 & 0.945895 & 0.860908 & 1.000000 \\
+Dot & 1 & dice\_0.1 & 0.952638 & 0.960625 & 0.904832 & 1.000000 \\
+Dot & 1 & dice\_0.25 & 0.945566 & 0.954772 & 0.893119 & 1.000000 \\
+Dot & 1 & dice\_0.5 & 0.929844 & 0.942879 & 0.853587 & 1.000000 \\
+Dot & 1 & ea\_0.1 & 0.951709 & 0.960479 & 0.903367 & 1.000000 \\
+Dot & 1 & ea\_0.25 & 0.949167 & 0.958245 & 0.904832 & 1.000000 \\
+Dot & 1 & ea\_0.5 & 0.944119 & 0.953016 & 0.885798 & 1.000000 \\
+Dot & 1 & delete\_0.5 & 0.942427 & 0.952825 & 0.881406 & 1.000000 \\
+Dot & 1 & delete\_hub\_0.5 & 0.920920 & 0.937797 & 0.847731 & 1.000000 \\
+Dot & 1 & insert\_0.5 & 0.934925 & 0.946731 & 0.877013 & 1.000000 \\
+Dot & 1 & feature\_shuffle & 0.766119 & 0.830632 & 0.606149 & 1.000000 \\
+Dot & 2 & clean & 0.963412 & 0.971219 & 0.926794 & 1.000000 \\
+Dot & 2 & rf\_0.1 & 0.958477 & 0.967353 & 0.915081 & 1.000000 \\
+Dot & 2 & rf\_0.25 & 0.953294 & 0.963331 & 0.912152 & 1.000000 \\
+Dot & 2 & rf\_0.5 & 0.937829 & 0.948765 & 0.866764 & 1.000000 \\
+Dot & 2 & dice\_0.1 & 0.956351 & 0.966328 & 0.915081 & 1.000000 \\
+Dot & 2 & dice\_0.25 & 0.953304 & 0.962364 & 0.903367 & 1.000000 \\
+Dot & 2 & dice\_0.5 & 0.930839 & 0.945855 & 0.857980 & 1.000000 \\
+Dot & 2 & ea\_0.1 & 0.961896 & 0.969893 & 0.925329 & 1.000000 \\
+Dot & 2 & ea\_0.25 & 0.958912 & 0.967533 & 0.922401 & 1.000000 \\
+Dot & 2 & ea\_0.5 & 0.952374 & 0.962505 & 0.907760 & 1.000000 \\
+Dot & 2 & delete\_0.5 & 0.947967 & 0.959509 & 0.907760 & 1.000000 \\
+Dot & 2 & delete\_hub\_0.5 & 0.938318 & 0.952244 & 0.884334 & 1.000000 \\
+Dot & 2 & insert\_0.5 & 0.938479 & 0.950726 & 0.863836 & 1.000000 \\
+Dot & 2 & feature\_shuffle & 0.752326 & 0.820538 & 0.582723 & 1.000000 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{pubmed / NCNC：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{pubmed / NCNC：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.986443 & 0.984929 & 0.810347 & 1.000000 \\
+Full & 0 & rf\_0.1 & 0.983549 & 0.982586 & 0.786885 & 1.000000 \\
+Full & 0 & rf\_0.25 & 0.978979 & 0.978731 & 0.768837 & 1.000000 \\
+Full & 0 & rf\_0.5 & 0.968800 & 0.969197 & 0.695142 & 1.000000 \\
+Full & 0 & dice\_0.1 & 0.982958 & 0.981806 & 0.788991 & 1.000000 \\
+Full & 0 & dice\_0.25 & 0.977584 & 0.977148 & 0.753497 & 1.000000 \\
+Full & 0 & dice\_0.5 & 0.966630 & 0.966135 & 0.675290 & 0.990000 \\
+Full & 0 & ea\_0.1 & 0.985716 & 0.984238 & 0.802226 & 1.000000 \\
+Full & 0 & ea\_0.25 & 0.985069 & 0.983508 & 0.791247 & 1.000000 \\
+Full & 0 & ea\_0.5 & 0.983328 & 0.982113 & 0.774703 & 1.000000 \\
+Full & 0 & delete\_0.5 & 0.979794 & 0.977892 & 0.737705 & 1.000000 \\
+Full & 0 & delete\_hub\_0.5 & 0.979128 & 0.977746 & 0.729132 & 1.000000 \\
+Full & 0 & insert\_0.5 & 0.960985 & 0.962264 & 0.660099 & 1.000000 \\
+Full & 0 & feature\_shuffle & 0.840346 & 0.800161 & 0.082268 & 0.880000 \\
+Full & 1 & clean & 0.987168 & 0.985709 & 0.807189 & 1.000000 \\
+Full & 1 & rf\_0.1 & 0.983941 & 0.982490 & 0.788991 & 1.000000 \\
+Full & 1 & rf\_0.25 & 0.978481 & 0.977214 & 0.734396 & 1.000000 \\
+Full & 1 & rf\_0.5 & 0.969673 & 0.969256 & 0.669424 & 1.000000 \\
+Full & 1 & dice\_0.1 & 0.983501 & 0.981862 & 0.768537 & 1.000000 \\
+Full & 1 & dice\_0.25 & 0.978398 & 0.977347 & 0.733193 & 1.000000 \\
+Full & 1 & dice\_0.5 & 0.967535 & 0.966973 & 0.655136 & 1.000000 \\
+Full & 1 & ea\_0.1 & 0.985922 & 0.984502 & 0.795759 & 1.000000 \\
+Full & 1 & ea\_0.25 & 0.985132 & 0.983771 & 0.778463 & 1.000000 \\
+Full & 1 & ea\_0.5 & 0.982519 & 0.981236 & 0.758610 & 1.000000 \\
+Full & 1 & delete\_0.5 & 0.980047 & 0.978510 & 0.738156 & 1.000000 \\
+Full & 1 & delete\_hub\_0.5 & 0.981593 & 0.979861 & 0.727628 & 1.000000 \\
+Full & 1 & insert\_0.5 & 0.964411 & 0.964895 & 0.647917 & 1.000000 \\
+Full & 1 & feature\_shuffle & 0.835994 & 0.794207 & 0.087682 & 0.910000 \\
+Full & 2 & clean & 0.987955 & 0.986138 & 0.813205 & 1.000000 \\
+Full & 2 & rf\_0.1 & 0.985092 & 0.983527 & 0.792600 & 1.000000 \\
+Full & 2 & rf\_0.25 & 0.980505 & 0.979201 & 0.753647 & 1.000000 \\
+Full & 2 & rf\_0.5 & 0.970410 & 0.969813 & 0.685216 & 1.000000 \\
+Full & 2 & dice\_0.1 & 0.984160 & 0.982482 & 0.776658 & 1.000000 \\
+Full & 2 & dice\_0.25 & 0.979807 & 0.978315 & 0.747932 & 1.000000 \\
+Full & 2 & dice\_0.5 & 0.967331 & 0.967338 & 0.666115 & 1.000000 \\
+Full & 2 & ea\_0.1 & 0.986690 & 0.984820 & 0.801173 & 1.000000 \\
+Full & 2 & ea\_0.25 & 0.985287 & 0.983226 & 0.782524 & 1.000000 \\
+Full & 2 & ea\_0.5 & 0.982540 & 0.980338 & 0.740412 & 1.000000 \\
+Full & 2 & delete\_0.5 & 0.980615 & 0.978085 & 0.729433 & 1.000000 \\
+Full & 2 & delete\_hub\_0.5 & 0.981868 & 0.978765 & 0.726425 & 1.000000 \\
+Full & 2 & insert\_0.5 & 0.964867 & 0.965913 & 0.664310 & 1.000000 \\
+Full & 2 & feature\_shuffle & 0.840870 & 0.801327 & 0.110092 & 0.880000 \\
+noCNC & 0 & clean & 0.986117 & 0.984602 & 0.801474 & 1.000000 \\
+noCNC & 0 & rf\_0.1 & 0.984152 & 0.983184 & 0.791848 & 1.000000 \\
+noCNC & 0 & rf\_0.25 & 0.980104 & 0.979567 & 0.764777 & 1.000000 \\
+noCNC & 0 & rf\_0.5 & 0.970925 & 0.971349 & 0.696195 & 1.000000 \\
+noCNC & 0 & dice\_0.1 & 0.983199 & 0.982032 & 0.776057 & 1.000000 \\
+noCNC & 0 & dice\_0.25 & 0.977942 & 0.977242 & 0.733795 & 1.000000 \\
+noCNC & 0 & dice\_0.5 & 0.967019 & 0.966101 & 0.664611 & 0.990000 \\
+noCNC & 0 & ea\_0.1 & 0.985148 & 0.983675 & 0.792300 & 1.000000 \\
+noCNC & 0 & ea\_0.25 & 0.983233 & 0.981703 & 0.764777 & 1.000000 \\
+noCNC & 0 & ea\_0.5 & 0.978370 & 0.977454 & 0.735299 & 1.000000 \\
+noCNC & 0 & delete\_0.5 & 0.975200 & 0.972832 & 0.678598 & 1.000000 \\
+noCNC & 0 & delete\_hub\_0.5 & 0.974900 & 0.972234 & 0.677545 & 1.000000 \\
+noCNC & 0 & insert\_0.5 & 0.966710 & 0.967695 & 0.697398 & 1.000000 \\
+noCNC & 0 & feature\_shuffle & 0.868760 & 0.859828 & 0.269514 & 0.950000 \\
+noCNC & 1 & clean & 0.986245 & 0.984638 & 0.821026 & 1.000000 \\
+noCNC & 1 & rf\_0.1 & 0.983841 & 0.982254 & 0.801173 & 1.000000 \\
+noCNC & 1 & rf\_0.25 & 0.979380 & 0.977950 & 0.761317 & 1.000000 \\
+noCNC & 1 & rf\_0.5 & 0.972086 & 0.972100 & 0.695443 & 1.000000 \\
+noCNC & 1 & dice\_0.1 & 0.983339 & 0.981653 & 0.794706 & 1.000000 \\
+noCNC & 1 & dice\_0.25 & 0.979223 & 0.977626 & 0.739209 & 1.000000 \\
+noCNC & 1 & dice\_0.5 & 0.970167 & 0.968976 & 0.671981 & 1.000000 \\
+noCNC & 1 & ea\_0.1 & 0.985176 & 0.983634 & 0.811400 & 1.000000 \\
+noCNC & 1 & ea\_0.25 & 0.984359 & 0.982751 & 0.802677 & 1.000000 \\
+noCNC & 1 & ea\_0.5 & 0.980593 & 0.979220 & 0.772748 & 1.000000 \\
+noCNC & 1 & delete\_0.5 & 0.975335 & 0.973479 & 0.696345 & 1.000000 \\
+noCNC & 1 & delete\_hub\_0.5 & 0.976900 & 0.974054 & 0.705219 & 1.000000 \\
+noCNC & 1 & insert\_0.5 & 0.968507 & 0.968842 & 0.699504 & 1.000000 \\
+noCNC & 1 & feature\_shuffle & 0.863653 & 0.859870 & 0.282900 & 0.990000 \\
+noCNC & 2 & clean & 0.987099 & 0.985878 & 0.812303 & 1.000000 \\
+noCNC & 2 & rf\_0.1 & 0.984663 & 0.983582 & 0.788389 & 1.000000 \\
+noCNC & 2 & rf\_0.25 & 0.981153 & 0.980214 & 0.737254 & 1.000000 \\
+noCNC & 2 & rf\_0.5 & 0.973010 & 0.972410 & 0.694992 & 1.000000 \\
+noCNC & 2 & dice\_0.1 & 0.984137 & 0.983012 & 0.774853 & 1.000000 \\
+noCNC & 2 & dice\_0.25 & 0.980258 & 0.979280 & 0.754098 & 1.000000 \\
+noCNC & 2 & dice\_0.5 & 0.969338 & 0.968991 & 0.662506 & 1.000000 \\
+noCNC & 2 & ea\_0.1 & 0.985732 & 0.984663 & 0.806136 & 1.000000 \\
+noCNC & 2 & ea\_0.25 & 0.983828 & 0.982545 & 0.785532 & 1.000000 \\
+noCNC & 2 & ea\_0.5 & 0.979669 & 0.978628 & 0.750639 & 1.000000 \\
+noCNC & 2 & delete\_0.5 & 0.975437 & 0.972858 & 0.681456 & 1.000000 \\
+noCNC & 2 & delete\_hub\_0.5 & 0.977743 & 0.974566 & 0.709731 & 1.000000 \\
+noCNC & 2 & insert\_0.5 & 0.969616 & 0.970126 & 0.685517 & 1.000000 \\
+noCNC & 2 & feature\_shuffle & 0.866197 & 0.854359 & 0.226951 & 0.980000 \\
+noCN & 0 & clean & 0.985299 & 0.982764 & 0.793052 & 1.000000 \\
+noCN & 0 & rf\_0.1 & 0.983118 & 0.980812 & 0.779215 & 1.000000 \\
+noCN & 0 & rf\_0.25 & 0.979284 & 0.977567 & 0.772748 & 1.000000 \\
+noCN & 0 & rf\_0.5 & 0.970700 & 0.970111 & 0.689126 & 1.000000 \\
+noCN & 0 & dice\_0.1 & 0.982602 & 0.980549 & 0.756956 & 1.000000 \\
+noCN & 0 & dice\_0.25 & 0.977728 & 0.976221 & 0.731990 & 1.000000 \\
+noCN & 0 & dice\_0.5 & 0.966610 & 0.964670 & 0.656941 & 1.000000 \\
+noCN & 0 & ea\_0.1 & 0.984405 & 0.981934 & 0.778162 & 1.000000 \\
+noCN & 0 & ea\_0.25 & 0.982661 & 0.980127 & 0.740713 & 1.000000 \\
+noCN & 0 & ea\_0.5 & 0.977700 & 0.976016 & 0.716950 & 1.000000 \\
+noCN & 0 & delete\_0.5 & 0.974755 & 0.970858 & 0.675891 & 1.000000 \\
+noCN & 0 & delete\_hub\_0.5 & 0.974511 & 0.971111 & 0.684614 & 1.000000 \\
+noCN & 0 & insert\_0.5 & 0.965349 & 0.965576 & 0.655738 & 1.000000 \\
+noCN & 0 & feature\_shuffle & 0.842274 & 0.799653 & 0.069635 & 0.820000 \\
+noCN & 1 & clean & 0.986992 & 0.985000 & 0.824786 & 1.000000 \\
+noCN & 1 & rf\_0.1 & 0.984359 & 0.981913 & 0.794405 & 1.000000 \\
+noCN & 1 & rf\_0.25 & 0.980546 & 0.978542 & 0.776959 & 1.000000 \\
+noCN & 1 & rf\_0.5 & 0.972777 & 0.971947 & 0.702512 & 1.000000 \\
+noCN & 1 & dice\_0.1 & 0.984138 & 0.982095 & 0.785983 & 1.000000 \\
+noCN & 1 & dice\_0.25 & 0.980309 & 0.978816 & 0.782524 & 1.000000 \\
+noCN & 1 & dice\_0.5 & 0.971193 & 0.969492 & 0.707024 & 1.000000 \\
+noCN & 1 & ea\_0.1 & 0.985670 & 0.983653 & 0.810498 & 1.000000 \\
+noCN & 1 & ea\_0.25 & 0.984333 & 0.982701 & 0.798616 & 1.000000 \\
+noCN & 1 & ea\_0.5 & 0.979008 & 0.978177 & 0.760415 & 1.000000 \\
+noCN & 1 & delete\_0.5 & 0.977572 & 0.975687 & 0.715296 & 1.000000 \\
+noCN & 1 & delete\_hub\_0.5 & 0.978570 & 0.975865 & 0.750188 & 0.990000 \\
+noCN & 1 & insert\_0.5 & 0.968994 & 0.968059 & 0.680553 & 1.000000 \\
+noCN & 1 & feature\_shuffle & 0.841859 & 0.812330 & 0.126485 & 0.930000 \\
+noCN & 2 & clean & 0.987328 & 0.986146 & 0.810648 & 1.000000 \\
+noCN & 2 & rf\_0.1 & 0.984787 & 0.983466 & 0.784028 & 1.000000 \\
+noCN & 2 & rf\_0.25 & 0.981615 & 0.980285 & 0.745826 & 1.000000 \\
+noCN & 2 & rf\_0.5 & 0.972905 & 0.972422 & 0.699203 & 1.000000 \\
+noCN & 2 & dice\_0.1 & 0.984455 & 0.983233 & 0.768687 & 1.000000 \\
+noCN & 2 & dice\_0.25 & 0.980536 & 0.979377 & 0.754399 & 1.000000 \\
+noCN & 2 & dice\_0.5 & 0.970050 & 0.969553 & 0.686118 & 0.990000 \\
+noCN & 2 & ea\_0.1 & 0.985601 & 0.984485 & 0.796661 & 1.000000 \\
+noCN & 2 & ea\_0.25 & 0.982375 & 0.981147 & 0.766732 & 1.000000 \\
+noCN & 2 & ea\_0.5 & 0.975331 & 0.975170 & 0.717702 & 1.000000 \\
+noCN & 2 & delete\_0.5 & 0.976589 & 0.974984 & 0.705219 & 1.000000 \\
+noCN & 2 & delete\_hub\_0.5 & 0.979095 & 0.977234 & 0.737103 & 1.000000 \\
+noCN & 2 & insert\_0.5 & 0.969727 & 0.969281 & 0.676042 & 1.000000 \\
+noCN & 2 & feature\_shuffle & 0.843616 & 0.801290 & 0.089186 & 0.810000 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{pubmed / LPFormer：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{pubmed / LPFormer：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.980193 & 0.980743 & 0.784178 & 1.000000 \\
+Full & 0 & rf\_0.1 & 0.977362 & 0.978296 & 0.766882 & 1.000000 \\
+Full & 0 & rf\_0.25 & 0.971740 & 0.973058 & 0.713190 & 1.000000 \\
+Full & 0 & rf\_0.5 & 0.959398 & 0.962628 & 0.677245 & 1.000000 \\
+Full & 0 & dice\_0.1 & 0.976691 & 0.977376 & 0.762220 & 1.000000 \\
+Full & 0 & dice\_0.25 & 0.970552 & 0.971604 & 0.718454 & 1.000000 \\
+Full & 0 & dice\_0.5 & 0.956692 & 0.959787 & 0.653632 & 1.000000 \\
+Full & 0 & ea\_0.1 & 0.979208 & 0.979566 & 0.775154 & 1.000000 \\
+Full & 0 & ea\_0.25 & 0.978480 & 0.978361 & 0.762821 & 1.000000 \\
+Full & 0 & ea\_0.5 & 0.977563 & 0.977646 & 0.755151 & 1.000000 \\
+Full & 0 & delete\_0.5 & 0.967986 & 0.968935 & 0.699955 & 1.000000 \\
+Full & 0 & delete\_hub\_0.5 & 0.970500 & 0.970632 & 0.693638 & 1.000000 \\
+Full & 0 & insert\_0.5 & 0.954461 & 0.958148 & 0.643104 & 1.000000 \\
+Full & 0 & feature\_shuffle & 0.895129 & 0.901317 & 0.401263 & 1.000000 \\
+Full & 1 & clean & 0.978938 & 0.978602 & 0.759814 & 1.000000 \\
+Full & 1 & rf\_0.1 & 0.975976 & 0.976108 & 0.729283 & 1.000000 \\
+Full & 1 & rf\_0.25 & 0.970481 & 0.971271 & 0.691533 & 1.000000 \\
+Full & 1 & rf\_0.5 & 0.959169 & 0.961004 & 0.638893 & 1.000000 \\
+Full & 1 & dice\_0.1 & 0.975091 & 0.974970 & 0.713491 & 1.000000 \\
+Full & 1 & dice\_0.25 & 0.968931 & 0.969633 & 0.675139 & 1.000000 \\
+Full & 1 & dice\_0.5 & 0.956900 & 0.958860 & 0.641600 & 1.000000 \\
+Full & 1 & ea\_0.1 & 0.977752 & 0.977532 & 0.757257 & 1.000000 \\
+Full & 1 & ea\_0.25 & 0.977366 & 0.977334 & 0.734246 & 1.000000 \\
+Full & 1 & ea\_0.5 & 0.976361 & 0.976079 & 0.716950 & 1.000000 \\
+Full & 1 & delete\_0.5 & 0.967318 & 0.967666 & 0.686269 & 1.000000 \\
+Full & 1 & delete\_hub\_0.5 & 0.971958 & 0.970571 & 0.690029 & 0.990000 \\
+Full & 1 & insert\_0.5 & 0.952621 & 0.955074 & 0.601293 & 1.000000 \\
+Full & 1 & feature\_shuffle & 0.896096 & 0.900778 & 0.395548 & 1.000000 \\
+Full & 2 & clean & 0.981219 & 0.980689 & 0.774101 & 1.000000 \\
+Full & 2 & rf\_0.1 & 0.978698 & 0.978218 & 0.740562 & 1.000000 \\
+Full & 2 & rf\_0.25 & 0.973535 & 0.974087 & 0.718454 & 1.000000 \\
+Full & 2 & rf\_0.5 & 0.962678 & 0.964661 & 0.674838 & 1.000000 \\
+Full & 2 & dice\_0.1 & 0.978411 & 0.977905 & 0.740262 & 1.000000 \\
+Full & 2 & dice\_0.25 & 0.972957 & 0.973070 & 0.706422 & 1.000000 \\
+Full & 2 & dice\_0.5 & 0.958451 & 0.959572 & 0.628365 & 1.000000 \\
+Full & 2 & ea\_0.1 & 0.980481 & 0.979891 & 0.771244 & 1.000000 \\
+Full & 2 & ea\_0.25 & 0.979657 & 0.978562 & 0.758310 & 1.000000 \\
+Full & 2 & ea\_0.5 & 0.978297 & 0.976970 & 0.727327 & 1.000000 \\
+Full & 2 & delete\_0.5 & 0.969040 & 0.969518 & 0.685366 & 1.000000 \\
+Full & 2 & delete\_hub\_0.5 & 0.973722 & 0.973328 & 0.703715 & 1.000000 \\
+Full & 2 & insert\_0.5 & 0.956742 & 0.958276 & 0.625056 & 1.000000 \\
+Full & 2 & feature\_shuffle & 0.901272 & 0.902909 & 0.385772 & 1.000000 \\
+Uniform & 0 & clean & 0.980084 & 0.980660 & 0.775756 & 1.000000 \\
+Uniform & 0 & rf\_0.1 & 0.977010 & 0.977954 & 0.750188 & 1.000000 \\
+Uniform & 0 & rf\_0.25 & 0.971484 & 0.972768 & 0.702361 & 1.000000 \\
+Uniform & 0 & rf\_0.5 & 0.959004 & 0.962231 & 0.661453 & 1.000000 \\
+Uniform & 0 & dice\_0.1 & 0.976520 & 0.977230 & 0.746729 & 1.000000 \\
+Uniform & 0 & dice\_0.25 & 0.970251 & 0.971472 & 0.705971 & 1.000000 \\
+Uniform & 0 & dice\_0.5 & 0.956007 & 0.959439 & 0.635284 & 1.000000 \\
+Uniform & 0 & ea\_0.1 & 0.979026 & 0.979357 & 0.764175 & 1.000000 \\
+Uniform & 0 & ea\_0.25 & 0.978318 & 0.978142 & 0.757407 & 1.000000 \\
+Uniform & 0 & ea\_0.5 & 0.977352 & 0.977405 & 0.743871 & 1.000000 \\
+Uniform & 0 & delete\_0.5 & 0.966997 & 0.967790 & 0.694541 & 1.000000 \\
+Uniform & 0 & delete\_hub\_0.5 & 0.970000 & 0.969836 & 0.683862 & 1.000000 \\
+Uniform & 0 & insert\_0.5 & 0.954180 & 0.957825 & 0.648669 & 1.000000 \\
+Uniform & 0 & feature\_shuffle & 0.895098 & 0.903007 & 0.438111 & 1.000000 \\
+Uniform & 1 & clean & 0.979516 & 0.979180 & 0.758310 & 1.000000 \\
+Uniform & 1 & rf\_0.1 & 0.976560 & 0.976667 & 0.731689 & 1.000000 \\
+Uniform & 1 & rf\_0.25 & 0.970928 & 0.971741 & 0.688675 & 1.000000 \\
+Uniform & 1 & rf\_0.5 & 0.958785 & 0.960720 & 0.631674 & 1.000000 \\
+Uniform & 1 & dice\_0.1 & 0.975824 & 0.975713 & 0.727478 & 1.000000 \\
+Uniform & 1 & dice\_0.25 & 0.969906 & 0.970869 & 0.694240 & 1.000000 \\
+Uniform & 1 & dice\_0.5 & 0.956888 & 0.958905 & 0.646413 & 1.000000 \\
+Uniform & 1 & ea\_0.1 & 0.978260 & 0.978047 & 0.747481 & 1.000000 \\
+Uniform & 1 & ea\_0.25 & 0.977896 & 0.977711 & 0.734396 & 1.000000 \\
+Uniform & 1 & ea\_0.5 & 0.976695 & 0.976301 & 0.710934 & 1.000000 \\
+Uniform & 1 & delete\_0.5 & 0.967997 & 0.968625 & 0.677395 & 1.000000 \\
+Uniform & 1 & delete\_hub\_0.5 & 0.972323 & 0.971999 & 0.689577 & 1.000000 \\
+Uniform & 1 & insert\_0.5 & 0.952000 & 0.954907 & 0.614980 & 1.000000 \\
+Uniform & 1 & feature\_shuffle & 0.897296 & 0.898031 & 0.372988 & 1.000000 \\
+Uniform & 2 & clean & 0.980784 & 0.980139 & 0.751090 & 1.000000 \\
+Uniform & 2 & rf\_0.1 & 0.978052 & 0.977278 & 0.728982 & 1.000000 \\
+Uniform & 2 & rf\_0.25 & 0.973057 & 0.973618 & 0.712889 & 1.000000 \\
+Uniform & 2 & rf\_0.5 & 0.961664 & 0.963867 & 0.655587 & 1.000000 \\
+Uniform & 2 & dice\_0.1 & 0.977703 & 0.977242 & 0.726124 & 1.000000 \\
+Uniform & 2 & dice\_0.25 & 0.972048 & 0.972448 & 0.698300 & 1.000000 \\
+Uniform & 2 & dice\_0.5 & 0.957170 & 0.958758 & 0.619943 & 1.000000 \\
+Uniform & 2 & ea\_0.1 & 0.979979 & 0.979214 & 0.745375 & 1.000000 \\
+Uniform & 2 & ea\_0.25 & 0.979143 & 0.977560 & 0.736201 & 0.990000 \\
+Uniform & 2 & ea\_0.5 & 0.977844 & 0.975894 & 0.718604 & 0.990000 \\
+Uniform & 2 & delete\_0.5 & 0.968542 & 0.969393 & 0.681005 & 1.000000 \\
+Uniform & 2 & delete\_hub\_0.5 & 0.973642 & 0.973111 & 0.693488 & 1.000000 \\
+Uniform & 2 & insert\_0.5 & 0.956472 & 0.958021 & 0.623252 & 1.000000 \\
+Uniform & 2 & feature\_shuffle & 0.900894 & 0.897994 & 0.360054 & 1.000000 \\
+noPE & 0 & clean & 0.980003 & 0.980562 & 0.773650 & 1.000000 \\
+noPE & 0 & rf\_0.1 & 0.976846 & 0.977779 & 0.751391 & 1.000000 \\
+noPE & 0 & rf\_0.25 & 0.971345 & 0.972763 & 0.709129 & 1.000000 \\
+noPE & 0 & rf\_0.5 & 0.959786 & 0.963063 & 0.672131 & 1.000000 \\
+noPE & 0 & dice\_0.1 & 0.976097 & 0.976931 & 0.742818 & 1.000000 \\
+noPE & 0 & dice\_0.25 & 0.970149 & 0.971466 & 0.713491 & 1.000000 \\
+noPE & 0 & dice\_0.5 & 0.956413 & 0.960212 & 0.661453 & 1.000000 \\
+noPE & 0 & ea\_0.1 & 0.979126 & 0.979220 & 0.763724 & 0.990000 \\
+noPE & 0 & ea\_0.25 & 0.978422 & 0.977704 & 0.747631 & 0.990000 \\
+noPE & 0 & ea\_0.5 & 0.977414 & 0.976903 & 0.739660 & 0.990000 \\
+noPE & 0 & delete\_0.5 & 0.967444 & 0.968487 & 0.701308 & 1.000000 \\
+noPE & 0 & delete\_hub\_0.5 & 0.970724 & 0.970553 & 0.681907 & 1.000000 \\
+noPE & 0 & insert\_0.5 & 0.953647 & 0.957773 & 0.645661 & 1.000000 \\
+noPE & 0 & feature\_shuffle & 0.898787 & 0.904325 & 0.428937 & 1.000000 \\
+noPE & 1 & clean & 0.978348 & 0.978187 & 0.753948 & 1.000000 \\
+noPE & 1 & rf\_0.1 & 0.975391 & 0.975605 & 0.731388 & 1.000000 \\
+noPE & 1 & rf\_0.25 & 0.969879 & 0.970705 & 0.700556 & 1.000000 \\
+noPE & 1 & rf\_0.5 & 0.959091 & 0.961285 & 0.653181 & 1.000000 \\
+noPE & 1 & dice\_0.1 & 0.974469 & 0.974528 & 0.722665 & 1.000000 \\
+noPE & 1 & dice\_0.25 & 0.969015 & 0.969945 & 0.680253 & 1.000000 \\
+noPE & 1 & dice\_0.5 & 0.956889 & 0.959329 & 0.640698 & 1.000000 \\
+noPE & 1 & ea\_0.1 & 0.977074 & 0.977101 & 0.746729 & 1.000000 \\
+noPE & 1 & ea\_0.25 & 0.976770 & 0.976975 & 0.736051 & 1.000000 \\
+noPE & 1 & ea\_0.5 & 0.975745 & 0.975741 & 0.732742 & 1.000000 \\
+noPE & 1 & delete\_0.5 & 0.966734 & 0.967658 & 0.699203 & 1.000000 \\
+noPE & 1 & delete\_hub\_0.5 & 0.971456 & 0.971069 & 0.693789 & 1.000000 \\
+noPE & 1 & insert\_0.5 & 0.953058 & 0.955833 & 0.631373 & 1.000000 \\
+noPE & 1 & feature\_shuffle & 0.898192 & 0.898070 & 0.352685 & 1.000000 \\
+noPE & 2 & clean & 0.979893 & 0.979452 & 0.754098 & 1.000000 \\
+noPE & 2 & rf\_0.1 & 0.977012 & 0.976603 & 0.727177 & 1.000000 \\
+noPE & 2 & rf\_0.25 & 0.971681 & 0.972399 & 0.711987 & 1.000000 \\
+noPE & 2 & rf\_0.5 & 0.959196 & 0.961694 & 0.665062 & 1.000000 \\
+noPE & 2 & dice\_0.1 & 0.976662 & 0.976506 & 0.726425 & 1.000000 \\
+noPE & 2 & dice\_0.25 & 0.970646 & 0.971215 & 0.698000 & 1.000000 \\
+noPE & 2 & dice\_0.5 & 0.954330 & 0.956323 & 0.614679 & 1.000000 \\
+noPE & 2 & ea\_0.1 & 0.979115 & 0.978625 & 0.744924 & 1.000000 \\
+noPE & 2 & ea\_0.25 & 0.978069 & 0.976998 & 0.733043 & 0.990000 \\
+noPE & 2 & ea\_0.5 & 0.976455 & 0.975022 & 0.716198 & 0.990000 \\
+noPE & 2 & delete\_0.5 & 0.966809 & 0.967609 & 0.668371 & 1.000000 \\
+noPE & 2 & delete\_hub\_0.5 & 0.972220 & 0.972005 & 0.700556 & 1.000000 \\
+noPE & 2 & insert\_0.5 & 0.953477 & 0.955136 & 0.590615 & 1.000000 \\
+noPE & 2 & feature\_shuffle & 0.899826 & 0.899363 & 0.362611 & 1.000000 \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrr}
+\caption{pubmed / Refined-GAE：逐seed指标}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endfirsthead
+\multicolumn{7}{l}{pubmed / Refined-GAE：逐seed指标（续）}\\
+\toprule
+版本 & seed & 条件 & AUC & AP & Hits100 & Prec100 \\
+\midrule
+\endhead
+\midrule\multicolumn{7}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+Full & 0 & clean & 0.987008 & 0.986156 & 0.831253 & 1.000000 \\
+Full & 0 & rf\_0.1 & 0.984560 & 0.983881 & 0.821928 & 1.000000 \\
+Full & 0 & rf\_0.25 & 0.981376 & 0.981206 & 0.804783 & 1.000000 \\
+Full & 0 & rf\_0.5 & 0.972935 & 0.973311 & 0.742969 & 1.000000 \\
+Full & 0 & dice\_0.1 & 0.984362 & 0.983957 & 0.809445 & 1.000000 \\
+Full & 0 & dice\_0.25 & 0.980904 & 0.980978 & 0.782072 & 1.000000 \\
+Full & 0 & dice\_0.5 & 0.971978 & 0.972258 & 0.732441 & 1.000000 \\
+Full & 0 & ea\_0.1 & 0.986139 & 0.985421 & 0.816965 & 1.000000 \\
+Full & 0 & ea\_0.25 & 0.984935 & 0.984240 & 0.794405 & 1.000000 \\
+Full & 0 & ea\_0.5 & 0.982349 & 0.981702 & 0.779967 & 1.000000 \\
+Full & 0 & delete\_0.5 & 0.976952 & 0.975737 & 0.745676 & 1.000000 \\
+Full & 0 & delete\_hub\_0.5 & 0.977114 & 0.976574 & 0.736351 & 1.000000 \\
+Full & 0 & insert\_0.5 & 0.972313 & 0.973156 & 0.740412 & 1.000000 \\
+Full & 0 & feature\_shuffle & 0.853137 & 0.847150 & 0.211160 & 0.970000 \\
+Full & 1 & clean & 0.986858 & 0.985482 & 0.823733 & 1.000000 \\
+Full & 1 & rf\_0.1 & 0.984134 & 0.982660 & 0.788540 & 1.000000 \\
+Full & 1 & rf\_0.25 & 0.980287 & 0.979259 & 0.753798 & 1.000000 \\
+Full & 1 & rf\_0.5 & 0.973752 & 0.974081 & 0.724019 & 1.000000 \\
+Full & 1 & dice\_0.1 & 0.983892 & 0.982429 & 0.785832 & 1.000000 \\
+Full & 1 & dice\_0.25 & 0.980086 & 0.979347 & 0.748534 & 1.000000 \\
+Full & 1 & dice\_0.5 & 0.972107 & 0.971870 & 0.724319 & 1.000000 \\
+Full & 1 & ea\_0.1 & 0.986015 & 0.984599 & 0.803579 & 1.000000 \\
+Full & 1 & ea\_0.25 & 0.985118 & 0.983712 & 0.786735 & 1.000000 \\
+Full & 1 & ea\_0.5 & 0.982649 & 0.981213 & 0.763273 & 1.000000 \\
+Full & 1 & delete\_0.5 & 0.977330 & 0.976739 & 0.751241 & 1.000000 \\
+Full & 1 & delete\_hub\_0.5 & 0.979403 & 0.978489 & 0.758009 & 1.000000 \\
+Full & 1 & insert\_0.5 & 0.970217 & 0.969557 & 0.668371 & 1.000000 \\
+Full & 1 & feature\_shuffle & 0.861605 & 0.858159 & 0.256580 & 0.990000 \\
+Full & 2 & clean & 0.987356 & 0.986243 & 0.817567 & 1.000000 \\
+Full & 2 & rf\_0.1 & 0.985121 & 0.984365 & 0.783877 & 1.000000 \\
+Full & 2 & rf\_0.25 & 0.981384 & 0.980892 & 0.758911 & 1.000000 \\
+Full & 2 & rf\_0.5 & 0.973817 & 0.973995 & 0.707926 & 1.000000 \\
+Full & 2 & dice\_0.1 & 0.984668 & 0.983730 & 0.786434 & 1.000000 \\
+Full & 2 & dice\_0.25 & 0.980280 & 0.979681 & 0.758159 & 1.000000 \\
+Full & 2 & dice\_0.5 & 0.971800 & 0.971949 & 0.693939 & 1.000000 \\
+Full & 2 & ea\_0.1 & 0.986317 & 0.985158 & 0.807490 & 1.000000 \\
+Full & 2 & ea\_0.25 & 0.984820 & 0.983377 & 0.777861 & 1.000000 \\
+Full & 2 & ea\_0.5 & 0.981647 & 0.980191 & 0.743119 & 1.000000 \\
+Full & 2 & delete\_0.5 & 0.977794 & 0.976658 & 0.744473 & 1.000000 \\
+Full & 2 & delete\_hub\_0.5 & 0.978195 & 0.976614 & 0.738006 & 1.000000 \\
+Full & 2 & insert\_0.5 & 0.971005 & 0.970670 & 0.660400 & 1.000000 \\
+Full & 2 & feature\_shuffle & 0.857076 & 0.852567 & 0.237329 & 0.970000 \\
+noLN & 0 & clean & 0.982520 & 0.981125 & 0.780268 & 1.000000 \\
+noLN & 0 & rf\_0.1 & 0.979123 & 0.977973 & 0.758159 & 1.000000 \\
+noLN & 0 & rf\_0.25 & 0.973571 & 0.973431 & 0.721763 & 1.000000 \\
+noLN & 0 & rf\_0.5 & 0.961344 & 0.962468 & 0.647015 & 1.000000 \\
+noLN & 0 & dice\_0.1 & 0.978144 & 0.977594 & 0.741916 & 1.000000 \\
+noLN & 0 & dice\_0.25 & 0.971049 & 0.971317 & 0.704617 & 1.000000 \\
+noLN & 0 & dice\_0.5 & 0.958842 & 0.959509 & 0.628816 & 1.000000 \\
+noLN & 0 & ea\_0.1 & 0.980850 & 0.979481 & 0.753346 & 1.000000 \\
+noLN & 0 & ea\_0.25 & 0.978833 & 0.977201 & 0.719055 & 1.000000 \\
+noLN & 0 & ea\_0.5 & 0.975192 & 0.973252 & 0.679952 & 1.000000 \\
+noLN & 0 & delete\_0.5 & 0.966424 & 0.963420 & 0.621447 & 1.000000 \\
+noLN & 0 & delete\_hub\_0.5 & 0.968362 & 0.965560 & 0.640848 & 1.000000 \\
+noLN & 0 & insert\_0.5 & 0.963408 & 0.964878 & 0.664762 & 1.000000 \\
+noLN & 0 & feature\_shuffle & 0.728638 & 0.724244 & 0.087081 & 0.860000 \\
+noLN & 1 & clean & 0.981670 & 0.980600 & 0.754700 & 1.000000 \\
+noLN & 1 & rf\_0.1 & 0.977446 & 0.976390 & 0.730787 & 1.000000 \\
+noLN & 1 & rf\_0.25 & 0.971754 & 0.970926 & 0.700256 & 1.000000 \\
+noLN & 1 & rf\_0.5 & 0.962357 & 0.962191 & 0.619191 & 1.000000 \\
+noLN & 1 & dice\_0.1 & 0.976728 & 0.975995 & 0.718604 & 1.000000 \\
+noLN & 1 & dice\_0.25 & 0.971454 & 0.971004 & 0.688374 & 1.000000 \\
+noLN & 1 & dice\_0.5 & 0.959621 & 0.960262 & 0.632276 & 1.000000 \\
+noLN & 1 & ea\_0.1 & 0.979811 & 0.979016 & 0.737103 & 1.000000 \\
+noLN & 1 & ea\_0.25 & 0.977940 & 0.977078 & 0.720409 & 1.000000 \\
+noLN & 1 & ea\_0.5 & 0.974535 & 0.973377 & 0.681305 & 1.000000 \\
+noLN & 1 & delete\_0.5 & 0.966417 & 0.964113 & 0.602346 & 1.000000 \\
+noLN & 1 & delete\_hub\_0.5 & 0.969933 & 0.967359 & 0.618589 & 1.000000 \\
+noLN & 1 & insert\_0.5 & 0.961229 & 0.961818 & 0.591518 & 1.000000 \\
+noLN & 1 & feature\_shuffle & 0.732735 & 0.729713 & 0.091593 & 0.930000 \\
+noLN & 2 & clean & 0.982871 & 0.980960 & 0.743570 & 1.000000 \\
+noLN & 2 & rf\_0.1 & 0.979481 & 0.977690 & 0.704918 & 1.000000 \\
+noLN & 2 & rf\_0.25 & 0.974273 & 0.972910 & 0.669123 & 1.000000 \\
+noLN & 2 & rf\_0.5 & 0.963868 & 0.964047 & 0.623853 & 1.000000 \\
+noLN & 2 & dice\_0.1 & 0.978704 & 0.976900 & 0.695593 & 1.000000 \\
+noLN & 2 & dice\_0.25 & 0.972968 & 0.971441 & 0.660550 & 1.000000 \\
+noLN & 2 & dice\_0.5 & 0.960783 & 0.960314 & 0.589713 & 1.000000 \\
+noLN & 2 & ea\_0.1 & 0.980724 & 0.978773 & 0.722966 & 1.000000 \\
+noLN & 2 & ea\_0.25 & 0.978050 & 0.975388 & 0.677997 & 1.000000 \\
+noLN & 2 & ea\_0.5 & 0.974174 & 0.970968 & 0.654535 & 1.000000 \\
+noLN & 2 & delete\_0.5 & 0.966173 & 0.962888 & 0.552263 & 1.000000 \\
+noLN & 2 & delete\_hub\_0.5 & 0.971403 & 0.968601 & 0.620394 & 1.000000 \\
+noLN & 2 & insert\_0.5 & 0.963684 & 0.963215 & 0.601895 & 1.000000 \\
+noLN & 2 & feature\_shuffle & 0.738798 & 0.739048 & 0.102572 & 0.960000 \\
+Dot & 0 & clean & 0.961055 & 0.969787 & 0.777861 & 1.000000 \\
+Dot & 0 & rf\_0.1 & 0.956323 & 0.965659 & 0.751391 & 1.000000 \\
+Dot & 0 & rf\_0.25 & 0.948808 & 0.959200 & 0.710633 & 1.000000 \\
+Dot & 0 & rf\_0.5 & 0.933132 & 0.944968 & 0.620244 & 1.000000 \\
+Dot & 0 & dice\_0.1 & 0.956268 & 0.965890 & 0.759964 & 1.000000 \\
+Dot & 0 & dice\_0.25 & 0.948151 & 0.959138 & 0.708979 & 1.000000 \\
+Dot & 0 & dice\_0.5 & 0.930233 & 0.943028 & 0.631674 & 1.000000 \\
+Dot & 0 & ea\_0.1 & 0.960075 & 0.968851 & 0.766431 & 1.000000 \\
+Dot & 0 & ea\_0.25 & 0.959182 & 0.967959 & 0.753948 & 1.000000 \\
+Dot & 0 & ea\_0.5 & 0.957829 & 0.966321 & 0.726425 & 1.000000 \\
+Dot & 0 & delete\_0.5 & 0.934764 & 0.944718 & 0.588510 & 1.000000 \\
+Dot & 0 & delete\_hub\_0.5 & 0.929222 & 0.942637 & 0.603249 & 1.000000 \\
+Dot & 0 & insert\_0.5 & 0.939892 & 0.952263 & 0.692285 & 1.000000 \\
+Dot & 0 & feature\_shuffle & 0.672948 & 0.696884 & 0.094300 & 0.890000 \\
+Dot & 1 & clean & 0.961936 & 0.970377 & 0.777410 & 1.000000 \\
+Dot & 1 & rf\_0.1 & 0.956603 & 0.965767 & 0.745074 & 1.000000 \\
+Dot & 1 & rf\_0.25 & 0.948325 & 0.958938 & 0.711836 & 1.000000 \\
+Dot & 1 & rf\_0.5 & 0.936106 & 0.947401 & 0.615431 & 1.000000 \\
+Dot & 1 & dice\_0.1 & 0.955928 & 0.965079 & 0.759362 & 1.000000 \\
+Dot & 1 & dice\_0.25 & 0.945683 & 0.956843 & 0.700105 & 1.000000 \\
+Dot & 1 & dice\_0.5 & 0.929830 & 0.942625 & 0.629568 & 1.000000 \\
+Dot & 1 & ea\_0.1 & 0.961181 & 0.969607 & 0.765829 & 1.000000 \\
+Dot & 1 & ea\_0.25 & 0.960317 & 0.968610 & 0.758610 & 1.000000 \\
+Dot & 1 & ea\_0.5 & 0.958590 & 0.966661 & 0.735148 & 1.000000 \\
+Dot & 1 & delete\_0.5 & 0.933334 & 0.945344 & 0.598285 & 1.000000 \\
+Dot & 1 & delete\_hub\_0.5 & 0.933716 & 0.946295 & 0.636487 & 1.000000 \\
+Dot & 1 & insert\_0.5 & 0.940136 & 0.951093 & 0.657091 & 1.000000 \\
+Dot & 1 & feature\_shuffle & 0.682019 & 0.710591 & 0.104677 & 0.960000 \\
+Dot & 2 & clean & 0.963425 & 0.971594 & 0.784780 & 1.000000 \\
+Dot & 2 & rf\_0.1 & 0.958941 & 0.968130 & 0.763573 & 1.000000 \\
+Dot & 2 & rf\_0.25 & 0.950762 & 0.960917 & 0.701308 & 1.000000 \\
+Dot & 2 & rf\_0.5 & 0.936168 & 0.948409 & 0.640848 & 1.000000 \\
+Dot & 2 & dice\_0.1 & 0.958261 & 0.967228 & 0.753046 & 1.000000 \\
+Dot & 2 & dice\_0.25 & 0.950099 & 0.960429 & 0.707324 & 1.000000 \\
+Dot & 2 & dice\_0.5 & 0.932279 & 0.945831 & 0.626109 & 1.000000 \\
+Dot & 2 & ea\_0.1 & 0.961903 & 0.970128 & 0.772597 & 1.000000 \\
+Dot & 2 & ea\_0.25 & 0.960502 & 0.968283 & 0.754700 & 1.000000 \\
+Dot & 2 & ea\_0.5 & 0.958187 & 0.965802 & 0.727929 & 1.000000 \\
+Dot & 2 & delete\_0.5 & 0.935695 & 0.946277 & 0.630320 & 1.000000 \\
+Dot & 2 & delete\_hub\_0.5 & 0.930799 & 0.943555 & 0.618890 & 1.000000 \\
+Dot & 2 & insert\_0.5 & 0.943774 & 0.955699 & 0.693939 & 1.000000 \\
+Dot & 2 & feature\_shuffle & 0.669896 & 0.696348 & 0.098060 & 0.940000 \\
+\end{longtable}
+}
+\clearpage\section{全部条件：Degree10、PageRank10及全局组件效应}
+本表展开全部14条件的同seed Full−Variant效应，单位pp。所有k0--100的50904行组件汇总及229068行逐seed曲线在CSV/ZIP中保留，不把k0的NA替换为数值。
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lllrrr}
+\caption{cora全部条件组件差值}\\
+\toprule
+模型 & 变体 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endfirsthead
+\multicolumn{6}{l}{cora全部条件组件差值（续）}\\
+\toprule
+模型 & 变体 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endhead
+\midrule\multicolumn{6}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & noCNC & clean & $-0.09\pm0.63$ & $-0.24\pm0.79$ & $0.06\pm0.27$ \\
+NCNC & noCNC & rf\_0.1 & $-0.26\pm0.62$ & $-0.44\pm0.64$ & $0.08\pm0.26$ \\
+NCNC & noCNC & rf\_0.25 & $0.04\pm0.87$ & $-0.21\pm0.84$ & $0.06\pm0.34$ \\
+NCNC & noCNC & rf\_0.5 & $-0.07\pm0.63$ & $-0.09\pm0.80$ & $0.21\pm0.18$ \\
+NCNC & noCNC & dice\_0.1 & $-0.19\pm0.80$ & $-0.39\pm0.96$ & $0.06\pm0.30$ \\
+NCNC & noCNC & dice\_0.25 & $-0.43\pm0.64$ & $-0.51\pm0.65$ & $0.01\pm0.40$ \\
+NCNC & noCNC & dice\_0.5 & $0.25\pm0.73$ & $0.41\pm0.87$ & $0.16\pm0.23$ \\
+NCNC & noCNC & ea\_0.1 & $-0.24\pm0.62$ & $-0.39\pm0.79$ & $-0.00\pm0.32$ \\
+NCNC & noCNC & ea\_0.25 & $-0.27\pm0.66$ & $-0.43\pm0.80$ & $0.01\pm0.32$ \\
+NCNC & noCNC & ea\_0.5 & $-0.20\pm0.82$ & $-0.35\pm0.66$ & $-0.07\pm0.13$ \\
+NCNC & noCNC & delete\_0.5 & $0.31\pm0.40$ & $0.25\pm0.41$ & $0.45\pm0.23$ \\
+NCNC & noCNC & delete\_hub\_0.5 & $-0.16\pm1.26$ & $-0.23\pm0.94$ & $0.39\pm0.24$ \\
+NCNC & noCNC & insert\_0.5 & $-0.45\pm0.93$ & $-0.45\pm0.88$ & $-0.49\pm0.54$ \\
+NCNC & noCNC & feature\_shuffle & $-10.54\pm2.90$ & $-10.16\pm3.12$ & $-5.83\pm3.06$ \\
+NCNC & noCN & clean & $-0.18\pm0.11$ & $-0.17\pm0.25$ & $0.12\pm0.10$ \\
+NCNC & noCN & rf\_0.1 & $-0.35\pm0.13$ & $-0.35\pm0.07$ & $0.17\pm0.17$ \\
+NCNC & noCN & rf\_0.25 & $-0.11\pm0.27$ & $-0.14\pm0.43$ & $0.04\pm0.04$ \\
+NCNC & noCN & rf\_0.5 & $-0.17\pm0.43$ & $0.04\pm0.42$ & $-0.04\pm0.06$ \\
+NCNC & noCN & dice\_0.1 & $-0.38\pm0.29$ & $-0.39\pm0.39$ & $0.09\pm0.23$ \\
+NCNC & noCN & dice\_0.25 & $-0.54\pm0.22$ & $-0.48\pm0.15$ & $-0.11\pm0.17$ \\
+NCNC & noCN & dice\_0.5 & $-0.16\pm0.07$ & $0.13\pm0.15$ & $0.01\pm0.23$ \\
+NCNC & noCN & ea\_0.1 & $-0.18\pm0.15$ & $-0.15\pm0.32$ & $0.11\pm0.16$ \\
+NCNC & noCN & ea\_0.25 & $-0.19\pm0.15$ & $-0.12\pm0.36$ & $0.17\pm0.21$ \\
+NCNC & noCN & ea\_0.5 & $-0.11\pm0.25$ & $0.01\pm0.44$ & $0.33\pm0.15$ \\
+NCNC & noCN & delete\_0.5 & $-0.03\pm0.22$ & $0.08\pm0.29$ & $0.37\pm0.23$ \\
+NCNC & noCN & delete\_hub\_0.5 & $-0.41\pm0.32$ & $-0.31\pm0.31$ & $0.48\pm0.26$ \\
+NCNC & noCN & insert\_0.5 & $-0.55\pm0.43$ & $-0.42\pm0.40$ & $-0.26\pm0.27$ \\
+NCNC & noCN & feature\_shuffle & $1.30\pm0.85$ & $1.36\pm1.33$ & $2.10\pm2.32$ \\
+LPFormer & Uniform & clean & $0.31\pm0.58$ & $0.35\pm0.38$ & $0.32\pm0.59$ \\
+LPFormer & Uniform & rf\_0.1 & $0.44\pm0.71$ & $0.32\pm0.57$ & $0.32\pm0.52$ \\
+LPFormer & Uniform & rf\_0.25 & $0.30\pm0.55$ & $0.25\pm0.30$ & $0.25\pm0.94$ \\
+LPFormer & Uniform & rf\_0.5 & $0.93\pm0.64$ & $0.51\pm0.69$ & $0.59\pm1.02$ \\
+LPFormer & Uniform & dice\_0.1 & $0.26\pm0.68$ & $0.23\pm0.45$ & $0.35\pm0.58$ \\
+LPFormer & Uniform & dice\_0.25 & $0.33\pm0.78$ & $0.38\pm0.81$ & $0.38\pm0.93$ \\
+LPFormer & Uniform & dice\_0.5 & $1.14\pm0.53$ & $0.73\pm0.31$ & $0.36\pm0.98$ \\
+LPFormer & Uniform & ea\_0.1 & $0.26\pm0.34$ & $0.38\pm0.13$ & $0.24\pm0.38$ \\
+LPFormer & Uniform & ea\_0.25 & $0.04\pm0.20$ & $0.13\pm0.05$ & $0.27\pm0.47$ \\
+LPFormer & Uniform & ea\_0.5 & $0.12\pm0.68$ & $0.16\pm0.49$ & $0.27\pm0.37$ \\
+LPFormer & Uniform & delete\_0.5 & $0.45\pm0.63$ & $0.25\pm0.17$ & $0.38\pm0.92$ \\
+LPFormer & Uniform & delete\_hub\_0.5 & $0.56\pm1.51$ & $0.92\pm1.34$ & $0.58\pm1.51$ \\
+LPFormer & Uniform & insert\_0.5 & $0.67\pm0.88$ & $0.67\pm0.82$ & $-0.01\pm0.39$ \\
+LPFormer & Uniform & feature\_shuffle & $0.83\pm2.67$ & $0.46\pm2.99$ & $0.56\pm1.19$ \\
+LPFormer & noPE & clean & $0.95\pm0.88$ & $0.80\pm0.98$ & $0.98\pm1.10$ \\
+LPFormer & noPE & rf\_0.1 & $1.03\pm1.11$ & $0.80\pm1.10$ & $0.94\pm1.04$ \\
+LPFormer & noPE & rf\_0.25 & $0.78\pm0.95$ & $0.63\pm1.23$ & $1.25\pm0.96$ \\
+LPFormer & noPE & rf\_0.5 & $1.56\pm0.95$ & $1.13\pm1.34$ & $1.67\pm1.18$ \\
+LPFormer & noPE & dice\_0.1 & $1.07\pm0.87$ & $0.92\pm0.92$ & $1.18\pm0.96$ \\
+LPFormer & noPE & dice\_0.25 & $1.15\pm0.86$ & $0.99\pm0.93$ & $1.44\pm1.05$ \\
+LPFormer & noPE & dice\_0.5 & $1.74\pm1.03$ & $1.55\pm1.34$ & $1.67\pm1.19$ \\
+LPFormer & noPE & ea\_0.1 & $0.83\pm0.72$ & $0.79\pm0.92$ & $0.83\pm1.15$ \\
+LPFormer & noPE & ea\_0.25 & $0.71\pm0.26$ & $0.67\pm0.40$ & $0.86\pm1.13$ \\
+LPFormer & noPE & ea\_0.5 & $0.55\pm0.13$ & $0.49\pm0.30$ & $0.79\pm0.97$ \\
+LPFormer & noPE & delete\_0.5 & $2.05\pm0.89$ & $1.85\pm1.65$ & $1.89\pm1.00$ \\
+LPFormer & noPE & delete\_hub\_0.5 & $1.50\pm2.66$ & $1.58\pm2.47$ & $1.69\pm1.84$ \\
+LPFormer & noPE & insert\_0.5 & $1.34\pm0.96$ & $1.10\pm0.91$ & $0.88\pm1.35$ \\
+LPFormer & noPE & feature\_shuffle & $-0.06\pm0.19$ & $-0.03\pm0.83$ & $-0.34\pm0.63$ \\
+Refined-GAE & noLN & clean & $0.52\pm0.53$ & $0.52\pm0.69$ & $0.96\pm0.64$ \\
+Refined-GAE & noLN & rf\_0.1 & $0.31\pm0.47$ & $0.35\pm0.54$ & $0.93\pm0.59$ \\
+Refined-GAE & noLN & rf\_0.25 & $0.66\pm0.51$ & $0.68\pm0.46$ & $1.00\pm0.81$ \\
+Refined-GAE & noLN & rf\_0.5 & $0.14\pm0.58$ & $0.48\pm0.64$ & $0.30\pm0.36$ \\
+Refined-GAE & noLN & dice\_0.1 & $0.36\pm0.34$ & $0.35\pm0.39$ & $0.98\pm0.41$ \\
+Refined-GAE & noLN & dice\_0.25 & $0.53\pm0.34$ & $0.60\pm0.28$ & $0.69\pm0.59$ \\
+Refined-GAE & noLN & dice\_0.5 & $0.37\pm0.51$ & $0.66\pm0.61$ & $0.27\pm0.16$ \\
+Refined-GAE & noLN & ea\_0.1 & $0.41\pm0.33$ & $0.39\pm0.56$ & $0.97\pm0.56$ \\
+Refined-GAE & noLN & ea\_0.25 & $0.34\pm0.07$ & $0.35\pm0.31$ & $1.02\pm0.43$ \\
+Refined-GAE & noLN & ea\_0.5 & $0.25\pm0.37$ & $0.29\pm0.37$ & $1.05\pm0.44$ \\
+Refined-GAE & noLN & delete\_0.5 & $1.57\pm0.68$ & $1.33\pm0.48$ & $1.24\pm0.65$ \\
+Refined-GAE & noLN & delete\_hub\_0.5 & $1.18\pm0.76$ & $1.08\pm0.97$ & $1.38\pm1.10$ \\
+Refined-GAE & noLN & insert\_0.5 & $-2.10\pm1.74$ & $-1.95\pm1.71$ & $-1.27\pm1.42$ \\
+Refined-GAE & noLN & feature\_shuffle & $6.35\pm5.43$ & $6.59\pm4.71$ & $8.22\pm6.68$ \\
+Refined-GAE & Dot & clean & $1.23\pm0.32$ & $1.30\pm0.39$ & $1.57\pm0.50$ \\
+Refined-GAE & Dot & rf\_0.1 & $0.71\pm0.71$ & $0.88\pm0.60$ & $1.50\pm0.56$ \\
+Refined-GAE & Dot & rf\_0.25 & $1.54\pm0.17$ & $1.64\pm0.38$ & $1.63\pm0.59$ \\
+Refined-GAE & Dot & rf\_0.5 & $1.05\pm1.48$ & $1.43\pm0.81$ & $1.38\pm0.79$ \\
+Refined-GAE & Dot & dice\_0.1 & $1.00\pm0.35$ & $1.13\pm0.18$ & $1.67\pm0.43$ \\
+Refined-GAE & Dot & dice\_0.25 & $1.37\pm0.59$ & $1.55\pm0.44$ & $1.54\pm0.42$ \\
+Refined-GAE & Dot & dice\_0.5 & $1.14\pm0.77$ & $1.68\pm0.31$ & $1.34\pm0.12$ \\
+Refined-GAE & Dot & ea\_0.1 & $0.92\pm0.25$ & $0.96\pm0.38$ & $1.35\pm0.46$ \\
+Refined-GAE & Dot & ea\_0.25 & $0.72\pm0.11$ & $0.67\pm0.43$ & $1.12\pm0.28$ \\
+Refined-GAE & Dot & ea\_0.5 & $0.51\pm0.68$ & $0.41\pm0.75$ & $0.84\pm0.22$ \\
+Refined-GAE & Dot & delete\_0.5 & $4.10\pm0.46$ & $4.03\pm0.09$ & $3.45\pm0.63$ \\
+Refined-GAE & Dot & delete\_hub\_0.5 & $6.86\pm0.92$ & $7.09\pm0.41$ & $4.95\pm0.39$ \\
+Refined-GAE & Dot & insert\_0.5 & $-1.69\pm2.36$ & $-1.47\pm1.89$ & $-0.61\pm1.33$ \\
+Refined-GAE & Dot & feature\_shuffle & $-6.79\pm1.51$ & $-6.54\pm1.41$ & $-3.17\pm1.48$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lllrrr}
+\caption{citeseer全部条件组件差值}\\
+\toprule
+模型 & 变体 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endfirsthead
+\multicolumn{6}{l}{citeseer全部条件组件差值（续）}\\
+\toprule
+模型 & 变体 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endhead
+\midrule\multicolumn{6}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & noCNC & clean & $-0.21\pm0.41$ & $-0.30\pm0.16$ & $-0.01\pm0.26$ \\
+NCNC & noCNC & rf\_0.1 & $-0.18\pm0.46$ & $-0.28\pm0.20$ & $-0.04\pm0.20$ \\
+NCNC & noCNC & rf\_0.25 & $-0.29\pm0.25$ & $-0.28\pm0.14$ & $-0.11\pm0.35$ \\
+NCNC & noCNC & rf\_0.5 & $-0.02\pm0.17$ & $-0.02\pm0.03$ & $-0.07\pm0.69$ \\
+NCNC & noCNC & dice\_0.1 & $-0.22\pm0.47$ & $-0.31\pm0.24$ & $-0.04\pm0.28$ \\
+NCNC & noCNC & dice\_0.25 & $-0.22\pm0.06$ & $-0.23\pm0.05$ & $-0.03\pm0.45$ \\
+NCNC & noCNC & dice\_0.5 & $-0.29\pm0.62$ & $-0.29\pm0.35$ & $-0.20\pm0.74$ \\
+NCNC & noCNC & ea\_0.1 & $-0.49\pm0.78$ & $-0.52\pm0.48$ & $-0.07\pm0.26$ \\
+NCNC & noCNC & ea\_0.25 & $-0.56\pm0.88$ & $-0.60\pm0.69$ & $-0.03\pm0.26$ \\
+NCNC & noCNC & ea\_0.5 & $-0.84\pm1.09$ & $-0.74\pm0.86$ & $-0.08\pm0.31$ \\
+NCNC & noCNC & delete\_0.5 & $-0.09\pm0.20$ & $-0.19\pm0.11$ & $-0.06\pm0.33$ \\
+NCNC & noCNC & delete\_hub\_0.5 & $-0.10\pm0.18$ & $-0.31\pm0.06$ & $-0.08\pm0.17$ \\
+NCNC & noCNC & insert\_0.5 & $-0.64\pm0.87$ & $-0.48\pm0.59$ & $-0.37\pm0.73$ \\
+NCNC & noCNC & feature\_shuffle & $-9.28\pm2.95$ & $-8.28\pm2.41$ & $-3.06\pm2.89$ \\
+NCNC & noCN & clean & $0.09\pm0.28$ & $0.26\pm0.17$ & $0.20\pm0.20$ \\
+NCNC & noCN & rf\_0.1 & $0.08\pm0.29$ & $0.31\pm0.24$ & $0.15\pm0.23$ \\
+NCNC & noCN & rf\_0.25 & $0.13\pm0.45$ & $0.34\pm0.30$ & $0.10\pm0.31$ \\
+NCNC & noCN & rf\_0.5 & $0.14\pm0.29$ & $0.33\pm0.10$ & $0.23\pm0.55$ \\
+NCNC & noCN & dice\_0.1 & $0.00\pm0.27$ & $0.21\pm0.31$ & $0.12\pm0.26$ \\
+NCNC & noCN & dice\_0.25 & $0.05\pm0.30$ & $0.25\pm0.07$ & $0.10\pm0.34$ \\
+NCNC & noCN & dice\_0.5 & $-0.00\pm0.39$ & $0.26\pm0.14$ & $0.19\pm0.54$ \\
+NCNC & noCN & ea\_0.1 & $-0.03\pm0.53$ & $0.15\pm0.33$ & $0.17\pm0.17$ \\
+NCNC & noCN & ea\_0.25 & $0.05\pm0.68$ & $0.23\pm0.46$ & $0.23\pm0.24$ \\
+NCNC & noCN & ea\_0.5 & $0.02\pm0.84$ & $0.21\pm0.53$ & $0.22\pm0.26$ \\
+NCNC & noCN & delete\_0.5 & $0.10\pm0.14$ & $0.19\pm0.19$ & $0.02\pm0.30$ \\
+NCNC & noCN & delete\_hub\_0.5 & $0.15\pm0.28$ & $0.25\pm0.30$ & $0.10\pm0.09$ \\
+NCNC & noCN & insert\_0.5 & $0.11\pm0.52$ & $0.40\pm0.35$ & $0.11\pm0.40$ \\
+NCNC & noCN & feature\_shuffle & $-1.38\pm5.06$ & $-0.49\pm4.78$ & $1.95\pm3.74$ \\
+LPFormer & Uniform & clean & $-0.09\pm0.73$ & $-0.03\pm1.00$ & $0.26\pm0.35$ \\
+LPFormer & Uniform & rf\_0.1 & $-0.37\pm0.56$ & $-0.31\pm0.92$ & $0.14\pm0.64$ \\
+LPFormer & Uniform & rf\_0.25 & $-0.11\pm0.97$ & $-0.15\pm1.27$ & $0.19\pm0.66$ \\
+LPFormer & Uniform & rf\_0.5 & $0.38\pm0.98$ & $0.49\pm1.47$ & $0.50\pm1.11$ \\
+LPFormer & Uniform & dice\_0.1 & $-0.14\pm0.60$ & $-0.17\pm0.94$ & $0.17\pm0.58$ \\
+LPFormer & Uniform & dice\_0.25 & $-0.10\pm0.63$ & $-0.13\pm1.16$ & $0.29\pm0.56$ \\
+LPFormer & Uniform & dice\_0.5 & $0.06\pm0.57$ & $0.14\pm0.85$ & $0.63\pm1.27$ \\
+LPFormer & Uniform & ea\_0.1 & $-0.01\pm0.66$ & $-0.10\pm0.96$ & $0.32\pm0.40$ \\
+LPFormer & Uniform & ea\_0.25 & $0.07\pm0.80$ & $-0.03\pm1.03$ & $0.36\pm0.54$ \\
+LPFormer & Uniform & ea\_0.5 & $0.12\pm0.89$ & $0.14\pm1.04$ & $0.33\pm0.62$ \\
+LPFormer & Uniform & delete\_0.5 & $-0.17\pm0.64$ & $0.04\pm1.23$ & $0.15\pm0.36$ \\
+LPFormer & Uniform & delete\_hub\_0.5 & $0.44\pm0.81$ & $0.79\pm1.03$ & $0.59\pm0.40$ \\
+LPFormer & Uniform & insert\_0.5 & $0.18\pm0.73$ & $0.22\pm1.02$ & $0.65\pm0.54$ \\
+LPFormer & Uniform & feature\_shuffle & $-0.46\pm0.38$ & $-0.50\pm0.60$ & $-0.42\pm1.93$ \\
+LPFormer & noPE & clean & $-0.06\pm0.27$ & $0.12\pm1.00$ & $0.57\pm0.82$ \\
+LPFormer & noPE & rf\_0.1 & $-0.29\pm0.44$ & $-0.14\pm1.24$ & $0.58\pm0.89$ \\
+LPFormer & noPE & rf\_0.25 & $-0.07\pm0.14$ & $0.23\pm0.58$ & $0.69\pm0.63$ \\
+LPFormer & noPE & rf\_0.5 & $0.49\pm0.66$ & $0.86\pm1.87$ & $1.23\pm1.09$ \\
+LPFormer & noPE & dice\_0.1 & $-0.28\pm0.33$ & $-0.12\pm1.22$ & $0.55\pm0.76$ \\
+LPFormer & noPE & dice\_0.25 & $-0.12\pm0.32$ & $0.03\pm0.84$ & $0.65\pm0.84$ \\
+LPFormer & noPE & dice\_0.5 & $-0.12\pm1.01$ & $-0.05\pm1.96$ & $1.06\pm1.04$ \\
+LPFormer & noPE & ea\_0.1 & $0.09\pm0.33$ & $0.15\pm0.99$ & $0.47\pm0.75$ \\
+LPFormer & noPE & ea\_0.25 & $0.10\pm0.61$ & $0.15\pm1.26$ & $0.43\pm0.75$ \\
+LPFormer & noPE & ea\_0.5 & $0.07\pm0.46$ & $0.18\pm1.27$ & $0.51\pm0.91$ \\
+LPFormer & noPE & delete\_0.5 & $0.08\pm1.17$ & $0.26\pm1.66$ & $0.84\pm1.08$ \\
+LPFormer & noPE & delete\_hub\_0.5 & $-0.93\pm0.89$ & $-0.57\pm0.97$ & $0.74\pm0.80$ \\
+LPFormer & noPE & insert\_0.5 & $0.65\pm0.33$ & $1.15\pm0.89$ & $1.17\pm0.55$ \\
+LPFormer & noPE & feature\_shuffle & $-0.37\pm0.88$ & $0.41\pm1.86$ & $-0.63\pm1.36$ \\
+Refined-GAE & noLN & clean & $0.36\pm0.70$ & $0.48\pm0.72$ & $0.12\pm0.37$ \\
+Refined-GAE & noLN & rf\_0.1 & $0.52\pm0.59$ & $0.58\pm0.57$ & $0.27\pm0.19$ \\
+Refined-GAE & noLN & rf\_0.25 & $0.73\pm0.46$ & $0.60\pm0.67$ & $0.45\pm0.27$ \\
+Refined-GAE & noLN & rf\_0.5 & $0.70\pm0.41$ & $0.77\pm0.54$ & $0.41\pm0.25$ \\
+Refined-GAE & noLN & dice\_0.1 & $0.53\pm0.50$ & $0.65\pm0.55$ & $0.19\pm0.33$ \\
+Refined-GAE & noLN & dice\_0.25 & $0.87\pm0.36$ & $0.79\pm0.58$ & $0.55\pm0.22$ \\
+Refined-GAE & noLN & dice\_0.5 & $0.57\pm0.87$ & $0.62\pm1.05$ & $0.46\pm0.37$ \\
+Refined-GAE & noLN & ea\_0.1 & $0.53\pm0.79$ & $0.51\pm0.86$ & $0.25\pm0.26$ \\
+Refined-GAE & noLN & ea\_0.25 & $0.66\pm0.85$ & $0.62\pm0.88$ & $0.45\pm0.22$ \\
+Refined-GAE & noLN & ea\_0.5 & $0.82\pm0.83$ & $0.79\pm0.90$ & $0.52\pm0.34$ \\
+Refined-GAE & noLN & delete\_0.5 & $0.05\pm0.96$ & $0.13\pm0.96$ & $-0.08\pm0.25$ \\
+Refined-GAE & noLN & delete\_hub\_0.5 & $0.24\pm1.70$ & $0.17\pm1.65$ & $0.05\pm0.72$ \\
+Refined-GAE & noLN & insert\_0.5 & $1.01\pm0.44$ & $0.75\pm0.59$ & $0.69\pm0.56$ \\
+Refined-GAE & noLN & feature\_shuffle & $22.06\pm3.30$ & $19.53\pm4.77$ & $15.46\pm1.99$ \\
+Refined-GAE & Dot & clean & $-0.04\pm0.38$ & $0.37\pm0.29$ & $0.38\pm0.21$ \\
+Refined-GAE & Dot & rf\_0.1 & $0.14\pm0.21$ & $0.43\pm0.13$ & $0.27\pm0.20$ \\
+Refined-GAE & Dot & rf\_0.25 & $-0.10\pm0.33$ & $0.35\pm0.34$ & $0.32\pm0.51$ \\
+Refined-GAE & Dot & rf\_0.5 & $0.54\pm0.69$ & $0.83\pm0.31$ & $0.36\pm0.51$ \\
+Refined-GAE & Dot & dice\_0.1 & $0.19\pm0.37$ & $0.52\pm0.20$ & $0.37\pm0.25$ \\
+Refined-GAE & Dot & dice\_0.25 & $0.23\pm0.36$ & $0.51\pm0.40$ & $0.42\pm0.47$ \\
+Refined-GAE & Dot & dice\_0.5 & $0.74\pm0.52$ & $1.08\pm0.33$ & $0.21\pm0.39$ \\
+Refined-GAE & Dot & ea\_0.1 & $-0.08\pm0.43$ & $0.29\pm0.33$ & $0.34\pm0.15$ \\
+Refined-GAE & Dot & ea\_0.25 & $-0.14\pm0.28$ & $0.25\pm0.28$ & $0.28\pm0.21$ \\
+Refined-GAE & Dot & ea\_0.5 & $-0.10\pm0.38$ & $0.46\pm0.38$ & $0.15\pm0.43$ \\
+Refined-GAE & Dot & delete\_0.5 & $1.11\pm0.41$ & $1.56\pm0.44$ & $1.05\pm0.47$ \\
+Refined-GAE & Dot & delete\_hub\_0.5 & $4.75\pm1.21$ & $5.27\pm1.08$ & $2.71\pm0.36$ \\
+Refined-GAE & Dot & insert\_0.5 & $-0.35\pm0.11$ & $-0.06\pm0.51$ & $-0.17\pm0.24$ \\
+Refined-GAE & Dot & feature\_shuffle & $-10.20\pm2.78$ & $-10.97\pm2.86$ & $-5.97\pm0.13$ \\
+\end{longtable}
+}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{lllrrr}
+\caption{pubmed全部条件组件差值}\\
+\toprule
+模型 & 变体 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endfirsthead
+\multicolumn{6}{l}{pubmed全部条件组件差值（续）}\\
+\toprule
+模型 & 变体 & 条件 & Degree10 pp & PageRank10 pp & 全局pp \\
+\midrule
+\endhead
+\midrule\multicolumn{6}{r}{续下页}\\
+\endfoot
+\bottomrule\endlastfoot
+NCNC & noCNC & clean & $-0.15\pm0.09$ & $-0.20\pm0.01$ & $0.07\pm0.03$ \\
+NCNC & noCNC & rf\_0.1 & $-0.19\pm0.20$ & $-0.23\pm0.14$ & $-0.00\pm0.05$ \\
+NCNC & noCNC & rf\_0.25 & $-0.16\pm0.07$ & $-0.19\pm0.05$ & $-0.09\pm0.02$ \\
+NCNC & noCNC & rf\_0.5 & $-0.25\pm0.17$ & $-0.18\pm0.07$ & $-0.24\pm0.02$ \\
+NCNC & noCNC & dice\_0.1 & $-0.18\pm0.11$ & $-0.20\pm0.03$ & $-0.00\pm0.02$ \\
+NCNC & noCNC & dice\_0.25 & $-0.12\pm0.06$ & $-0.11\pm0.04$ & $-0.05\pm0.02$ \\
+NCNC & noCNC & dice\_0.5 & $-0.05\pm0.23$ & $-0.00\pm0.24$ & $-0.17\pm0.12$ \\
+NCNC & noCNC & ea\_0.1 & $-0.12\pm0.06$ & $-0.20\pm0.07$ & $0.08\pm0.02$ \\
+NCNC & noCNC & ea\_0.25 & $0.02\pm0.22$ & $-0.11\pm0.21$ & $0.14\pm0.05$ \\
+NCNC & noCNC & ea\_0.5 & $0.45\pm0.53$ & $0.21\pm0.49$ & $0.33\pm0.16$ \\
+NCNC & noCNC & delete\_0.5 & $-0.01\pm0.16$ & $0.02\pm0.07$ & $0.48\pm0.03$ \\
+NCNC & noCNC & delete\_hub\_0.5 & $-0.10\pm0.12$ & $-0.15\pm0.16$ & $0.43\pm0.03$ \\
+NCNC & noCNC & insert\_0.5 & $-0.36\pm0.30$ & $-0.33\pm0.35$ & $-0.49\pm0.08$ \\
+NCNC & noCNC & feature\_shuffle & $-8.09\pm0.64$ & $-7.46\pm0.54$ & $-2.71\pm0.16$ \\
+NCNC & noCN & clean & $-0.04\pm0.14$ & $-0.14\pm0.22$ & $0.06\pm0.05$ \\
+NCNC & noCN & rf\_0.1 & $-0.01\pm0.13$ & $-0.11\pm0.16$ & $0.01\pm0.05$ \\
+NCNC & noCN & rf\_0.25 & $-0.05\pm0.27$ & $-0.12\pm0.34$ & $-0.12\pm0.09$ \\
+NCNC & noCN & rf\_0.5 & $-0.16\pm0.10$ & $-0.15\pm0.10$ & $-0.25\pm0.06$ \\
+NCNC & noCN & dice\_0.1 & $-0.06\pm0.11$ & $-0.15\pm0.21$ & $-0.02\pm0.05$ \\
+NCNC & noCN & dice\_0.25 & $-0.04\pm0.15$ & $-0.11\pm0.19$ & $-0.09\pm0.09$ \\
+NCNC & noCN & dice\_0.5 & $-0.00\pm0.16$ & $0.04\pm0.25$ & $-0.21\pm0.19$ \\
+NCNC & noCN & ea\_0.1 & $0.05\pm0.16$ & $-0.08\pm0.22$ & $0.09\pm0.06$ \\
+NCNC & noCN & ea\_0.25 & $0.34\pm0.29$ & $0.13\pm0.28$ & $0.20\pm0.11$ \\
+NCNC & noCN & ea\_0.5 & $1.02\pm0.45$ & $0.65\pm0.44$ & $0.54\pm0.19$ \\
+NCNC & noCN & delete\_0.5 & $-0.05\pm0.24$ & $-0.11\pm0.26$ & $0.38\pm0.13$ \\
+NCNC & noCN & delete\_hub\_0.5 & $-0.08\pm0.17$ & $-0.22\pm0.20$ & $0.35\pm0.10$ \\
+NCNC & noCN & insert\_0.5 & $-0.12\pm0.18$ & $-0.10\pm0.18$ & $-0.46\pm0.02$ \\
+NCNC & noCN & feature\_shuffle & $-1.39\pm0.91$ & $-1.12\pm0.92$ & $-0.35\pm0.21$ \\
+LPFormer & Uniform & clean & $0.00\pm0.07$ & $0.07\pm0.05$ & $-0.00\pm0.05$ \\
+LPFormer & Uniform & rf\_0.1 & $0.03\pm0.07$ & $0.10\pm0.04$ & $0.01\pm0.06$ \\
+LPFormer & Uniform & rf\_0.25 & $0.02\pm0.08$ & $0.03\pm0.05$ & $0.01\pm0.05$ \\
+LPFormer & Uniform & rf\_0.5 & $0.07\pm0.13$ & $0.10\pm0.16$ & $0.06\pm0.04$ \\
+LPFormer & Uniform & dice\_0.1 & $0.04\pm0.12$ & $0.10\pm0.10$ & $0.00\pm0.07$ \\
+LPFormer & Uniform & dice\_0.25 & $-0.04\pm0.16$ & $0.02\pm0.14$ & $0.01\pm0.10$ \\
+LPFormer & Uniform & dice\_0.5 & $0.01\pm0.11$ & $0.07\pm0.06$ & $0.07\pm0.06$ \\
+LPFormer & Uniform & ea\_0.1 & $-0.00\pm0.10$ & $0.06\pm0.05$ & $0.01\pm0.05$ \\
+LPFormer & Uniform & ea\_0.25 & $-0.01\pm0.10$ & $0.07\pm0.05$ & $0.00\pm0.05$ \\
+LPFormer & Uniform & ea\_0.5 & $-0.01\pm0.08$ & $0.07\pm0.02$ & $0.01\pm0.04$ \\
+LPFormer & Uniform & delete\_0.5 & $0.01\pm0.05$ & $0.05\pm0.05$ & $0.03\pm0.09$ \\
+LPFormer & Uniform & delete\_hub\_0.5 & $-0.09\pm0.08$ & $0.01\pm0.04$ & $0.01\pm0.04$ \\
+LPFormer & Uniform & insert\_0.5 & $0.02\pm0.16$ & $0.03\pm0.13$ & $0.04\pm0.02$ \\
+LPFormer & Uniform & feature\_shuffle & $0.31\pm1.06$ & $0.27\pm0.94$ & $-0.03\pm0.08$ \\
+LPFormer & noPE & clean & $0.17\pm0.12$ & $0.24\pm0.11$ & $0.07\pm0.06$ \\
+LPFormer & noPE & rf\_0.1 & $0.19\pm0.11$ & $0.26\pm0.11$ & $0.09\pm0.07$ \\
+LPFormer & noPE & rf\_0.25 & $0.19\pm0.16$ & $0.28\pm0.15$ & $0.10\pm0.08$ \\
+LPFormer & noPE & rf\_0.5 & $0.12\pm0.31$ & $0.26\pm0.34$ & $0.11\pm0.21$ \\
+LPFormer & noPE & dice\_0.1 & $0.19\pm0.12$ & $0.26\pm0.12$ & $0.10\pm0.07$ \\
+LPFormer & noPE & dice\_0.25 & $0.14\pm0.22$ & $0.26\pm0.22$ & $0.09\pm0.13$ \\
+LPFormer & noPE & dice\_0.5 & $0.16\pm0.36$ & $0.31\pm0.33$ & $0.15\pm0.23$ \\
+LPFormer & noPE & ea\_0.1 & $0.15\pm0.13$ & $0.23\pm0.11$ & $0.07\pm0.06$ \\
+LPFormer & noPE & ea\_0.25 & $0.17\pm0.16$ & $0.23\pm0.13$ & $0.07\pm0.08$ \\
+LPFormer & noPE & ea\_0.5 & $0.18\pm0.20$ & $0.24\pm0.13$ & $0.09\pm0.09$ \\
+LPFormer & noPE & delete\_0.5 & $0.22\pm0.16$ & $0.33\pm0.19$ & $0.11\pm0.10$ \\
+LPFormer & noPE & delete\_hub\_0.5 & $0.12\pm0.11$ & $0.20\pm0.08$ & $0.06\pm0.09$ \\
+LPFormer & noPE & insert\_0.5 & $0.24\pm0.26$ & $0.35\pm0.32$ & $0.12\pm0.19$ \\
+LPFormer & noPE & feature\_shuffle & $0.19\pm0.56$ & $0.17\pm0.53$ & $-0.14\pm0.26$ \\
+Refined-GAE & noLN & clean & $0.69\pm0.18$ & $0.69\pm0.18$ & $0.47\pm0.04$ \\
+Refined-GAE & noLN & rf\_0.1 & $0.80\pm0.12$ & $0.85\pm0.13$ & $0.59\pm0.07$ \\
+Refined-GAE & noLN & rf\_0.25 & $1.00\pm0.02$ & $1.08\pm0.05$ & $0.78\pm0.07$ \\
+Refined-GAE & noLN & rf\_0.5 & $1.11\pm0.07$ & $1.23\pm0.13$ & $1.10\pm0.09$ \\
+Refined-GAE & noLN & dice\_0.1 & $0.84\pm0.19$ & $0.90\pm0.20$ & $0.64\pm0.06$ \\
+Refined-GAE & noLN & dice\_0.25 & $1.10\pm0.19$ & $1.18\pm0.19$ & $0.86\pm0.13$ \\
+Refined-GAE & noLN & dice\_0.5 & $1.32\pm0.20$ & $1.40\pm0.30$ & $1.22\pm0.11$ \\
+Refined-GAE & noLN & ea\_0.1 & $0.81\pm0.17$ & $0.77\pm0.18$ & $0.57\pm0.05$ \\
+Refined-GAE & noLN & ea\_0.25 & $0.97\pm0.17$ & $0.95\pm0.20$ & $0.67\pm0.05$ \\
+Refined-GAE & noLN & ea\_0.5 & $1.07\pm0.19$ & $1.14\pm0.24$ & $0.76\pm0.05$ \\
+Refined-GAE & noLN & delete\_0.5 & $1.26\pm0.38$ & $1.32\pm0.42$ & $1.10\pm0.06$ \\
+Refined-GAE & noLN & delete\_hub\_0.5 & $0.91\pm0.17$ & $0.98\pm0.17$ & $0.83\pm0.14$ \\
+Refined-GAE & noLN & insert\_0.5 & $0.82\pm0.25$ & $0.97\pm0.36$ & $0.84\pm0.09$ \\
+Refined-GAE & noLN & feature\_shuffle & $8.12\pm0.73$ & $7.01\pm0.55$ & $12.39\pm0.53$ \\
+Refined-GAE & Dot & clean & $1.36\pm0.05$ & $1.48\pm0.10$ & $2.49\pm0.10$ \\
+Refined-GAE & Dot & rf\_0.1 & $1.39\pm0.14$ & $1.49\pm0.22$ & $2.73\pm0.10$ \\
+Refined-GAE & Dot & rf\_0.25 & $1.64\pm0.18$ & $1.76\pm0.21$ & $3.17\pm0.10$ \\
+Refined-GAE & Dot & rf\_0.5 & $1.82\pm0.26$ & $1.90\pm0.22$ & $3.84\pm0.12$ \\
+Refined-GAE & Dot & dice\_0.1 & $1.37\pm0.10$ & $1.49\pm0.16$ & $2.75\pm0.09$ \\
+Refined-GAE & Dot & dice\_0.25 & $1.63\pm0.21$ & $1.74\pm0.27$ & $3.24\pm0.21$ \\
+Refined-GAE & Dot & dice\_0.5 & $2.04\pm0.32$ & $2.06\pm0.41$ & $4.12\pm0.15$ \\
+Refined-GAE & Dot & ea\_0.1 & $1.31\pm0.09$ & $1.46\pm0.11$ & $2.51\pm0.09$ \\
+Refined-GAE & Dot & ea\_0.25 & $1.15\pm0.05$ & $1.36\pm0.09$ & $2.50\pm0.07$ \\
+Refined-GAE & Dot & ea\_0.5 & $0.75\pm0.06$ & $1.08\pm0.09$ & $2.40\pm0.05$ \\
+Refined-GAE & Dot & delete\_0.5 & $2.83\pm0.26$ & $2.99\pm0.18$ & $4.28\pm0.11$ \\
+Refined-GAE & Dot & delete\_hub\_0.5 & $3.41\pm0.21$ & $3.52\pm0.13$ & $4.70\pm0.12$ \\
+Refined-GAE & Dot & insert\_0.5 & $0.56\pm0.70$ & $0.46\pm0.69$ & $2.99\pm0.26$ \\
+Refined-GAE & Dot & feature\_shuffle & $3.52\pm0.39$ & $3.41\pm0.27$ & $18.23\pm0.42$ \\
+\end{longtable}
+}
+\end{document}

@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "counts": {
+    "per_seed.csv": 1134,
+    "robustness_summary.csv": 378,
+    "paired_component_deltas.csv": 252,
+    "summary.csv": 76356,
+    "conditional_component_deltas.csv": 50904,
+    "training_summary.csv": 81,
+    "learned_parameters.csv": 81,
+    "five_model_full_summary.csv": 42420
+  },
+  "all1134_raw_rows_present_in_md_and_tex": true,
+  "figures": 17,
+  "pages": 67,
+  "embedded_fonts": 40,
+  "text_outside_cropbox": 0,
+  "tex_missing_glyph_or_overfull_or_reference_errors": false,
+  "all4_zip_integrity_checks": true,
+  "source_bundle_assets_exact": true
+}

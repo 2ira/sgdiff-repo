@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "local_numpy": "1.24.4",
+  "hlgnn_numpy": "1.26.4",
+  "same_all9_permutations": true,
+  "hashes": {
+    "cora_s0": "5f61559976ea47606f408dc59549c4148050e3b01d2c99ed9446cfc41be7e5e1",
+    "cora_s1": "8ccf22d7860577334a0e01843f599f7edbafb426b2a0613b178e32bbc4bbb124",
+    "cora_s2": "42dd6daa20e2d1bf39e83b6da7efdc80dce60f8edb338a77c79f70a81390c23a",
+    "citeseer_s0": "09c76e7ed311229815b047348192c4a4b100c504de98f6a4a6420a5e1a639152",
+    "citeseer_s1": "8718ab74884cdf262dfdd1a601e6047ab65900ff67b82a56a92c3f103a05a797",
+    "citeseer_s2": "a049d42c2a352edb46144c589d219d0535dd6f811ecdd913270f75625827db15",
+    "pubmed_s0": "b4b5e76448375e524bc04bfea964cd5c4dfea00121835065ce61e8a507e8fcac",
+    "pubmed_s1": "353f1cb4e6bdd4229caf92f1ed3ae72a8919938cda650842f5adb379ab960a8e",
+    "pubmed_s2": "a7acff57d16628bcf55710c4e9e945ee488861612286e91091d1064970a639c9"
+  }
+}

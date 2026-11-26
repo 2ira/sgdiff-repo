@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "splits": [
+    {
+      "dataset": "cora",
+      "seed": 0,
+      "split": "3d59643175b1ca4842c9b8a9fc9b764ad1bfc42003740fe94deeffeb9f12dbd2",
+      "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392"
+    },
+    {
+      "dataset": "cora",
+      "seed": 1,
+      "split": "e25f7c7137fdfc4699f2e137d49e4c891a69d46126de84fc517159e0db93e267",
+      "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392"
+    },
+    {
+      "dataset": "cora",
+      "seed": 2,
+      "split": "0f7c2b3e9cad26562f6a52454759c86a75f2d345582c9db22148553f255e13f7",
+      "features": "c12081a37e469c69186db645c2a938090f7595e544a9842d228f7ca3799b9392"
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 0,
+      "split": "77d9e419176b4b0f505efee313dc3782f2bf1dd2a181c3278a82dd1b4b96e9e3",
+      "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767"
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 1,
+      "split": "d252423b184b3dc2ee4e535b993b56ae0424bc1df3964d8ad180d2b4cdb63992",
+      "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767"
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 2,
+      "split": "9e65563ea08e713b85fd5b0d143fc0fa5186f59fcd1ed69778bb3cda66824058",
+      "features": "8a6536491913a9df16fc442120efd234a102351c93ab0b5a663365d04a5c5767"
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 0,
+      "split": "cbc50d2d7c0924691ccf846118b054b37a7f8815c75f4bbc15136e2cc2cfa495",
+      "features": "63d27d4887e663ae6bea7530902a84fb1150e63b8296ca550ea8965791d5e622"
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 1,
+      "split": "1f97f3eed8bc25ac8db17345d0dd7decc02e54eb3513cfc84ad34b4d61925ae4",
+      "features": "63d27d4887e663ae6bea7530902a84fb1150e63b8296ca550ea8965791d5e622"
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 2,
+      "split": "6fc3aa45bd0667dbb53f1b51848bbaea15127c6f4344df6a241de51c3da9e243",
+      "features": "63d27d4887e663ae6bea7530902a84fb1150e63b8296ca550ea8965791d5e622"
+    }
+  ],
+  "features_match_hlgnn": true
+}

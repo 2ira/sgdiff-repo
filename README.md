@@ -56,6 +56,8 @@ full mapping lives in [`docs/alignment.md`](docs/alignment.md).
 | prior `p(y) = 0.5` | `LikelihoodFusion.log_prior` (uniform) |
 | 80 / 5 / 15 split, equal negatives, AUC/AP/Hit@100, 10 seeds | `data.*`, `scripts/run_experiments.py --seeds` |
 
+**Three-model update (2026-11-26):** [Shared robustness, component ablations and Top-k% important-node AUROC](results/new-models-node-rank/report.md) for NCNC, LPFormer and Refined-GAE on Cora/Citeseer/PubMed: 81 models (54 reused + 27 new), 1134 evaluations, 17 figures and complete tables. [PDF report](results/new-models-node-rank/report.pdf) · [TeX sources](results/new-models-node-rank/report_sources.zip) · [Code and CPU-only replay](experiments/new_models_rank/README.md). This extension follows the unified branch’s Nov 24 protocol; the earlier main-input/attack supplement remains a separate setting.
+
 ## Repository layout
 
 A consolidated [Chinese LaTeX research report](experiments/new_link_models/paper_report/README.md) is available as [PDF](experiments/new_link_models/paper_report/report.pdf) and [TeX source bundle](experiments/new_link_models/paper_report/report_sources.zip), including model introductions, citations, experimental design, figures and complete numerical appendices.

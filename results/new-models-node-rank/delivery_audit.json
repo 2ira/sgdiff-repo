@@ -1,0 +1,87 @@
+{
+  "passed": true,
+  "partial": false,
+  "original_predictions": 1134,
+  "curve_rows": 229068,
+  "summary_rows": 76356,
+  "conditional_component_rows": 50904,
+  "global_summary_rows": 378,
+  "checks": [
+    {
+      "dataset": "citeseer",
+      "seed": 0,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 1,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    },
+    {
+      "dataset": "citeseer",
+      "seed": 2,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    },
+    {
+      "dataset": "cora",
+      "seed": 0,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    },
+    {
+      "dataset": "cora",
+      "seed": 1,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    },
+    {
+      "dataset": "cora",
+      "seed": 2,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 0,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 1,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    },
+    {
+      "dataset": "pubmed",
+      "seed": 2,
+      "rankings_byte_identical_to_hlgnn_and_katz": true,
+      "queries_identical": true,
+      "graphs_identical": true
+    }
+  ],
+  "k0_undefined": true,
+  "k100_matches_all_original_auc": true,
+  "paired_differences_before_seed_aggregation": true,
+  "sample_standard_deviation_ddof": 1,
+  "rank_adapter": "frozen_rank.py; published rankings retained verbatim",
+  "expected_complete_grid": {
+    "original_predictions": 1134,
+    "curve_rows": 229068,
+    "summary_rows": 76356,
+    "conditional_component_rows": 50904,
+    "global_summary_rows": 378,
+    "global_component_rows": 252
+  }
+}

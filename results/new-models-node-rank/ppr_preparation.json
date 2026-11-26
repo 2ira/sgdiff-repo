@@ -1,0 +1,22 @@
+{
+  "unique_graphs": 42,
+  "reused": [
+    {
+      "label": "pubmed_s0_clean",
+      "graph_sha256": "cc4443f0494b12e3632554d04e819b90e07ee7cc087861a5b8d36e7fda05b449",
+      "source": "/mnt/afs/260010145/new_link_main_protocol_v1/ppr_cache/ppr_cc4443f0494b12e3632554d04e819b90e07ee7cc087861a5b8d36e7fda05b449_a0.15_e1e-05.npz"
+    },
+    {
+      "label": "pubmed_s1_clean",
+      "graph_sha256": "dcfa6406169cbb522fbf8fbab6d08d9c2933cb30a12109841911f595a8d7dd48",
+      "source": "/mnt/afs/260010145/new_link_main_protocol_v1/ppr_cache/ppr_dcfa6406169cbb522fbf8fbab6d08d9c2933cb30a12109841911f595a8d7dd48_a0.15_e1e-05.npz"
+    },
+    {
+      "label": "pubmed_s2_clean",
+      "graph_sha256": "8ce0e8165946eb6961b541ca224127eb92496fa7915a1f8e327c84b4356918bb",
+      "source": "/mnt/afs/260010145/new_link_main_protocol_v1/ppr_cache/ppr_8ce0e8165946eb6961b541ca224127eb92496fa7915a1f8e327c84b4356918bb_a0.15_e1e-05.npz"
+    }
+  ],
+  "new": 39,
+  "weights_reused": false
+}

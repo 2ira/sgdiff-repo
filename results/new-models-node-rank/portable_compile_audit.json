@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "pages": 67,
+  "all_page_text_identical": true,
+  "rendered_pages_identical": [
+    1,
+    4,
+    9,
+    11,
+    13,
+    22,
+    36,
+    67
+  ],
+  "source_archive_sha256": "15e0ea6441d04b4e8b33b5948fdb066ed0ce99596663375a90307099b6b3c48a",
+  "delivered_pdf_sha256": "af47f5bad8fd3ce08f45c8465215fd80fcdd1976245964e2d67b2e1bc54e3db1",
+  "standalone_pdf_sha256": "372d179eaa16455eeb9ac251932cb1b8fd5806bb0145e2566fec64479a39183d"
+}

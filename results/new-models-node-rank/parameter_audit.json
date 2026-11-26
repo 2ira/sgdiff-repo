@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "models": 81,
+  "uniform_attention_zero_vectors": 9,
+  "depth_coefficients_sum_to_one": true,
+  "cn0_beta_registered_but_not_used": true,
+  "interpretation": "Descriptive coefficients, not causal importance"
+}

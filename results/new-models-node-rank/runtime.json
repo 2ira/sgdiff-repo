@@ -1,0 +1,23 @@
+{
+  "numpy": "1.24.4",
+  "scipy": "1.12.0",
+  "scikit-learn": "1.2.0",
+  "networkx": "2.6.3",
+  "matplotlib": "3.8.4",
+  "torch": "2.3.0a0+6ddf5cf85e.nv24.4",
+  "python": "3.10.12",
+  "target_branch": "feat/ncnc-lpformer-refined-gae",
+  "target_commit": "2f4a48231882a377c603f233dc839b17c83793eb",
+  "native_commit": "95083da808e500c02da458e205f4b861ceb80871",
+  "gpu": "NVIDIA H100 80GB HBM3 MIG3g.40gb",
+  "gpu_total_bytes": 42412802048,
+  "training": "27 fresh PubMed fits, 54 protected-target fits reused",
+  "approval_state": "User authorized publication to feat/ncnc-lpformer-refined-gae",
+  "threads": "main fits3 CPU threads; auxiliary fits1; independent replay1; per-configuration locks prevent duplicate fitting",
+  "tf32": "new PubMed matmul and cuDNN disabled",
+  "ppr": "42 exact graph contexts; existing matched graph PPR may be reused, no reused main-supplement weights",
+  "timing_note": "Wall times include shared-device scheduling, cache preparation and concurrent jobs; not a dedicated speed benchmark.",
+  "experiment_base_branch": "unified-robustness-ablation",
+  "experiment_base_commit": "bef9674",
+  "integration": "Copied original shared scorer/ranks; isolated peer.py binding selects immutable native checkout before existing local model package"
+}

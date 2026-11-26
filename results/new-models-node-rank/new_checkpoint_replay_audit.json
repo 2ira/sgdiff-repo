@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "checkpoints": 27,
+  "evaluations": 81,
+  "max_auc_ap_error": 3.2337389876957445e-08,
+  "max_absolute_score_error": 7.62939453125e-06,
+  "score_rtol": 2e-05,
+  "score_atol": 2e-05
+}

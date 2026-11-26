@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "evaluations": 1134,
+  "models": 81,
+  "reused_weights": 54,
+  "new_weights": 27,
+  "peer_rank_archive_sha256": "d531668c2884df8ed4a3a231fcff36022f9ee979b3054ce8e233a174464c669d",
+  "archive_sha256": {
+    "predictions.zip": "1276f99f206c674dde5dbf115a2450c49775744b54367a34919bd6850607edd9",
+    "training_records.zip": "b3a1466efdcf305d910ac66aaf369e1a5ca32d9f38c6ef8be7f37021f6959a64",
+    "per_seed_curves.zip": "72c257735a580dcab669d41a98f4d7fe44da1a3b90e6db22f0310944805c6995"
+  }
+}

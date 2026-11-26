@@ -1,0 +1,33 @@
+{
+  "base_commit": "bef9674",
+  "publication_base_commit": "2f4a48231882a377c603f233dc839b17c83793eb",
+  "publication_branch": "feat/ncnc-lpformer-refined-gae",
+  "native_commit": "95083da808e500c02da458e205f4b861ceb80871",
+  "files": {
+    "experiments/new_models_rank/__init__.py": "606efbca088991370e0f59d16e201c5902f27814f2e0868846b373ff8f3bcb1f",
+    "experiments/new_models_rank/finish.py": "50f73784f64399b5be80836f0fac5b2fc8d12d11d135eb4eb1b0945b4591187f",
+    "experiments/new_models_rank/frozen_rank.py": "82906516fe0f14199a0547fb637253dd6ba88b18232e4497d70a900fd745e719",
+    "experiments/new_models_rank/package.py": "b7a4f3b38e148d6dbdb151eb6e303888637042545efe1abfeabd6110acd474ee",
+    "experiments/new_models_rank/parameters.py": "c9b69a2a61377f3a0ae1bf04217218d7d5bd38c8be42289e92d456a294443494",
+    "experiments/new_models_rank/peer.py": "64fe8493cfdf83ed70fddac5152b1c3774e3266a4c60b16ecbeb61fcf84f8f13",
+    "experiments/new_models_rank/plotting.py": "ba910d7e0f21326603a5698bd95c1b59facad4cc7e4b859dda0e37f8bcfca310",
+    "experiments/new_models_rank/prepare_ppr.py": "18cfaeb5501e3867054b1ef7fd8a8f755ddb6b4a08440b11da0a4e5163ae1a03",
+    "experiments/new_models_rank/prepare_scores.py": "aad07bcf566f695a214dedc0ee8a67920fc34ea41291094e9fd7a1667e98b0b4",
+    "experiments/new_models_rank/pubmed_models.py": "d1c41d9ab0130475b1ad7ff2283bee3e29bdf4a189071518de8a0c404a69dfcd",
+    "experiments/new_models_rank/replay.py": "d4d5580ee2bd4dcb45df82e734fbbd7fc12f646e8b26aadda36c83d6816eab69",
+    "experiments/new_models_rank/replay_models.py": "4cc0301dcd5a50981b99612011d8699a7a189f4e6510d986bc2ea40bbe817ec1",
+    "experiments/new_models_rank/report.py": "4af56c445dcef248eb55b5f852cb86c64865c637e030dd3e1dd705561a5e232c",
+    "experiments/new_models_rank/report_sources.py": "78fe58811d86f0389074b098b9e1b2a092b61cf6b64a33fdfeddebaf77ec0c88",
+    "experiments/new_models_rank/stage_graphs.py": "806893712f95a49c0fe856d99815174e325ec5f2c52af52552b190cdbb61fbb2",
+    "experiments/new_models_rank/suite.py": "31af36661490ccb8b49bc8c73a8f879ada9b1c50e1600ab99878cd035aef9ed8",
+    "experiments/new_models_rank/summarize.py": "1cce7987eb8f9026804bb49217c6e84696073e11365f6080257673b03cbcd76d",
+    "experiments/new_models_rank/test_frozen_rank.py": "b1b73482ee6307aa23dbe5b3ca60522b02ecfe6ead59b07d3920597ab1178ba1",
+    "experiments/new_models_rank/tex_report.py": "a2fb8a50c5564a08447fe857a54a0557efc02e5eaa3b8903682a6dc480639af3",
+    "experiments/new_models_rank/train_pubmed.py": "22e209a7e6f777b652684decb87a668ef668abbc801381628f04eabd7441ad7f",
+    "experiments/new_models_rank/training_plots.py": "eedacb7391a89247f5b011c05b343570410942de7411b1a3aa0ab3ab5c810526",
+    "experiments/new_models_rank/verify_report.py": "ab9f40f0d81de485c44b16173666448d0fa662d87247ff20841080a6aa77429d",
+    "experiments/new_models_rank/README.md": "78700293ba9e842f3a15e4732e06aebe171d9d4d3bb46dec9e460721521d4ba1",
+    "README.md": "a3ef6fb96419c026acc61bd10d48fc42ec907dd3f649fcb0a66eb2f453b4e6bc"
+  },
+  "published_rank_scoring_sha256": "cf48d18490f9633538d2ae84d5032d28f6ffc79cc36b8dd797673bcb8f50c6dd"
+}

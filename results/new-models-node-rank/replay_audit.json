@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "original_predictions": 1134,
+  "curve_rows_checked": 229068,
+  "rankings_byte_identical": true,
+  "k0_undefined": true,
+  "k100_original_auc": true,
+  "max_curve_auc_error": 0.0,
+  "model_inference": false,
+  "gpu_required": false
+}

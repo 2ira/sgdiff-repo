@@ -1,0 +1,66 @@
+{
+  "passed": true,
+  "publication_branch": "feat/ncnc-lpformer-refined-gae",
+  "publication_base_commit": "2f4a48231882a377c603f233dc839b17c83793eb",
+  "upstream_commit": "bef967467abd3fe825c08e243b3f7c7b6a2f250b",
+  "native_protocol": "/mnt/afs/260010145/sgdiff_peer_95083da/experiments/new_link_models/protocol.py",
+  "native_evaluator": "/mnt/afs/260010145/sgdiff_peer_95083da/experiments/new_link_models/run.py",
+  "native_adapters": "/mnt/afs/260010145/sgdiff_peer_95083da/experiments/new_link_models/adapters.py",
+  "local_model_package_shadowing_prevented": true,
+  "all117_graphs_reimported_and_identical": true,
+  "scoring_and_ranking_inputs_byte_identical": [
+    {
+      "path": "experiments/node_rank_auc/evaluate.py",
+      "sha256": "cf48d18490f9633538d2ae84d5032d28f6ffc79cc36b8dd797673bcb8f50c6dd"
+    },
+    {
+      "path": "experiments/node_rank_auc/test_evaluate.py",
+      "sha256": "d8e1d04924b26eaaee3ddf0881e2a43ea0b696faddde4b01a75991fe2d4be6e1"
+    },
+    {
+      "path": "experiments/node_rank_auc/prepare_hlgnn.py",
+      "sha256": "d6215b19c7cc1928f39e723b0c24fb9ccf8c57b73652e8ca18cec3f0c8581f6b"
+    },
+    {
+      "path": "experiments/node_rank_auc/test_hlgnn_adapter.py",
+      "sha256": "4abe9f8f28338440a8845d631c819cf7d6a116d1c96a66438fbfad814433a6aa"
+    },
+    {
+      "path": "experiments/node_rank_auc/requirements.lock.txt",
+      "sha256": "f3dca6190b36f2f1758b9e7226b2eabe2750d6e2866741146adbcd9a488cd488"
+    },
+    {
+      "path": "results/node-rank-auc/per_seed_curves.zip",
+      "sha256": "d531668c2884df8ed4a3a231fcff36022f9ee979b3054ce8e233a174464c669d"
+    },
+    {
+      "path": "results/node-rank-auc/summary.csv",
+      "sha256": "0a945f60fb3ba2482df1e7656caf35b1fd7b1ee812caf5df8dd9d52216a30379"
+    }
+  ],
+  "experiment_predictions_unchanged": true,
+  "all9_split_arrays_identical": true,
+  "unchanged_experiment_files": {
+    "conditional_component_deltas.csv": "190d391aecf56865e20d0c2062ba6a30762046875d33209cfa3f2941fe0d8204",
+    "conditional_component_key_points.csv": "5683bb4c7a855cb340b68e86f260765db4979468853350ea864ffbe76ce37e62",
+    "delta_summary.csv": "063d1a52390cf0a5c78deba92575ad9239370fe8ac9957f35b692b2fea246e0d",
+    "five_model_full_summary.csv": "2116e7bf89d2af70056a8a691d005c66bf33d0fdec16c64eb0ba73a6afd90fcc",
+    "key_points.csv": "18449d98eef46773beb15569032d979711e8bb815985fbc2ddc522f4d5594136",
+    "learned_parameters.csv": "d4eea4515c85f8926e7cb255437066d43844192c707d33ca1a87e908be197438",
+    "paired_component_deltas.csv": "13554d3d94697747ad6729d464e44710d087fa0fa247d806933dd0894201602a",
+    "per_seed.csv": "2a850df49ea2567e40f0bd11a96098cd21c69d056d8a41c935545a03c3970845",
+    "robustness_summary.csv": "00d21264baa96823c241df2b6b88c3bbafe37335f13a708c19f7ec727a51442a",
+    "summary.csv": "16e5ed4c652590dec885291d88eacfde0791c0ac201a47139d5660ed8c11fb37",
+    "training_summary.csv": "1b6b5185ee7929662d41b2914c56f817c8282fa637327c42fb478eb27594d2aa",
+    "predictions.zip": "1276f99f206c674dde5dbf115a2450c49775744b54367a34919bd6850607edd9",
+    "per_seed_curves.zip": "72c257735a580dcab669d41a98f4d7fe44da1a3b90e6db22f0310944805c6995",
+    "training_records.zip": "b3a1466efdcf305d910ac66aaf369e1a5ca32d9f38c6ef8be7f37021f6959a64"
+  },
+  "adapted_archive_importer": {
+    "source_commit": "bef967467abd3fe825c08e243b3f7c7b6a2f250b",
+    "source_path": "scripts/stage_hlgnn_archived_inputs.py",
+    "published_path": "experiments/new_models_rank/stage_graphs.py",
+    "change": "Only replace entrypoint path setup and bind_peer import; attack import/validation logic unchanged"
+  },
+  "metric_tests_passed": 9
+}
